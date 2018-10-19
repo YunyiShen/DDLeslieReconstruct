@@ -1,17 +1,10 @@
-# get Lislie Matrix using specific parameters, can also return L-I if needed, first nage entries should be survival(inv logit transformed) and next fertility rate, 
-getLislie = function(Survival,estFer=T,Ferc=NULL,minus1=F){
-  nage = length(Survival)/(1 + estFer)
+# get Lislie Matrix using specific parameters, can also return L-I if needed, first nage entries should be survival(no transiform, 0<S<1,transformation occor in sampler function) and next fertility rate, 
+getLislie = function(Survival,Ferc,minus1=F){
+  nage = length(Survival)
   Tr = matrix(0,nage,nage)
-  if(!estFer){
-    Tr[1,] = Ferc
-  }
-  else{
-    Tr[1,] = Survival[(nage+1):(2*nage)]
-  }
-  Nextage = Survival[1:(nage-1)]
-  Nextage = exp(Nextage)/(1+exp(Nextage))
-  diag(Tr[2:(nage),1:(nage-1)]) = Nextage
-  Tr[nage,nage] = exp( Survival[nage])/(1+exp(Survival[nage]))
+  Tr[1,] = Ferc
+  diag(Tr[2:(nage),1:(nage-1)]) = Survival[-nage]
+  Tr[nage,nage] = Survival[nage]
   if(minus1){
     diag(Tr)=diag(Tr)-1
   }
@@ -39,7 +32,7 @@ GetHarvest = function(Harvpar,nage){
   return(Harvest)
 }
 
-# Project the harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
+# Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
 ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, K0, null = F){
 	I = matrix(0,nrow(data),nrow(data))	
 	diag(I) = 1
@@ -50,27 +43,38 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, K0, null = F){
     return(data_n1)
   }
 
-# Project harvest model from a initial harvest
-ProjectHarvest = function(pars,estFer=T,Ferc=NULL, estK0 = T, E0=NULL, K0 = NULL, global = F, null = F,data,nage){
-  period = ncol(data)
-  if(estK0){
-    K0 = pars[length(pars)]
-    pars = pars[-length(pars)]
-  }
-  Survival = pars[1:(nage * (1 + estFer))]
-  Harvpar = pars[-(1:(nage * (1 + estFer)))]
-  Lislie = getLislie(Survival,estFer=estFer,Ferc=Ferc,minus1=T)
+# Project harvest model from a initial harvest, survival is col vector with all survival rate of all age class, this nrow(Survival)=nage
+ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, global = F, null = F,bl , period, nage){
+  Lislie = getLislie(Survival,Ferc=Ferc,minus1=T)
   H = GetHarvest(Harvpar,nage)
-  Harvest[,1] = data[,1] 
+  Harest = matrix(0,nage,period + 1)
+  Harvest[,1] = bl 
   if(length(E0)=0){
-	E0 = solve(H,data[,1])
+	E0 = solve(H,bl)
 	E0 = E0/(sum(E0))
   }
   else E0 = E0/(sum(E0))
-  for(i in 2 : period){
-	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0,H=H,null = null) # project harvest from very initial
+  for(i in 1 : period + 1){
+	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0, H=H,null = null) # project harvest from very initial
   }              
-  return(Harvest)
+  return(Harvest[,-1])
+}
+
+# project when time inhomo survival and ferc, survival should be a matrix with nage x period entries, so do ferc
+ProjectHarvest_inhomo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, global = F, null = F,bl , period, nage){
+  Harest = matrix(0,nage,period+1)
+  Harvest[,1] = bl
+  H = GetHarvest(Harvpar,nage)
+  if(length(E0)=0){
+	E0 = solve(H,bl)
+	E0 = E0/(sum(E0))
+  }
+  else E0 = E0/(sum(E0))
+  for(i in 1 : period + 1){
+    Lislie = getLislie(Survival[,i-1],Ferc[,i-1],minus1=T)
+    Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0, H=H,null = null)
+  }
+  return(Harest[,-1])
 }
 
 # Given harvest data, calculate the living individual in certain year
@@ -82,37 +86,6 @@ getLivingIdividuals = function(H,data){
   return(LivingIdividuals)
 }
 
-# Problem is how to deal with the noise in the time series, 
-#  least square given here will cause error to accumulate
-sqrResidue = function(pars,estFer=T,Ferc=NULL, estK0 = T, E0, K0 = NULL, global = F,data){
-  period = ncol(data)
-  nage = length(E0)
-  if(estK0){
-    K0 = pars[length(pars)]
-    pars = pars[-length(pars)]
-  }
-  Survival = pars[1:(nage * (1 + estFer))]
-  Harvpar = pars[-(1:(nage * (1 + estFer)))]
-  Lislie = getLislie(Survival,estFer=estFer,Ferc=Ferc)
-  H = GetHarvest(Harvpar,nage)
-  Harest = apply(data[,-period],2,
-                 function(data_n,
-                          Lislie,
-                          H,
-                          global, 
-                          E0, 
-                          K0){
-	I = matrix(0,nrow(data),nrow(data))	
-	diag(I) = 1
-    X_n1 = (I-H) %*% solve(H,data_n)
-    D = DensityDependcy(global = global, Xn=X_n1, E0=E0, K0=K0)
-	data_n1 = H %*% (Lislie %*% D %*% X_n1 + X_n1)
-    #Popu_after = (eyes-H)%*%Popu_before_harvest 
-    return(data_n1)
-  },global = global, Lislie = Lislie, E0=E0, K0=K0,H=H)
-  Residue = sum((data[,-1]-Harest)^2)
-  return(Residue)
-}
 
 ########
 # Coming functions are
@@ -275,7 +248,7 @@ acc.ra.var = function(log.prop.post, log.curr.post, log.prop.var, log.curr.var){
 ### --------------------------- SAMPLER --------------------------- ###
 ### --------------------------------------------------------------- ### hardest part is coming
 
-DDLislie.sampler <-
+HDDLislie.sampler <-
     function(#.. number of iterations and burn-in (not saved)
              n.iter, burn.in = 0, thin.by = 1
 
@@ -288,7 +261,7 @@ DDLislie.sampler <-
              ,mean.f, mean.s, mean.b, mean.K0, mean.H
 
              #.. inital values for vitals and variances
-             #   *vitals not transformed coming in*
+             #   *vitals not transformed coming in* all not transfer, will 
              ,start.f = mean.f, start.s = mean.s
 			 ,start.b = mean.b, start.K0 = mean.K0, start.H = mean.H
              ,start.sigmasq.f = 5, start.sigmasq.s = 5
@@ -312,8 +285,8 @@ DDLislie.sampler <-
              #.. age group width
              ,nage = 7 , nyear = NULL
 			 
-			 ,estFer=T, Ferc=NULL, estK0 = T
-			 ,E0=NA , K0 = NULL, global = F, null = F # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
+			 ,estFer=FALSE, Ferc=rep(1,nage), estK0 = T
+			 ,E0=NULL , K0 = 0, global = FALSE, null = FALSE # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
 			 ,timehomo = F # whether assume time homogeneous 
 
              #.. print algorithm progress
@@ -537,21 +510,23 @@ DDLislie.sampler <-
                         ,dimnames = dimnames(mean.s))
 
 
-    ## -------- Initialize -------- ## Stop here in 10/18/2018
+    ## -------- Initialize -------- ## Restart here in 10/19/2018
 
     #.. Set current vitals and variances to inital values
     #   Take logs/logits here where required
 
-    log.curr.f <- log(start.f) #<-- log(0) stored as "-Inf". Gets
-    log.prop.f <- log(start.f) #    converted to 0 under exponentiation
-    logit.curr.s <- estMod.logit.mar29(start.s)
-    curr.g <- start.g
-    log.curr.b <- log(start.b)
+    log.curr.f = estFer * log(start.f) #<-- log(0) stored as "-Inf". Gets
+    log.prop.f = estFer * log(start.f) #    converted to 0 under exponentiation
+    logit.curr.s = logit(start.s)
+	logit.curr.H = logit(start.H)
+    log.K0 = estK0 * log(start.K0)
+    log.curr.b = log(start.b)
 
-    curr.sigmasq.f <- start.sigmasq.f
-    curr.sigmasq.s <- start.sigmasq.s
-    curr.sigmasq.g <- start.sigmasq.g
-    curr.sigmasq.n <- start.sigmasq.n
+    curr.sigmasq.f = start.sigmasq.f
+    curr.sigmasq.s = start.sigmasq.s
+    curr.sigmasq.H = start.sigmasq.H
+	curr.sigmasq.K0 = start.sigmasq.K0
+    curr.sigmasq.n = start.sigmasq.n
 
 
     #.. Fixed means for vitals and baseline
@@ -569,26 +544,22 @@ DDLislie.sampler <-
     log.census.mat <- log(pop.data)
 
 
-    #.. Set current projection: base on initial values
-
-    log.curr.proj <-
-        log(proj.cen.yrs(full.proj =
-                         ccmp.function(pop = exp(log.curr.b),
-                                       surv = estMod.invlogit.mar29(logit.curr.s),
-                                       fert = exp(log.curr.f),
-                                       mig = curr.g,
-                                       proj.steps = proj.periods,
-                                       age.int = age.size)
-                         ,bline.yr = baseline.year
-                         ,vr.yrs = vr.years
-                         ,cen.yrs = census.years, proj.yrs = proj.years
-                         ))
+    #.. Set current projection: base on initial values # timehomo or not is important, determin it use homo = T
+	if(homo){
+	  log.curr.proj =
+        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+	}
+	else{
+	  log.curr.proj =
+        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+	}
+## stop here 10/19/2018   
 
 
     #.. Current log posterior
 
     log.curr.posterior <-
-        log.post.mar29(f = log.curr.f
+        log.post(f = log.curr.f
                        ,s = logit.curr.s
                        ,g = curr.g
                        ,baseline.n = log.curr.b
