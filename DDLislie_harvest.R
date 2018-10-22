@@ -28,7 +28,7 @@ DensityDependcy = function(global = F, Xn, E0, K0, null = F){
 # get age specific harvest proportion matrix
 GetHarvest = function(Harvpar,nage){
   Harvest = matrix(0,nage,nage)
-  diag(Harvest) =exp( Harvpar)/(1+exp(Harvpar))
+  diag(Harvest) = Harvpar
   return(Harvest)
 }
 
@@ -71,7 +71,7 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, glo
   }
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
-    Lislie = getLislie(Survival[,i-1],Ferc[,i-1],minus1=T)
+    Lislie = getLislie(Survival[,i-1],Ferc[,i-1],minus1=T) # inhomo, Survival rows are age structure, cols are time
     Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0, H=H,null = null)
   }
   return(Harest[,-1])
@@ -273,7 +273,7 @@ HDDLislie.sampler <-
 
              #.. **variances** for proposal distributions used in M-H
              #   steps which update vital rates.
-             ,prop.vars
+             ,prop.vars # col names should be "fert.rate", 
 
              #.. ccmp function
              ,ccmp.function = popRecon.ccmp.female
@@ -383,7 +383,7 @@ HDDLislie.sampler <-
     ## How many (samples) stored?
 	
     n.stored = ceiling(n.iter / thin.by)
-	ntimes = (timehomo) * ncol(start.s) + (!timehomo)
+	ntimes = (!timehomo) * ncol(start.s) + (timehomo) # whether assume time homogeneous of survival etc.
       # Fertility
 	  if(estFer){
       fert.rate.mcmc =
@@ -519,7 +519,7 @@ HDDLislie.sampler <-
     log.prop.f = estFer * log(start.f) #    converted to 0 under exponentiation
     logit.curr.s = logit(start.s)
 	logit.curr.H = logit(start.H)
-    log.K0 = estK0 * log(start.K0)
+    log.curr.K0 = estK0 * log(start.K0)
     log.curr.b = log(start.b)
 
     curr.sigmasq.f = start.sigmasq.f
@@ -532,54 +532,61 @@ HDDLislie.sampler <-
     #.. Fixed means for vitals and baseline
     #   Set these to inputs, take logs where required.
 
-    log.mean.f <- log(mean.f)
-    logit.mean.s <- estMod.logit.mar29(mean.s)
-    mean.g <- mean.g
-    log.mean.b <- log(mean.b)
+    log.mean.f = log(mean.f)
+    logit.mean.s = logit(mean.s)
+    logit.mean.H = logit(mean.H)
+	log.mean.K0 = log(mean.K0)
+    log.mean.b = log(mean.b)
 
 
-    #.. Fixed census data
+    #.. Fixed Harvest data
     #   Take logs here
 
-    log.census.mat <- log(pop.data)
+    log.Harv.mat = log(Harv.data)
 
 
     #.. Set current projection: base on initial values # timehomo or not is important, determin it use homo = T
 	if(homo){
 	  log.curr.proj =
-        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
 	}
 	else{
 	  log.curr.proj =
-        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
 	}
 ## stop here 10/19/2018   
-
+## restart here 10/22/2018
 
     #.. Current log posterior
+	## shit so many parameters to pass here... really hard to read...
 
-    log.curr.posterior <-
+    log.curr.posterior =
         log.post(f = log.curr.f
                        ,s = logit.curr.s
-                       ,g = curr.g
+                       ,H = logit.curr.H
+					   ,K0 = log.curr.K0
                        ,baseline.n = log.curr.b
+					   ,estFer=estFer, estK0=estK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-                       ,prior.mean.g = mean.g
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-                       ,alpha.g = al.g, beta.g = be.g
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
                        ,alpha.n = al.n, beta.n = be.n
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
-                       ,sigmasq.g = curr.sigmasq.g
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
                        ,sigmasq.n = curr.sigmasq.n
-                       ,log.like = log.lhood.mar29(
-                        log.n.census = log.census.mat
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
                         ,log.n.hat = log.curr.proj
                         ,ll.var = curr.sigmasq.n)
-                       ,non.zero.fert = fert.rows
+                       ,non.zero.fert = fert.rows # tell algorithm where the fert has to be 0
                        )
 
 
@@ -592,9 +599,6 @@ HDDLislie.sampler <-
             ,"\nthin = ", thin.by
             ,",\nnumber stored = ", n.stored, sep = "")
         cat("\n\nfert.rows = ", which(fert.rows)
-            ,"\ncensus years = ", census.years
-            ,"\nvital rate years = ", vr.years
-            ,"\nprojection years = ", proj.years
             )
         cat("\n\n"
             ,"iter ", " quantity\n", "---- ", " --------"
@@ -608,7 +612,7 @@ HDDLislie.sampler <-
 
 
       ## -------- Vital Rate M-H Steps ------- ##
-
+	if(estFer){
       ##...... Fertility .....##
 
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Fertility")
@@ -622,62 +626,64 @@ HDDLislie.sampler <-
         log.prop.f.mat <-
             matrix(0, nrow = nrow(log.curr.f), ncol = ncol(log.curr.f))
         log.prop.f.mat[fert.rows,][j] <-
-            rnorm(1, 0, sqrt(prop.vars$fert.rate[j]))
+            rnorm(1, 0, sqrt(prop.vars$fert.rate[j])) #pop vars col names 
 
         #.. make proposal
         log.prop.f <- log.curr.f + log.prop.f.mat
-
         # - Run CCMP (project on the original scale)
         #   ** Don't allow negative population
-        full.proj <- ccmp.function(pop = exp(log.curr.b),
-                            fert = exp(log.prop.f), #<-- use proposal
-                            surv = estMod.invlogit.mar29(logit.curr.s),
-                            mig = curr.g,
-                            proj.steps = proj.periods,
-                                   age.int = age.size)
+		if(homo){
+			full.proj =
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.prop.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+		}
+		else{
+			full.proj =
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.prop.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+		}
+
 
         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
            || is.nan(sum(full.proj))) {
             if(i > burn.in) {
-                pop.negative$fert.rate[j] <-
+                pop.negative$fert.rate[j] =
                     pop.negative$fert.rate[j] + 1/n.iter
             }
         } else {
-            prop.proj <-
-                proj.cen.yrs(full.proj = full.proj
-                             ,bline.yr = baseline.year
-                             ,vr.yrs = vr.years
-                             ,cen.yrs = census.years, proj.yrs = proj.years
-                             )
-            log.prop.proj <- log(prop.proj)
+            log.prop.proj = log(full.proj)
 
-          # - Calculate log posterior of proposed vital under projection
-          log.prop.posterior <-
-              log.post.mar29(f = log.prop.f #<-- use proposal
-                             ,s = logit.curr.s
-                             ,g = curr.g
-                             ,baseline.n = log.curr.b
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = curr.sigmasq.f
-                             ,sigmasq.s = curr.sigmasq.s
-                             ,sigmasq.g = curr.sigmasq.g
-                             ,sigmasq.n = curr.sigmasq.n
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.prop.proj #<-- use proposal
-                              ,ll.var = curr.sigmasq.n)
-                             ,non.zero.fert = fert.rows
-                             )
+          # - Calculate log posterior of proposed vital under projection		  
+		  ## shit again so many parameters to pass here... really hard to read...
 
+		  log.prop.posterior =
+			  log.post(f = log.prop.f #<-- use proposal
+                       ,s = logit.curr.s
+                       ,H = logit.curr.H
+					   ,K0 = log.curr.K0
+                       ,baseline.n = log.curr.b
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
           #- Acceptance ratio
-          ar <- acc.ra.mar29(log.prop = log.prop.posterior,
+          ar <- acc.ra(log.prop = log.prop.posterior,
                              log.current = log.curr.posterior)
 
           # - Move or stay
@@ -693,7 +699,7 @@ HDDLislie.sampler <-
                   acc.count$fert.rate[j] + 1/n.iter
               log.curr.f <- log.prop.f
               log.curr.proj <- log.prop.proj
-              log.curr.posterior <- log.prop.posterior
+              log.curr.posterior <- log.prop.posterior # change log curr
             }
             #.. if reject, leave current fert rates and projections
             #   alone
@@ -707,8 +713,8 @@ HDDLislie.sampler <-
       #.. Store proposed fertility rate matrix
       if(k %% 1 == 0 && k > 0) fert.rate.mcmc[k,] <-
           as.vector(exp(log.curr.f[fert.rows,]))
-
-
+	}
+	else{log.curr.f = log(Ferc)}
       ##...... Survival ......##
 
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Survival")
@@ -721,7 +727,7 @@ HDDLislie.sampler <-
         #.. make a matrix conformable w rate matrix
         logit.prop.s.mat <-
             matrix(0, nrow = nrow(logit.curr.s)
-                   ,ncol = ncol(logit.curr.s))
+                   ,ncol = ncol(logit.curr.s)) # this result depends on whether time-homo assumed.
         logit.prop.s.mat[j] <- rnorm(1, 0, sqrt(prop.vars$surv.prop[j]))
 
         #.. make proposal
@@ -729,8 +735,8 @@ HDDLislie.sampler <-
 
         #.. If proposal resulted in back-transformed s = 0 or 1, do
         #   nothing
-        if(estMod.invlogit.mar29(logit.prop.s[j]) > 1 - s.tol ||
-           estMod.invlogit.mar29(logit.prop.s[j]) < s.tol) {
+        if(invlogit(logit.prop.s[j]) > 1 - s.tol ||
+           invlogit(logit.prop.s[j]) < s.tol) {
           #.. leave current surv rates and projections
           #   alone (simply do not propose
           #   extreme survival probabilities)
@@ -740,56 +746,57 @@ HDDLislie.sampler <-
           # - Run CCMP (project on the original scale)
           #   ** Don't allow negative population; again, simply treat
           #      this as if the proposal were never made
-            full.proj <- ccmp.function(pop = exp(log.curr.b),
-                                       fert = exp(log.curr.f),
-                                       surv = estMod.invlogit.mar29(logit.prop.s), #<-- use prop
-                                       mig = curr.g,
-                                       proj.steps = proj.periods,
-                                       age.int = age.size)
+            if(homo){
+				full.proj =
+				(ProjectHarvest_homo(Survival = invlogit(logit.prop.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
+			else{
+				full.proj =
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.prop.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
                || is.nan(sum(full.proj))) {
                 if(i > burn.in) {
-                    pop.negative$surv.prop[j] <-
+                    pop.negative$surv.prop[j] =
                         pop.negative$surv.prop[j] + 1/n.iter
                 }
             } else {
-                prop.proj <-
-                    proj.cen.yrs(full.proj = full.proj
-                                 ,bline.yr = baseline.year
-                                 ,vr.yrs = vr.years
-                                 ,cen.yrs = census.years, proj.yrs = proj.years
-                                 )
-            log.prop.proj <- log(prop.proj)
+				log.prop.proj = log(full.proj)
 
             # - Calculate log posterior of proposed vital under projection
-            log.prop.posterior <-
-              log.post.mar29(f = log.curr.f
-                             ,s = logit.prop.s #<-- use proposal
-                             ,g = curr.g
-                             ,baseline.n = log.curr.b
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = curr.sigmasq.f
-                             ,sigmasq.s = curr.sigmasq.s
-                             ,sigmasq.g = curr.sigmasq.g
-                             ,sigmasq.n = curr.sigmasq.n
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.prop.proj #<-- use proposal
-                              ,ll.var = curr.sigmasq.n)
-                             ,non.zero.fert = fert.rows
-                             )
+			log.prop.posterior =
+			  log.post(f = log.curr.f 
+                       ,s = logit.prop.s #<-- use proposal
+                       ,H = logit.curr.H
+					   ,K0 = log.curr.K0
+                       ,baseline.n = log.curr.b
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
 
             #- Acceptance ratio
-            ar <- acc.ra.mar29(log.prop = log.prop.posterior,
-                               log.current = log.curr.posterior)
+            ar <- acc.ra(log.prop = log.prop.posterior,
+                              log.current = log.curr.posterior)
 
             # - Move or stay
             #.. stay if acceptance ratio 0, missing, infinity, etc.
@@ -805,8 +812,7 @@ HDDLislie.sampler <-
                 logit.curr.s <- logit.prop.s
                 log.curr.proj <- log.prop.proj
                 log.curr.posterior <- log.prop.posterior
-              } #.. if reject, leave current surv rates and projections
-                #   alone
+              } 
 
             } # close else{ after checking for undefined ar
 
@@ -818,96 +824,98 @@ HDDLislie.sampler <-
 
       #.. Store proposed survival probability matrix
       if(k %% 1 == 0 && k > 0) surv.prop.mcmc[k,] <-
-        as.vector(estMod.invlogit.mar29(logit.curr.s))
+        as.vector(invlogit(logit.curr.s))
 
 
-      ##...... Migration ......##
+      ##...... Harvesting ......##
 
-      if(verb && identical(i%%1000, 0)) cat("\n", i, " Migration")
+      if(verb && identical(i%%1000, 0)) cat("\n", i, " Harvesting")
 
       # - Proposal
 
       #.. cycle through components
-      for(j in 1:length(curr.g)) {
+      for(j in 1:length(curr.H)) {
 
         #.. make a matrix conformable w rate matrix
-        prop.g.mat <-
-            matrix(0, nrow = nrow(curr.g), ncol = ncol(curr.g))
-        prop.g.mat[j] <- rnorm(1, 0, sqrt(prop.vars$mig[j]))
+        prop.H.mat <-
+            matrix(0, nrow = nrow(curr.H), ncol = ncol(curr.H))
+        prop.H.mat[j] <- rnorm(1, 0, sqrt(prop.vars$H[j])) # if need age-imspecific harvest, simply give a 1 by 1 start.H
 
         #.. make proposal
-        prop.g <- curr.g + prop.g.mat
+        prop.H <- curr.H + prop.H.mat
 
       # - Run CCMP (project on the original scale)
       #   ** Don't allow negative population
-        full.proj <- ccmp.function(pop = exp(log.curr.b),
-                              fert = exp(log.curr.f),
-                              surv = estMod.invlogit.mar29(logit.curr.s),
-                              mig = prop.g, #<-- use proposal
-                              proj.steps = proj.periods,
-                              age.int = age.size)
+        # - Run CCMP (project on the original scale)
+          #   ** Don't allow negative population; again, simply treat
+          #      this as if the proposal were never made
+            if(homo){
+				full.proj =
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
+			else{
+				full.proj =
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
 
-      if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
-         || is.nan(sum(full.proj))) {
-        if(i > burn.in) {
-          pop.negative$mig[j] <-
-              pop.negative$mig[j] + 1/n.iter
-        }
-      } else {
-
-        prop.proj <-
-            proj.cen.yrs(full.proj = full.proj
-                     ,bline.yr = baseline.year
-                     ,vr.yrs = vr.years
-                     ,cen.yrs = census.years, proj.yrs = proj.years
-                     )
-        log.prop.proj <- log(prop.proj)
+            if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
+               || is.nan(sum(full.proj))) {
+                if(i > burn.in) {
+                    pop.negative$surv.prop[j] =
+                        pop.negative$surv.prop[j] + 1/n.iter
+                }
+            } else {
+				log.prop.proj = log(full.proj)
 
         # - Calculate log posterior of proposed vital under projection
-        log.prop.posterior <-
-              log.post.mar29(f = log.curr.f
-                             ,s = logit.curr.s
-                             ,g = prop.g #<-- use proposal
-                             ,baseline.n = log.curr.b
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = curr.sigmasq.f
-                             ,sigmasq.s = curr.sigmasq.s
-                             ,sigmasq.g = curr.sigmasq.g
-                             ,sigmasq.n = curr.sigmasq.n
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.prop.proj #<-- use proposal
-                              ,ll.var = curr.sigmasq.n)
-                             ,non.zero.fert = fert.rows
-                             )
+        log.prop.posterior =
+			  log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.prop.H #<-- use proposal
+					   ,K0 = log.curr.K0
+                       ,baseline.n = log.curr.b
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
 
         #- Acceptance ratio
-        ar <- acc.ra.mar29(log.prop = log.prop.posterior,
+        ar <- acc.ra(log.prop = log.prop.posterior,
                            log.current = log.curr.posterior)
 
         # - Move or stay
         #.. stay if acceptance ratio 0, missing, infinity, etc.
         if(is.na(ar) || is.nan(ar) || ar < 0) {
-            if(i > burn.in) ar.na$mig[j] <-
-                ar.na$mig[j] + 1/n.iter
+            if(i > burn.in) ar.na$H[j] <-
+                ar.na$H[j] + 1/n.iter
         } else {
             #.. if accept, update current vital rates, store proposed
             #   rate, update current projection and count acceptance
             if(runif(1) <= ar) {
-                if(i > burn.in) acc.count$mig[j] <-
-                    acc.count$mig[j] + 1/n.iter
-                curr.g <- prop.g
+                if(i > burn.in) acc.count$H[j] <-
+                    acc.count$H[j] + 1/n.iter
+                curr.H = prop.H
                 log.curr.proj <- log.prop.proj
                 log.curr.posterior <- log.prop.posterior
-            } #.. if reject, leave current fert rates and projections
-            #   alone, store current rate
+            } 
 
         } # close else after checking for ar=na, nan, zero
 
@@ -916,10 +924,87 @@ HDDLislie.sampler <-
     } # close loop over all age-specific migration proportions
 
       #.. Store proposed migration proportion matrix
-      if(k %% 1 == 0 && k > 0) mig.mcmc[k,] <- as.vector(curr.g)
+      if(k %% 1 == 0 && k > 0) H.mcmc[k,] <- as.vector(curr.H)
 
 
-      ##...... Baseline population ......##
+      ##...... Carrying Capacity ......##
+	  
+	  log.prop.K0 = log.curr.K0 + rnorm(1, 0, sqrt(prop.vars$K0))
+	  
+	        if(homo){
+				full.proj =
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.prop.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
+			else{
+				full.proj =
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
+
+            if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
+               || is.nan(sum(full.proj))) {
+                if(i > burn.in) {
+                    pop.negative$surv.prop[j] =
+                        pop.negative$surv.prop[j] + 1/n.iter
+                }
+            } else {
+				log.prop.proj = log(full.proj)
+
+        # - Calculate log posterior of proposed vital under projection
+        log.prop.posterior =
+			  log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.curr.H 
+					   ,K0 = log.prop.K0 #<-- use proposal
+                       ,baseline.n = log.curr.b
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
+
+        #- Acceptance ratio
+        ar <- acc.ra(log.prop = log.prop.posterior,
+                           log.current = log.curr.posterior)
+
+        # - Move or stay
+        #.. stay if acceptance ratio 0, missing, infinity, etc.
+        if(is.na(ar) || is.nan(ar) || ar < 0) {
+            if(i > burn.in) ar.na$K0[j] <-
+                ar.na$K0[j] + 1/n.iter
+        } else {
+            #.. if accept, update current vital rates, store proposed
+            #   rate, update current projection and count acceptance
+            if(runif(1) <= ar) {
+                if(i > burn.in) acc.count$K0[j] <-
+                    acc.count$K0[j] + 1/n.iter
+                curr.K0 = prop.K0
+                log.curr.proj = log.prop.proj
+                log.curr.posterior = log.prop.posterior
+            } 
+
+        } # close else after checking for ar=na, nan, zero
+
+    } # close else after checking for negative population
+
+# stop here for flu shot 10/22/2018	  
+	  ##...... Baseline population ......##
 
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Baseline")
 
@@ -1301,7 +1386,7 @@ HDDLislie.sampler <-
 
       lx.mcmc[k,] <-
           as.vector(ccmp.function(pop = exp(log.curr.b),
-                                  surv = estMod.invlogit.mar29(logit.curr.s),
+                                  surv = invlogit(logit.curr.s),
                                   fert = exp(log.curr.f),
                                   mig = curr.g,
                                   proj.steps = proj.periods,
