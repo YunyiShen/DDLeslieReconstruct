@@ -1003,7 +1003,8 @@ HDDLislie.sampler <-
 
     } # close else after checking for negative population
 
-# stop here for flu shot 10/22/2018	  
+# stop here for flu shot 10/22/2018	  17:07
+# restart here 10/22/2018 20:45. Left arm is So0o0o0o0o painful after the flu shot!!!!! 
 	  ##...... Baseline population ......##
 
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Baseline")
@@ -1023,12 +1024,15 @@ HDDLislie.sampler <-
 
       # - Run CCMP (project on the original scale)
       #   ** Don't allow negative population
-      full.proj <- ccmp.function(pop = exp(log.prop.b), #<-- use proposal
-                            fert = exp(log.curr.f),
-                            surv = estMod.invlogit.mar29(logit.curr.s),
-                            mig = curr.g,
-                            proj.steps = proj.periods,
-                            age.int = age.size)
+	        if(homo){
+				full.proj =
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.prop.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
+			else{
+				full.proj =
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
+
 
       if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
          || is.nan(sum(full.proj))) {
@@ -1037,41 +1041,41 @@ HDDLislie.sampler <-
               pop.negative$baseline.count[j] + 1/n.iter
         }
       } else {
-      prop.proj <-
-          proj.cen.yrs(full.proj = full.proj
-                     ,bline.yr = baseline.year
-                     ,vr.yrs = vr.years
-                     ,cen.yrs = census.years, proj.yrs = proj.years
-                     )
-        log.prop.proj <- log(prop.proj)
+        log.prop.proj <- log(full.proj)
 
         # - Calculate log posterior of proposed vital under projection
-        log.prop.posterior <-
-              log.post.mar29(f = log.curr.f
-                             ,s = logit.curr.s
-                             ,g = curr.g
-                             ,baseline.n = log.prop.b #<-- use proposal
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = curr.sigmasq.f
-                             ,sigmasq.s = curr.sigmasq.s
-                             ,sigmasq.g = curr.sigmasq.g
-                             ,sigmasq.n = curr.sigmasq.n
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.prop.proj #<-- use proposal
-                              ,ll.var = curr.sigmasq.n)
-                             ,non.zero.fert = fert.rows
-                             )
+         log.prop.posterior =
+			  log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.curr.H 
+					   ,K0 = log.curr.K0 
+                       ,baseline.n = log.prop.b #<-- use proposal
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
+
 
         #- Acceptance ratio
-        ar <- acc.ra.mar29(log.prop = log.prop.posterior,
+        ar = acc.ra(log.prop = log.prop.posterior,
                            log.current = log.curr.posterior)
 
         # - Move or stay
@@ -1085,9 +1089,9 @@ HDDLislie.sampler <-
             if(runif(1) <= ar) {
                 if(i > burn.in) acc.count$baseline.count[j] <-
                     acc.count$baseline.count[j] + 1/n.iter
-                log.curr.b <- log.prop.b
-                log.curr.proj <- log.prop.proj
-                log.curr.posterior <- log.prop.posterior
+                log.curr.b = log.prop.b
+                log.curr.proj = log.prop.proj
+                log.curr.posterior = log.prop.posterior
             } #.. if reject, leave current fert rates and projections
             #   alone, store current rate
 
@@ -1107,9 +1111,9 @@ HDDLislie.sampler <-
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Variances")
 
       ##...... Fertility rate ......##
-
+	if(estFer){ # if not est Fer, this is not needed
       prop.sigmasq.f <-
-        estMod.rinvGamma.mar29(1, al.f +
+        rinvGamma(1, al.f +
                          length(mean.f[fert.rows,])/2,
                   be.f + 0.5*sum((log.curr.f[fert.rows,] -
                                   log.mean.f[fert.rows,])^2)
@@ -1117,39 +1121,44 @@ HDDLislie.sampler <-
 
         # - Calculate log posterior of proposed vital under projection
         log.prop.posterior <-
-              log.post.mar29(f = log.curr.f
-                             ,s = logit.curr.s
-                             ,g = curr.g
-                             ,baseline.n = log.curr.b
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = prop.sigmasq.f #<-- use proposal
-                             ,sigmasq.s = curr.sigmasq.s
-                             ,sigmasq.g = curr.sigmasq.g
-                             ,sigmasq.n = curr.sigmasq.n
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.curr.proj
-                              ,ll.var = curr.sigmasq.n #<-- use current
-                              )
-                             ,non.zero.fert = fert.rows
-                             )
+              log.prop.posterior =
+				log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.curr.H 
+					   ,K0 = log.curr.K0 
+                       ,baseline.n = log.curr.b 
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = prop.sigmasq.f #<-- use proposal
+                       ,sigmasq.s = curr.sigmasq.s
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
 
       #- Acceptance ratio
-      ar <- acc.ra.var.mar29(log.prop.post = log.prop.posterior
+      ar <- acc.ra.var(log.prop.post = log.prop.posterior
                              ,log.curr.post = log.curr.posterior
-                             ,log.prop.var = estMod.dinvGamma.mar29(prop.sigmasq.f
+                             ,log.prop.var = dinvGamma(prop.sigmasq.f
                               ,al.f + length(mean.f[fert.rows,])/2
                               ,be.f + 0.5*sum((log.curr.f[fert.rows,] -
                                                log.mean.f[fert.rows,])^2)
                               ,log = TRUE)
-                             ,log.curr.var = estMod.dinvGamma.mar29(curr.sigmasq.f
+                             ,log.curr.var = dinvGamma(curr.sigmasq.f
                               ,al.f + length(mean.f[fert.rows,])/2
                               ,be.f + 0.5*sum((log.curr.f[fert.rows,] -
                                                log.mean.f[fert.rows,])^2)
@@ -1173,50 +1182,53 @@ HDDLislie.sampler <-
         } # close else after checking for ar=na, nan, zero
 
       if(k %% 1 == 0 && k > 0) variances.mcmc[k,"fert.rate.var"] <- curr.sigmasq.f
-
-
+	}
       ##...... Survival Proportion ......##
 
       prop.sigmasq.s <-
-        estMod.rinvGamma.mar29(1, al.s + length(mean.s)/2,
+        rinvGamma(1, al.s + length(mean.s)/2,
                   be.s +
                     0.5*sum((logit.curr.s - logit.mean.s)^2))
 
         # - Calculate log posterior of proposed vital under projection
         log.prop.posterior <-
-              log.post.mar29(f = log.curr.f
-                             ,s = logit.curr.s
-                             ,g = curr.g
-                             ,baseline.n = log.curr.b
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = curr.sigmasq.f
-                             ,sigmasq.s = prop.sigmasq.s  #<-- use proposal
-                             ,sigmasq.g = curr.sigmasq.g
-                             ,sigmasq.n = curr.sigmasq.n
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.curr.proj
-                              ,ll.var = curr.sigmasq.n #<-- use current
-                              )
-                             ,non.zero.fert = fert.rows
-                             )
+              log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.curr.H 
+					   ,K0 = log.curr.K0 
+                       ,baseline.n = log.curr.b 
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = prop.sigmasq.s #<-- use proposal
+                       ,sigmasq.H = curr.sigmasq.H
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
 
       #- Acceptance ratio
-      ar <- acc.ra.var.mar29(log.prop.post = log.prop.posterior
+      ar <- acc.ra.var(log.prop.post = log.prop.posterior
                              ,log.curr.post = log.curr.posterior
-                             ,log.prop.var = estMod.dinvGamma.mar29(prop.sigmasq.s
+                             ,log.prop.var = dinvGamma(prop.sigmasq.s
                               ,al.s + length(mean.s)/2
                               ,be.s + 0.5*sum((logit.curr.s -
                                                logit.mean.s)^2)
                               ,log = TRUE)
-                             ,log.curr.var = estMod.dinvGamma.mar29(curr.sigmasq.s
+                             ,log.curr.var = dinvGamma(curr.sigmasq.s
                               ,al.s + length(mean.s)/2
                               ,be.s + 0.5*sum((logit.curr.s -
                                                logit.mean.s)^2)
@@ -1244,71 +1256,75 @@ HDDLislie.sampler <-
 
       ##...... Migration Proportion ......##
 
-      prop.sigmasq.g <-
-        estMod.rinvGamma.mar29(1, al.g + length(mean.g)/2,
-                  be.g +
-                    0.5*sum((curr.g - mean.g)^2))
+      prop.sigmasq.H <-
+        rinvGamma(1, al.H + length(logit.mean.H)/2,
+                  be.H +
+                    0.5*sum((logit.curr.H - logit.mean.H)^2))
 
         # - Calculate log posterior of proposed vital under projection
         log.prop.posterior <-
-              log.post.mar29(f = log.curr.f
-                             ,s = logit.curr.s
-                             ,g = curr.g
-                             ,baseline.n = log.curr.b
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = curr.sigmasq.f
-                             ,sigmasq.s = curr.sigmasq.s
-                             ,sigmasq.g = prop.sigmasq.g #<-- use proposal
-                             ,sigmasq.n = curr.sigmasq.n
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.curr.proj
-                              ,ll.var = curr.sigmasq.n #<-- use current
-                              )
-                             ,non.zero.fert = fert.rows
-                             )
+              log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.curr.H 
+					   ,K0 = log.curr.K0 
+                       ,baseline.n = log.curr.b 
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s 
+                       ,sigmasq.H = prop.sigmasq.H #<-- use proposal
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.prop.proj #<-- use proposal
+                        ,ll.var = curr.sigmasq.n)
+                       ,non.zero.fert = fert.rows 
+                       )
 
       #- Acceptance ratio
-      ar <- acc.ra.var.mar29(log.prop.post = log.prop.posterior
+      ar <- acc.ra.var(log.prop.post = log.prop.posterior
                              ,log.curr.post = log.curr.posterior
-                             ,log.prop.var = estMod.dinvGamma.mar29(prop.sigmasq.g
-                              ,al.g + length(mean.g)/2
-                              ,be.g + 0.5*sum((curr.g -
-                                               mean.g)^2)
+                             ,log.prop.var = dinvGamma(prop.sigmasq.s
+                              ,al.s + length(mean.H)/2
+                              ,be.s + 0.5*sum((logit.curr.H -
+                                               logit.mean.H)^2)
                               ,log = TRUE)
-                             ,log.curr.var = estMod.dinvGamma.mar29(curr.sigmasq.g
-                              ,al.g + length(mean.g)/2
-                              ,be.g + 0.5*sum((curr.g -
-                                               mean.g)^2)
+                             ,log.curr.var = dinvGamma(curr.sigmasq.H
+                              ,al.s + length(mean.H)/2
+                              ,be.s + 0.5*sum((logit.curr.H -
+                                               logit.mean.H)^2)
                               ,log = TRUE)
                              )
 
         # - Move or stay
         #.. stay if acceptance ratio 0, missing, infinity, etc.
         if(is.na(ar) || is.nan(ar) || ar < 0) {
-            if(i > burn.in) ar.na$sigmasq.g <-
-                ar.na$sigmasq.g + 1/n.iter
+            if(i > burn.in) ar.na$sigmasq.H <-
+                ar.na$sigmasq.H + 1/n.iter
         } else {
             #.. if accept, update current, store proposed
             #   and count acceptance
             if(runif(1) <= ar) {
-                if(i > burn.in) acc.count$sigmasq.g <-
-                    acc.count$sigmasq.g + 1/n.iter
-                curr.sigmasq.g <- prop.sigmasq.g
+                if(i > burn.in) acc.count$sigmasq.H <-
+                    acc.count$sigmasq.H + 1/n.iter
+                curr.sigmasq.H <- prop.sigmasq.H
                 log.curr.posterior <- log.prop.posterior
             } #.. if reject, leave current and posterior
         } # close else after checking for ar=na, nan, zero
 
       if(k %% 1 == 0 && k > 0) variances.mcmc[k,"mig.var"] <- curr.sigmasq.g
 
-
+# stop here 10/22/2018 21:36 Left arm is too pain to continue.
       ##...... Population Count ......##
 
       prop.sigmasq.n <-
