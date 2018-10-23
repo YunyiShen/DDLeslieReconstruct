@@ -57,7 +57,7 @@ ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, globa
   for(i in 1 : period + 1){
 	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0, H=H,null = null) # project harvest from very initial
   }              
-  return(Harvest[,-1])
+  return(Harvest)
 }
 
 # project when time inhomo survival and ferc, survival should be a matrix with nage x period entries, so do ferc
@@ -394,7 +394,8 @@ HDDLislie.sampler <-
                )
       colnames(fert.rate.mcmc) = NULL
           
-	}
+	} 
+	else{fert.rate.mcmc = NULL}
       # Survival proportions
       surv.prop.mcmc <-
           mcmc(matrix(nrow = n.stored
@@ -422,6 +423,9 @@ HDDLislie.sampler <-
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(K0.mcmc) = NULL
+	  } 
+	  else{
+	    K0.mcmc = NULL
 	  }
 
       # Harvest proportion, can be either time homo or not
@@ -515,11 +519,11 @@ HDDLislie.sampler <-
     #.. Set current vitals and variances to inital values
     #   Take logs/logits here where required
 
-    log.curr.f = estFer * log(start.f) #<-- log(0) stored as "-Inf". Gets
-    log.prop.f = estFer * log(start.f) #    converted to 0 under exponentiation
+    log.curr.f = estFer * log(start.f) + (!estFer)*log(Fer) #<-- log(0) stored as "-Inf". Gets
+    log.prop.f = estFer * log(start.f) + (!estFer)*log(Fer) #    converted to 0 under exponentiation
     logit.curr.s = logit(start.s)
 	logit.curr.H = logit(start.H)
-    log.curr.K0 = estK0 * log(start.K0)
+    log.curr.K0 = estK0 * log(start.K0) + (!estK0) * log(K0)
     log.curr.b = log(start.b)
 
     curr.sigmasq.f = start.sigmasq.f
@@ -548,11 +552,11 @@ HDDLislie.sampler <-
     #.. Set current projection: base on initial values # timehomo or not is important, determin it use homo = T
 	if(homo){
 	  log.curr.proj =
-        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 	}
 	else{
 	  log.curr.proj =
-        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc, E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 	}
 ## stop here 10/19/2018   
 ## restart here 10/22/2018
@@ -634,11 +638,13 @@ HDDLislie.sampler <-
         #   ** Don't allow negative population
 		if(homo){
 			full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.prop.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.prop.f) #<-- use proposal
+				, E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 		}
 		else{
 			full.proj =
-				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.prop.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.prop.f)#<-- use proposal
+				, E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 		}
 
 
@@ -714,7 +720,6 @@ HDDLislie.sampler <-
       if(k %% 1 == 0 && k > 0) fert.rate.mcmc[k,] <-
           as.vector(exp(log.curr.f[fert.rows,]))
 	}
-	else{log.curr.f = log(Ferc)}
       ##...... Survival ......##
 
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Survival")
@@ -748,11 +753,13 @@ HDDLislie.sampler <-
           #      this as if the proposal were never made
             if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.prop.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_homo(Survival = invlogit(logit.prop.s) #<-- use proposal
+				, Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
-				(ProjectHarvest_inhomo(Survival = invlogit(logit.prop.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.prop.s)#<-- use proposal
+				, Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -851,11 +858,13 @@ HDDLislie.sampler <-
           #      this as if the proposal were never made
             if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H)#<-- use proposal
+				,Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
-				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H)#<-- use proposal
+				,Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -928,16 +937,18 @@ HDDLislie.sampler <-
 
 
       ##...... Carrying Capacity ......##
-	  
+	if(estK0){
 	  log.prop.K0 = log.curr.K0 + rnorm(1, 0, sqrt(prop.vars$K0))
 	  
 	        if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.prop.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.prop.K0) #<-- use proposal
+				, global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
-				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.prop.K0)#<-- use proposal
+				, global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1002,7 +1013,7 @@ HDDLislie.sampler <-
         } # close else after checking for ar=na, nan, zero
 
     } # close else after checking for negative population
-
+	}
 # stop here for flu shot 10/22/2018	  17:07
 # restart here 10/22/2018 20:45. Left arm is So0o0o0o0o painful after the flu shot!!!!! 
 	  ##...... Baseline population ......##
@@ -1026,11 +1037,13 @@ HDDLislie.sampler <-
       #   ** Don't allow negative population
 	        if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.prop.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) #<-- use proposal
+				, period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
-				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.prop.b) #<-- use proposal
+				, period = proj.periods, nage = nage))
 			}
 
 
@@ -1145,8 +1158,8 @@ HDDLislie.sampler <-
                        ,sigmasq.n = curr.sigmasq.n
                        ,log.like = log.lhood(
                         log.n.census = log.Harv.mat
-                        ,log.n.hat = log.prop.proj #<-- use proposal
-                        ,ll.var = curr.sigmasq.n)
+                        ,log.n.hat = log.curr.proj 
+                        ,ll.var = curr.sigmasq.n) #<-- use current
                        ,non.zero.fert = fert.rows 
                        )
 
@@ -1215,8 +1228,8 @@ HDDLislie.sampler <-
                        ,sigmasq.n = curr.sigmasq.n
                        ,log.like = log.lhood(
                         log.n.census = log.Harv.mat
-                        ,log.n.hat = log.prop.proj #<-- use proposal
-                        ,ll.var = curr.sigmasq.n)
+                        ,log.n.hat = log.curr.proj 
+                        ,ll.var = curr.sigmasq.n) #<-- use current
                        ,non.zero.fert = fert.rows 
                        )
 
@@ -1254,7 +1267,7 @@ HDDLislie.sampler <-
       if(k %% 1 == 0 && k > 0) variances.mcmc[k,"surv.prop.var"] <- curr.sigmasq.s
 
 
-      ##...... Migration Proportion ......##
+      ##...... Harvest Proportion ......##
 
       prop.sigmasq.H <-
         rinvGamma(1, al.H + length(logit.mean.H)/2,
@@ -1286,22 +1299,22 @@ HDDLislie.sampler <-
                        ,sigmasq.n = curr.sigmasq.n
                        ,log.like = log.lhood(
                         log.n.census = log.Harv.mat
-                        ,log.n.hat = log.prop.proj #<-- use proposal
-                        ,ll.var = curr.sigmasq.n)
+                        ,log.n.hat = log.curr.proj 
+                        ,ll.var = curr.sigmasq.n) #<-- use current
                        ,non.zero.fert = fert.rows 
                        )
 
       #- Acceptance ratio
       ar <- acc.ra.var(log.prop.post = log.prop.posterior
                              ,log.curr.post = log.curr.posterior
-                             ,log.prop.var = dinvGamma(prop.sigmasq.s
-                              ,al.s + length(mean.H)/2
-                              ,be.s + 0.5*sum((logit.curr.H -
+                             ,log.prop.var = dinvGamma(prop.sigmasq.H
+                              ,al.H + length(mean.H)/2
+                              ,be.H + 0.5*sum((logit.curr.H -
                                                logit.mean.H)^2)
                               ,log = TRUE)
                              ,log.curr.var = dinvGamma(curr.sigmasq.H
-                              ,al.s + length(mean.H)/2
-                              ,be.s + 0.5*sum((logit.curr.H -
+                              ,al.H + length(mean.H)/2
+                              ,be.H + 0.5*sum((logit.curr.H -
                                                logit.mean.H)^2)
                               ,log = TRUE)
                              )
@@ -1322,58 +1335,138 @@ HDDLislie.sampler <-
             } #.. if reject, leave current and posterior
         } # close else after checking for ar=na, nan, zero
 
-      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"mig.var"] <- curr.sigmasq.g
+      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"H.var"] <- curr.sigmasq.H
 
 # stop here 10/22/2018 21:36 Left arm is too pain to continue.
+# restart here 10/23/2018 14:34	
+      ##...... Carrying Capacity ......##	
+	  if(estK0){
+		prop.sigmasq.K0 = rinvGamma(1,al.K0+0.5,be.K0 + 0.5*sum((log.curr.K0-log.mean.K0)^2))
+		    log.prop.posterior <-
+              log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.curr.H 
+					   ,K0 = log.curr.K0 
+                       ,baseline.n = log.curr.b 
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s 
+                       ,sigmasq.H = curr.sigmasq.H 
+					   ,sigmasq.K0 = prop.sigmasq.K0 #<-- use proposal
+                       ,sigmasq.n = curr.sigmasq.n
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.curr.proj 
+                        ,ll.var = curr.sigmasq.n) #<-- use current
+                       ,non.zero.fert = fert.rows 
+                       )
+
+	    #- Acceptance ratio
+      ar = acc.ra.var(log.prop.post = log.prop.posterior
+                             ,log.curr.post = log.curr.posterior
+                             ,log.prop.var = dinvGamma(prop.sigmasq.K0
+                              ,al.K0 + length(mean.H)/2
+                              ,be.K0 + 0.5*sum((logit.curr.H -
+                                               logit.mean.H)^2)
+                              ,log = TRUE)
+                             ,log.curr.var = dinvGamma(curr.sigmasq.K0
+                              ,al.K0 + length(mean.K0)/2
+                              ,be.K0 + 0.5*sum((logit.curr.K0 -
+                                               logit.mean.K0)^2)
+                              ,log = TRUE)
+                             )
+
+        # - Move or stay
+        #.. stay if acceptance ratio 0, missing, infinity, etc.
+        if(is.na(ar) || is.nan(ar) || ar < 0) {
+            if(i > burn.in) ar.na$sigmasq.K0 <-
+                ar.na$sigmasq.K0 + 1/n.iter
+        } else {
+            #.. if accept, update current, store proposed
+            #   and count acceptance
+            if(runif(1) <= ar) {
+                if(i > burn.in) acc.count$sigmasq.K0 <-
+                    acc.count$sigmasq.K0 + 1/n.iter
+                curr.sigmasq.K0 <- prop.sigmasq.K0
+                log.curr.posterior <- log.prop.posterior
+            } #.. if reject, leave current and posterior
+        } # close else after checking for ar=na, nan, zero
+
+      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"K0.var"] <- curr.sigmasq.K0
+
+	  
+	  
+	  
+	  }
+		
+
+
+
+
+
       ##...... Population Count ......##
 
       prop.sigmasq.n <-
-        estMod.rinvGamma.mar29(1, al.n + (length(mean.b) +
-                                    length(log.census.mat))/2,
+        rinvGamma(1, al.n + (length(mean.b) +
+                                    length(log.Harv.mat))/2,
                 be.n + 0.5 * (
                   sum((log.curr.b - log.mean.b)^2) +
-                  sum((log.census.mat - log.curr.proj)^2)
+                  sum((log.Harv.mat - log.curr.proj)^2)
                   )
-                         )
+                              )
 
         # - Calculate log posterior of proposed vital under projection
-        log.prop.posterior <-
-              log.post.mar29(f = log.curr.f
-                             ,s = logit.curr.s
-                             ,g = curr.g
-                             ,baseline.n = log.curr.b
-                             ,prior.mean.f = log.mean.f
-                             ,prior.mean.s = logit.mean.s
-                             ,prior.mean.g = mean.g
-                             ,prior.mean.b = log.mean.b
-                             ,alpha.f = al.f, beta.f = be.f
-                             ,alpha.s = al.s, beta.s = be.s
-                             ,alpha.g = al.g, beta.g = be.g
-                             ,alpha.n = al.n, beta.n = be.n
-                             ,sigmasq.f = curr.sigmasq.f
-                             ,sigmasq.s = curr.sigmasq.s
-                             ,sigmasq.g = curr.sigmasq.g
-                             ,sigmasq.n = prop.sigmasq.n #<-- use proposal
-                             ,log.like = log.lhood.mar29(
-                              log.n.census = log.census.mat
-                              ,log.n.hat = log.curr.proj
-                              ,ll.var = prop.sigmasq.n #<-- use proposal
-                              )
-                             ,non.zero.fert = fert.rows
-                             )
+		        log.prop.posterior <-
+              log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+                       ,H = logit.curr.H 
+					   ,K0 = log.curr.K0 
+                       ,baseline.n = log.curr.b 
+					   ,estFer=estFer, estK0=estK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+                       ,prior.mean.H = logit.mean.H
+					   ,prior.mean.K0 = log.mean.K0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+                       ,alpha.H = al.H, beta.H = be.H
+					   ,alpha.K0 = al.K0, beta.K0 = be.K0
+                       ,alpha.n = al.n, beta.n = be.n
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s 
+                       ,sigmasq.H = curr.sigmasq.H 
+					   ,sigmasq.K0 = curr.sigmasq.K0
+                       ,sigmasq.n = prop.sigmasq.n #<-- use proposal
+                       ,log.like = log.lhood(
+                        log.n.census = log.Harv.mat
+                        ,log.n.hat = log.curr.proj 
+                        ,ll.var = prop.sigmasq.n) #<-- use proposal
+                       ,non.zero.fert = fert.rows 
+                       )
 
       #- Acceptance ratio
-      ar <- acc.ra.var.mar29(log.prop.post = log.prop.posterior
+      ar <- acc.ra.var(log.prop.post = log.prop.posterior
                              ,log.curr.post = log.curr.posterior
-                             ,log.prop.var = estMod.dinvGamma.mar29(prop.sigmasq.n
+                             ,log.prop.var = dinvGamma(prop.sigmasq.n
                               ,al.n + (length(mean.b) +
-                                       length(log.census.mat))/2
-                              ,be.n + 0.5 * (sum((log.curr.b - log.mean.b)^2) + sum((log.census.mat - log.curr.proj)^2))
+                                       length(log.Harv.mat))/2
+                              ,be.n + 0.5 * (sum((log.curr.b - log.mean.b)^2) + sum((log.Harv.mat - log.curr.proj)^2))
                               ,log = TRUE)
-                             ,log.curr.var = estMod.dinvGamma.mar29(curr.sigmasq.n
+                             ,log.curr.var = dinvGamma(curr.sigmasq.n
                               ,al.n + (length(mean.b) +
-                                       length(log.census.mat))/2
-                              ,be.n + 0.5 * (sum((log.curr.b - log.mean.b)^2) + sum((log.census.mat - log.curr.proj)^2))
+                                       length(log.Harv.mat))/2
+                              ,be.n + 0.5 * (sum((log.curr.b - log.mean.b)^2) + sum((log.Harv.mat - log.curr.proj)^2))
                               ,log = TRUE)
                              )
 
@@ -1399,16 +1492,17 @@ HDDLislie.sampler <-
 
 
       ## ------- Store current population ------- ##
+			if(homo){
+				full.proj =
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
+			else{
+				full.proj =
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+			}
 
-      lx.mcmc[k,] <-
-          as.vector(ccmp.function(pop = exp(log.curr.b),
-                                  surv = invlogit(logit.curr.s),
-                                  fert = exp(log.curr.f),
-                                  mig = curr.g,
-                                  proj.steps = proj.periods,
-                                  age.int = age.size
-                                  )[-(1:ncol(baseline.count.mcmc))]
-                    )
+      lx.mcmc[k,] =
+          as.vector(full.proj)[-(1:ncol(baseline.count.mcmc))] # to delete all age class' baseline count, because of as.vector,thus need to do like this
 
 
       if(verb && identical(i%%1000, 0)) cat("\n\n")
@@ -1425,13 +1519,15 @@ HDDLislie.sampler <-
     #.. initial values
     start.vals <- list(fert.rate = start.f
                       ,surv.prop = start.s
-                      ,mig.XXX = start.g
+                      ,H = start.H
+					  ,K0 = start.K0
                       ,baseline.count = start.b
                       ,start.sigmasq.f = start.sigmasq.f
                       ,start.sigmasq.s = start.sigmasq.s
-                      ,start.sigmasq.g = start.sigmasq.g
+                      ,start.sigmasq.H = start.sigmasq.H
+					  ,start.sigmasq.K0 = start.sigmasq.K0
                       ,start.sigmasq.n = start.sigmasq.n
-                      ,pop.data = pop.data
+                      ,Harv.data = Harv.data
                       )
 
     #.. fixed parameters
@@ -1439,24 +1535,20 @@ HDDLislie.sampler <-
                          ,beta.fert.rate = be.f
                          ,alpha.surv.prop = al.s
                          ,beta.surv.prop = be.s
-                         ,alpha.mig.XXX = al.g
-                         ,beta.mig.XXX = be.g
+                         ,alpha.Harvest = al.H
+                         ,beta.Hervest = be.H
+						 ,alpha.K = al.K0
+						 ,beta.K = be.K0
                          ,alpha.population.count = al.n
                          ,beta.population.count = be.n
                          ,mean.fert.rate = mean.f
                          ,mean.surv.prop = mean.s
-                         ,mean.mig.XXX = mean.g
+                         ,mean.Harvest.proportion = mean.H
+						 ,mean.K = mean.K0
                          ,mean.baseline.count = mean.b
-                         ,mean.pop.data = pop.data
+                         ,mean.Harv.data = Harv.data
                          )
 
-    #.. migration type
-    new.names <-
-        lapply(list(start.vals, fixed.params), FUN = function(z) {
-        sub("XXX", mig.string, names(z))
-    })
-    names(start.vals) <- new.names[[1]]
-    names(fixed.params) <- new.names[[2]]
 
 
     #cat("algorithm statistics", "\n\n")
@@ -1478,27 +1570,23 @@ HDDLislie.sampler <-
     #.. algorithm parameters
     alg.params <- list(prop.vars = prop.vars
                        ,vital.transformations = list(fert.rate = "log"
-                        ,surv.prob = "logit", mig.XXX = "I"
+                        ,surv.prob = "logit", H = "logit", K0="log"
                         ,baseline.count = "log"
                         ,population.count = "log")
                        ,projection.periods = proj.periods
-                       ,age.gp.size = age.size
+                       ,age.gp.size = nage
                        ,non.zero.fert.rows = fert.rows
                        ,surv.tolerance = s.tol
                        ,burn.in = burn.in
                        ,iters = n.iter
-                       ,years = list(vital.rate.years = vr.years
-                        ,baseline.year = baseline.year
-                        ,census.years = census.years
-                        ,projection.years = proj.years
                         )
                        )
-    names(alg.params) <- sub("XXX", mig.string, names(alg.params))
 
     #.. results
     ret.list <- list(fert.rate.mcmc = fert.rate.mcmc
                   ,surv.prop.mcmc = surv.prop.mcmc
-                  ,mig.XXX.mcmc = mig.mcmc
+                  ,H.mcmc = H.mcmc
+				  ,K0.mcmc = K0.mcmc
                   ,baseline.count.mcmc = baseline.count.mcmc
                   ,lx.mcmc = lx.mcmc
                   ,variances.mcmc = variances.mcmc
@@ -1507,8 +1595,7 @@ HDDLislie.sampler <-
                   ,start.vals = start.vals
                   ,alg.params = alg.params
                   )
-    names(ret.list) <- sub("XXX", mig.string, names(ret.list))
 
     return(ret.list)
-
+# stop here 10/23/2018 15:51 start to test tomorrow.
   }
