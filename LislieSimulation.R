@@ -1,39 +1,27 @@
 source('DDLislie_harvest.R')
 
-Survival = matrix(c(0.5,-.1,-.2),nrow = 3,ncol = 1)
-Ferc = matrix(c(0,3,1.5),nrow = 3,ncol = 1)
+Survival = matrix(c(0.5,0.4,0.3),nrow = 3,ncol = 1)
+Ferc = matrix(c(0,1.3,1.5),nrow = 3,ncol = 1)
+Harvpar = as.matrix(c(0.1,0.05,0.05))
+non0ferc = c(2,3)
 nage = 3
-Lislie = getLislie(Survival,F,Ferc,T)
-Havpar = as.matrix(c(-1.50,-1.90,-1.50))
-H = GetHarvest(Havpar,3)
-K0 = 800
+K0 = 100
+period = 7
+Survival_inhomo = matrix( rep((Survival),period),nrow = nage,ncol = period )
+Ferc_inhomo = matrix( rep((Ferc),period),nrow = nage,ncol = period )
 
-nperiod = 100
+### Test of helper functions
+Lislie = getLislie(Survival,Ferc,T)
+H = GetHarvest(Harvpar,nage)
+H_prime = GetHarvest(0.05,nage) # age imspecific harvest rate
+D = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),K0,T)
+I = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),K0,T)
+ProjectHarvest_helper(c(1,1,1), Lislie, H, global=T, E0=NULL, K0=K0, null = F)
+data_homo = ProjectHarvest_homo(Survival=Survival,Harvpar=Harvpar,Ferc=Ferc,E0=NULL,K0=K0,global = T,null=T,bl=c(1,1,1),period = period,nage)
+data_inhomo = ProjectHarvest_inhomo(Survival=Survival_inhomo,Harvpar=Harvpar,Ferc=Ferc_inhomo,E0=NULL,K0=K0,global = T,null=T,bl=c(1,1,1),period = period,nage)
+living_homo = getLivingIdividuals(H,data_homo)
+log.lhood(log(data_homo),log(data_inhomo+matrix(rnorm(24,0,0.05),3,8)),1)
 
-Population = matrix(0,ncol = nperiod + 1,nrow = 3)
-Population[,1] = c(100,100,100)
-data = Population
-I = matrix(0,nage,nage)
-diag(I) = 1
+# skip the simplest functions
 
-for(i in 1:nperiod + 1){
-  Repoduce = (Lislie %*% DensityDependcy(global = T, Xn=Population[,i-1], E0=c(.5,.3,.2), K0=K0) %*% Population[,i-1] + Population[,i-1])
-  Population[,i] = (I-H) %*% Repoduce
-  data[,i-1] = ( H %*% Repoduce + rnorm(3,0,.1))
-}
-
-data = data[,-(nperiod + 1)]
-pars = rbind(as.matrix(Survival),Havpar)
-
-sqrResidue(pars,Fercest=F,Ferc=Ferc, estK0 = F, E0=c(.3,.5,.2), K0 = K0, global = T,data)
-
-opt = optim(pars + rnorm(length(pars),0,0.01),
-            sqrResidue,NULL, 
-            Fercest=F,Ferc=Ferc, estK0 = F, E0=c(.3,.5,.2), K0 = K0, global = T,data=data)
-
-pars_K0 = c(pars,K0)
-opt_estK0 = optim(pars_K0 ,
-                  sqrResidue,NULL, 
-                  Fercest=F,Ferc=Ferc, estK0 = T, E0=c(.3,.5,.2), K0 = NULL, global = T,data=data)
-
-
+### Test of sampler function

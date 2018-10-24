@@ -1,3 +1,7 @@
+########
+### ----------------------- HELPER FUNCTIONS ---------------------- ###
+### --------------------------------------------------------------- ###
+
 # get Lislie Matrix using specific parameters, can also return L-I if needed, first nage entries should be survival(no transiform, 0<S<1,transformation occor in sampler function) and next fertility rate, 
 getLislie = function(Survival,Ferc,minus1=F){
   nage = length(Survival)
@@ -9,10 +13,11 @@ getLislie = function(Survival,Ferc,minus1=F){
     diag(Tr)=diag(Tr)-1
   }
   return(Tr)
-}
+} #checked 10/24/2018
 
 # Linear density dependency matrix, can be global of age specific, or null = T for no density dependency. in estimaton process, if E0 is not fixed, it should be estimated as kk = solve(H, data[,1]) E0 = kk/sum(kk), by assuming that first year is at equalibrium
 DensityDependcy = function(global = F, Xn, E0, K0, null = F){
+  E0 = E0/sum(E0)
   nage = length(Xn)
   D = matrix(0,ncol = nage,nrow = nage)
   if(global){
@@ -23,33 +28,33 @@ DensityDependcy = function(global = F, Xn, E0, K0, null = F){
     diag(D) = 1-(1-null)*Xn/(K0 * E0)
   }
   return(D)
-}
+} #checked 10/24/2018
 
 # get age specific harvest proportion matrix
 GetHarvest = function(Harvpar,nage){
   Harvest = matrix(0,nage,nage)
   diag(Harvest) = Harvpar
   return(Harvest)
-}
+} # checked 10/24/2018, if not age-specific, give a single Harvpar
 
 # Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
 ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, K0, null = F){
-	I = matrix(0,nrow(data),nrow(data))	
+	I = matrix(0,length(data_n),length(data_n))	
 	diag(I) = 1
     X_n1 = (I-H) %*% solve(H,data_n)
     D = DensityDependcy(global = global, Xn=X_n1, E0=E0, K0=K0, null = null)
 	data_n1 = H %*% (Lislie %*% D %*% X_n1 + X_n1)
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
-  }
+  } # checked 10/24/2018
 
 # Project harvest model from a initial harvest, survival is col vector with all survival rate of all age class, this nrow(Survival)=nage
 ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, global = F, null = F,bl , period, nage){
   Lislie = getLislie(Survival,Ferc=Ferc,minus1=T)
   H = GetHarvest(Harvpar,nage)
-  Harest = matrix(0,nage,period + 1)
+  Harvest = matrix(0,nage,period + 1)
   Harvest[,1] = bl 
-  if(length(E0)=0){
+  if(length(E0)==0){
 	E0 = solve(H,bl)
 	E0 = E0/(sum(E0))
   }
@@ -58,14 +63,14 @@ ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, globa
 	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0, H=H,null = null) # project harvest from very initial
   }              
   return(Harvest)
-}
+} #checked 10/24/2018
 
 # project when time inhomo survival and ferc, survival should be a matrix with nage x period entries, so do ferc
 ProjectHarvest_inhomo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, global = F, null = F,bl , period, nage){
-  Harest = matrix(0,nage,period+1)
+  Harvest = matrix(0,nage,period+1)
   Harvest[,1] = bl
   H = GetHarvest(Harvpar,nage)
-  if(length(E0)=0){
+  if(length(E0)==0){
 	E0 = solve(H,bl)
 	E0 = E0/(sum(E0))
   }
@@ -74,8 +79,8 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, glo
     Lislie = getLislie(Survival[,i-1],Ferc[,i-1],minus1=T) # inhomo, Survival rows are age structure, cols are time
     Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0, H=H,null = null)
   }
-  return(Harest[,-1])
-}
+  return(Harvest)
+} # checked 10/24/2018
 
 # Given harvest data, calculate the living individual in certain year
 getLivingIdividuals = function(H,data){
@@ -84,23 +89,19 @@ getLivingIdividuals = function(H,data){
   IminusH = I-H
   LivingIdividuals = apply(data,2,function(ww,H,IminusH){IminusH%*%solve(H,ww)},H=H,IminusH=IminusH)
   return(LivingIdividuals)
-}
+} # checked 10/24/2018
 
 
 ########
 # Coming functions are
 # modified from popReconstruct package
-########
-### ----------------------- HELPER FUNCTIONS ---------------------- ###
-### --------------------------------------------------------------- ###
-
 
 ## ........... Misc Functions .......... ##
 ## ..................................... ##
 
 logitf = function(p){
   log(p / (1 - p))
- }
+ } # checked 10/24/2018 
 
 ## logit function  
 invlogit = function(x){
@@ -112,12 +113,12 @@ invlogit = function(x){
         return(y)
     }
     else return(exp(x) / (1 + exp(x)))
-}
+} # checked 10/24/2018 
 
 ##--- Generates random draws from inverse gamma ---##
 rinvGamma = function(n, shape, scale){
     return(1/rgamma(n, shape = shape, rate = scale))
-}
+} # checked 10/24/2018 
 
 ##--- Returns value of inverse gamma pdf ---##
 dinvGamma = function(x, shape, scale, log = FALSE){
@@ -125,7 +126,7 @@ dinvGamma = function(x, shape, scale, log = FALSE){
         shape * log(scale) - lgamma(shape) - (shape + 1) * log(x) - scale / x
     else d <- scale^shape / gamma(shape) * (1/x)^(shape + 1) * exp(-scale/x)
     return(d)
-}
+} # checked 10/24/2018
 
 ## ............. Likelihood ............ ##
 ## ..................................... ##
@@ -149,22 +150,22 @@ log.lhood =function(log.n.census, log.n.hat, ll.var){
     ##-- joint log likelihood --##
 
     return(sum(density))
-}
+} # checked 10/24/2018
 
 ## .............. Posterior ............ ##
 ## ..................................... ##  keep it, change in sampler function, but no migration here, should add estK0
 
 log.post = function(## estimated vitals
                            f, s, baseline.n, K0, H
-						   , estFer, estK0
+						               ,estFer, estK0
                            ## fixed prior means on vitals
                            ,prior.mean.f, prior.mean.s
                            ,prior.mean.b, prior.mean.K0
-						   ,prior.mean.H
+						               ,prior.mean.H
                            ## fixed prior parameters on variance distns
                            ,alpha.f, beta.f, alpha.s, beta.s
                            ,alpha.n, beta.n, alpha.K0, beta.K0
-						   ,alpha.H, beta.H
+						               ,alpha.H, beta.H
                            ## updated variances on prior distns
                            ,sigmasq.f, sigmasq.s, sigmasq.n, sigmasq.K0
                            ## value of the log likelihood
@@ -208,41 +209,41 @@ log.post = function(## estimated vitals
     ##-- prior for s and baseline n, and hunting rate H --##
 	log.s.prior = dnorm(s, mean = prior.mean.s, sd = sqrt(sigmasq.s)
                          ,log = TRUE)
-    log.b.prior = dnorm(baseline.n, mean = prior.mean.b
+  log.b.prior = dnorm(baseline.n, mean = prior.mean.b
                          ,sd = sqrt(sigmasq.n)
                          ,log = TRUE)
 	log.H.prior = dnorm(H, mean = prior.mean.H
                          ,sd = sqrt(sigmasq.H)
                          ,log = TRUE)
 
-    log.sigmasq.s.prior =
+  log.sigmasq.s.prior =
         log(dinvGamma(sigmasq.s, alpha.s, beta.s))
-    log.sigmasq.n.prior =
+  log.sigmasq.n.prior =
         log(dinvGamma(sigmasq.n, alpha.n, beta.n))
 	log.sigmasq.H.prior =
         log(dinvGamma(sigmasq.H, alpha.n, beta.n))
 	
     ##-- The log posterior is the SUM of these with the log.like --##
 
-    return(sum(log.f.prior, log.s.prior, log.b.prior, log.K0.prior, log.H.prior
+  return(sum(log.f.prior, log.s.prior, log.b.prior, log.K0.prior, log.H.prior
                ,log.sigmasq.f.prior
                ,log.sigmasq.s.prior
                ,log.sigmasq.n.prior
-			   ,log.sigmasq.K0.prior
-			   ,log.sigmasq.H.prior
+			         ,log.sigmasq.K0.prior
+			         ,log.sigmasq.H.prior
                ,log.like))
 
-}
+} # not checked yet, assume to be right
 
 ## ......... Acceptance Ratio .......... ##
 ## ..................................... ##
 acc.ra = function(log.prop, log.current){
     min(1, exp(log.prop - log.current))
-}
+} # assume to be right
 
 acc.ra.var = function(log.prop.post, log.curr.post, log.prop.var, log.curr.var){
     min(1, exp(log.curr.var + log.prop.post - log.prop.var - log.curr.post))
-}
+} # assume to be right
 
 
 ### --------------------------- SAMPLER --------------------------- ###
@@ -255,7 +256,7 @@ HDDLislie.sampler <-
              #.. fixed variance hyper-parameters
              ,al.f = 1, be.f = 0.0109, al.s = 1, be.s = 0.0109
              , al.K0 = 1, be.K0 = 0.0436, al.n = 1
-			 , be.n = 0.0109, al.H = 1, be.H = 0.0436
+			       , be.n = 0.0109, al.H = 1, be.H = 0.0436
 
              #.. fixed prior means
              ,mean.f, mean.s, mean.b, mean.K0, mean.H
@@ -263,7 +264,7 @@ HDDLislie.sampler <-
              #.. inital values for vitals and variances
              #   *vitals not transformed coming in* all not transfer, will 
              ,start.f = mean.f, start.s = mean.s
-			 ,start.b = mean.b, start.K0 = mean.K0, start.H = mean.H
+			       ,start.b = mean.b, start.K0 = mean.K0, start.H = mean.H
              ,start.sigmasq.f = 5, start.sigmasq.s = 5
              ,start.sigmasq.n = 5, start.sigmasq.K0 = 5, start.sigmasq.H = 5
 
@@ -285,9 +286,9 @@ HDDLislie.sampler <-
              #.. age group width
              ,nage = 7 , nyear = NULL
 			 
-			 ,estFer=FALSE, Ferc=rep(1,nage), estK0 = T
-			 ,E0=NULL , K0 = 0, global = FALSE, null = FALSE # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
-			 ,timehomo = F # whether assume time homogeneous 
+			       ,estFer=FALSE, Ferc=rep(1,nage), estK0 = T
+			       ,E0=NULL , K0 = 0, global = FALSE, null = FALSE # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
+			       ,timehomo = F # whether assume time homogeneous 
 
              #.. print algorithm progress
              ,verb = FALSE
@@ -505,7 +506,7 @@ HDDLislie.sampler <-
              ,baseline.count = matrix(0, nrow = nrow(mean.b)
               ,dimnames = dimnames(mean.b)
               )
-             )
+             ))
 
 
     #.. Count how often surv probs are outside tolerance
@@ -1580,7 +1581,7 @@ HDDLislie.sampler <-
                        ,burn.in = burn.in
                        ,iters = n.iter
                         )
-                       )
+                       
 
     #.. results
     ret.list <- list(fert.rate.mcmc = fert.rate.mcmc
