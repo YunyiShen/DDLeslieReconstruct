@@ -168,6 +168,7 @@ log.post = function(## estimated vitals
 						               ,alpha.H, beta.H
                            ## updated variances on prior distns
                            ,sigmasq.f, sigmasq.s, sigmasq.n, sigmasq.K0
+						               ,sigmasq.H
                            ## value of the log likelihood
                            ,log.like
                            ## non zero rows of fertility matrix
@@ -275,19 +276,19 @@ HDDLislie.sampler <-
              #.. **variances** for proposal distributions used in M-H
              #   steps which update vital rates.
              ,prop.vars # col names should be "fert.rate", 
-
+			       # "fert.rate.var", "surv.prop.var", "H.var", "K0.var"
+			       # ,"population.count.var"
              #.. ccmp function
-             ,ccmp.function = popRecon.ccmp.female
 
              #.. number of periods to project forward over (e.g.,
              #     number of five-year steps)
              ,proj.periods = (ncol(Harv.data)-1)
 
              #.. age group width
-             ,nage = 7 , nyear = NULL
+             ,nage = 3 
 			 
-			       ,estFer=FALSE, Ferc=rep(1,nage), estK0 = T
-			       ,E0=NULL , K0 = 0, global = FALSE, null = FALSE # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
+			       ,estFer=T, Ferc=rep(1,nage), estK0 = T
+			       ,E0=NULL , K0 = 0, global = T, null = T # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
 			       ,timehomo = F # whether assume time homogeneous 
 
              #.. print algorithm progress
@@ -502,11 +503,11 @@ HDDLislie.sampler <-
               ,dimnames = dimnames(mean.H)
               )
 			 ,K0 = matrix(0, nrow = nrow(mean.K0), ncol = ncol(mean.K0)
-              ,dimnames = dimnames(mean.K0)
+              ,dimnames = dimnames(mean.K0))
              ,baseline.count = matrix(0, nrow = nrow(mean.b)
               ,dimnames = dimnames(mean.b)
               )
-             ))
+             )
 
 
     #.. Count how often surv probs are outside tolerance
@@ -519,11 +520,17 @@ HDDLislie.sampler <-
 
     #.. Set current vitals and variances to inital values
     #   Take logs/logits here where required
-
-    log.curr.f = estFer * log(start.f) + (!estFer)*log(Fer) #<-- log(0) stored as "-Inf". Gets
-    log.prop.f = estFer * log(start.f) + (!estFer)*log(Fer) #    converted to 0 under exponentiation
-    logit.curr.s = logit(start.s)
-	logit.curr.H = logit(start.H)
+    if(estFer){
+      log.curr.f = log(start.f)  #<-- log(0) stored as "-Inf". Gets
+      log.prop.f = log(start.f)  #    converted to 0 under exponentiation
+      
+    }
+    else{
+      log.curr.f =  (!estFer)*log(Ferc) #<-- log(0) stored as "-Inf". Gets
+      log.prop.f =  (!estFer)*log(Ferc) #    converted to 0 under exponentiation
+    }
+    logit.curr.s = logitf(start.s)
+	  logit.curr.H = logitf(start.H)
     log.curr.K0 = estK0 * log(start.K0) + (!estK0) * log(K0)
     log.curr.b = log(start.b)
 
@@ -538,8 +545,8 @@ HDDLislie.sampler <-
     #   Set these to inputs, take logs where required.
 
     log.mean.f = log(mean.f)
-    logit.mean.s = logit(mean.s)
-    logit.mean.H = logit(mean.H)
+    logit.mean.s = logitf(mean.s)
+    logit.mean.H = logitf(mean.H)
 	log.mean.K0 = log(mean.K0)
     log.mean.b = log(mean.b)
 
@@ -564,7 +571,8 @@ HDDLislie.sampler <-
 
     #.. Current log posterior
 	## shit so many parameters to pass here... really hard to read...
-
+    
+# checked here,  -Inf return, 10/25/2018 14:31, Done, because of test data has zero likelihood (changed parameter)
     log.curr.posterior =
         log.post(f = log.curr.f
                        ,s = logit.curr.s
@@ -594,7 +602,7 @@ HDDLislie.sampler <-
                        ,non.zero.fert = fert.rows # tell algorithm where the fert has to be 0
                        )
 
-
+# stop checking here 10/25/2018
     ## -------- Begin loop ------- ##
     #...............................#
 
@@ -1599,4 +1607,4 @@ HDDLislie.sampler <-
 
     return(ret.list)
 # stop here 10/23/2018 15:51 start to test tomorrow.
-  }
+    }
