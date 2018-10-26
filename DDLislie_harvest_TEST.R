@@ -32,5 +32,9 @@ mean.b = as.matrix( c(1,1,1))
 mean.K0 = as.matrix( K0)
 mean.H = Harvpar
 Harv.data = floor(data_inhomo) # this harv have density dependency
-prop.var = data.frame() # not sure the col names
+prop.vars = list(fert.rate = matrix(1,nrow = length(non0ferc),ncol = period),
+                 surv.prop = matrix(1,nrow = nage, ncol = period),
+                 H = matrix(1,nrow = nage,ncol = 1),
+                 K0=1,
+                 baseline.pop.count = matrix(1,nrow = nage,ncol = 1)) # should be a list, fert.rate for all age classes can give birth to new 
 proj.periods = (ncol(Harv.data)-1)

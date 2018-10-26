@@ -1,3 +1,5 @@
 # Lislie_Reconstruct_ChicagoDeer
-This is a working repo for Yunyi's project, reconstruction of Chicago white tailed deer population using culling data and Bayesian framework.
+This is a working repo for Yunyi's project, reconstruction of Chicago [white tailed deer](https://en.wikipedia.org/wiki/White-tailed_deer) (*Odocoileus virginianus*) population using culling data and Bayesian framework.
 Basic ecology is Lislie growth with and without density dependency.
+
+The goal for this project is reconstruction the population dynamics in the past decade, and try to figure out what kind of density dependency this population has. It is highly related to management of white tailed deer population, since if survival rate itself is negative related to density, control a lower density population can be much less efficient than a higher density one. Careful sensitivity analysis of the growth matrix is needed to figure out how to management the population when there exist density dependency.

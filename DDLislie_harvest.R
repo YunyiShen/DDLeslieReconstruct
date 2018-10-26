@@ -572,7 +572,7 @@ HDDLislie.sampler <-
     #.. Current log posterior
 	## shit so many parameters to pass here... really hard to read...
     
-# checked here,  -Inf return, 10/25/2018 14:31, Done, because of test data has zero likelihood (changed parameter)
+# checked here,  solved, -Inf return 10/25/2018 14:31, Done, because of test data has zero likelihood (changed parameter)
     log.curr.posterior =
         log.post(f = log.curr.f
                        ,s = logit.curr.s
@@ -739,6 +739,9 @@ HDDLislie.sampler <-
       for(j in 1:length(logit.curr.s)) {
 
         #.. make a matrix conformable w rate matrix
+        ## TEST 10/26/2018, propble occur, logit.prop.s.mat is almost all 0
+        ##   this is a strange structure inherite from popReconstruct 
+        ##   the logit.prop.s.mat renew every loop, do not know why they do this.
         logit.prop.s.mat <-
             matrix(0, nrow = nrow(logit.curr.s)
                    ,ncol = ncol(logit.curr.s)) # this result depends on whether time-homo assumed.
@@ -850,29 +853,29 @@ HDDLislie.sampler <-
       # - Proposal
 
       #.. cycle through components
-      for(j in 1:length(curr.H)) {
+      for(j in 1:length(logit.curr.H)) {
 
         #.. make a matrix conformable w rate matrix
         prop.H.mat <-
-            matrix(0, nrow = nrow(curr.H), ncol = ncol(curr.H))
+            matrix(0, nrow = nrow(logit.curr.H), ncol = ncol(logit.curr.H))
         prop.H.mat[j] <- rnorm(1, 0, sqrt(prop.vars$H[j])) # if need age-imspecific harvest, simply give a 1 by 1 start.H
 
         #.. make proposal
-        prop.H <- curr.H + prop.H.mat
+        logit.prop.H <- logit.curr.H + prop.H.mat
 
       # - Run CCMP (project on the original scale)
       #   ** Don't allow negative population
         # - Run CCMP (project on the original scale)
           #   ** Don't allow negative population; again, simply treat
           #      this as if the proposal were never made
-            if(homo){
+      if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H)#<-- use proposal
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.prop.H)#<-- use proposal
 				,Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
-				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.porp.H)#<-- use proposal
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.prop.H)#<-- use proposal
 				,Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
 			}
 
@@ -930,7 +933,7 @@ HDDLislie.sampler <-
             if(runif(1) <= ar) {
                 if(i > burn.in) acc.count$H[j] <-
                     acc.count$H[j] + 1/n.iter
-                curr.H = prop.H
+                logit.curr.H = logit.prop.H
                 log.curr.proj <- log.prop.proj
                 log.curr.posterior <- log.prop.posterior
             } 
@@ -939,10 +942,10 @@ HDDLislie.sampler <-
 
     } # close else after checking for negative population
 
-    } # close loop over all age-specific migration proportions
+    } # close loop over all age-specific Harvest proportions
 
-      #.. Store proposed migration proportion matrix
-      if(k %% 1 == 0 && k > 0) H.mcmc[k,] <- as.vector(curr.H)
+      #.. Store proposed Harvest proportion matrix
+      if(k %% 1 == 0 && k > 0) H.mcmc[k,] <- as.vector(invlogit(logit.curr.H))
 
 
       ##...... Carrying Capacity ......##
@@ -1023,6 +1026,9 @@ HDDLislie.sampler <-
 
     } # close else after checking for negative population
 	}
+      #.. Store proposed K0 matrix
+      if(k %% 1 == 0 && k > 0) K0.mcmc[k,] <- as.vector(exp(log.curr.K0))    
+      
 # stop here for flu shot 10/22/2018	  17:07
 # restart here 10/22/2018 20:45. Left arm is So0o0o0o0o painful after the flu shot!!!!! 
 	  ##...... Baseline population ......##
@@ -1127,7 +1133,7 @@ HDDLislie.sampler <-
       if(k %% 1 == 0 && k > 0) baseline.count.mcmc[k,] <-
           as.vector(exp(log.curr.b))
 
-
+# TEST stop here 10/26/2018
       ## ------- Variance Updates ------- ##
 
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Variances")
@@ -1142,9 +1148,9 @@ HDDLislie.sampler <-
                   )
 
         # - Calculate log posterior of proposed vital under projection
-        log.prop.posterior <-
-              log.prop.posterior =
-				log.post(f = log.curr.f 
+        
+        log.prop.posterior =
+				      log.post(f = log.curr.f 
                        ,s = logit.curr.s 
                        ,H = logit.curr.H 
 					   ,K0 = log.curr.K0 
