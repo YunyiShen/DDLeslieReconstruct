@@ -38,3 +38,4 @@ prop.vars = list(fert.rate = matrix(1,nrow = length(non0ferc),ncol = period),
                  K0=1,
                  baseline.pop.count = matrix(1,nrow = nage,ncol = 1)) # should be a list, fert.rate for all age classes can give birth to new 
 proj.periods = (ncol(Harv.data)-1)
+ptm = proc.time()

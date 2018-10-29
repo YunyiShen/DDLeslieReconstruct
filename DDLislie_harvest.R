@@ -1396,8 +1396,8 @@ HDDLislie.sampler <-
                               ,log = TRUE)
                              ,log.curr.var = dinvGamma(curr.sigmasq.K0
                               ,al.K0 + length(mean.K0)/2
-                              ,be.K0 + 0.5*sum((logit.curr.K0 -
-                                               logit.mean.K0)^2)
+                              ,be.K0 + 0.5*sum((log.curr.K0 -
+                                               log.mean.K0)^2)
                               ,log = TRUE)
                              )
 
@@ -1574,7 +1574,7 @@ HDDLislie.sampler <-
              ,acc.prop.adj4neg = mapply(FUN = function(a, b, n) {
                  (a * n) / (n - b)
              },
-              acc.count[1:4], pop.negative, MoreArgs = list(n = n.iter)
+              acc.count[1:5], pop.negative, MoreArgs = list(n = n.iter)
               )
              ,acc.rat.na = ar.na
              ,surv.outside.tol = s.out.tol
@@ -1613,4 +1613,5 @@ HDDLislie.sampler <-
 
     return(ret.list)
 # stop here 10/23/2018 15:51 start to test tomorrow.
-    }
+# TEST of code done here, start SIMULATION
+}
