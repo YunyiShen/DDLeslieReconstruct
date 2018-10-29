@@ -117,8 +117,10 @@ invlogit = function(x){
 
 ##--- Generates random draws from inverse gamma ---##
 rinvGamma = function(n, shape, scale){
-    return(1/rgamma(n, shape = shape, rate = scale))
-} # checked 10/24/2018 
+  #print(shape) # debug mode
+  #print(scale)
+    return(1/(rgamma(n, shape = shape, rate = scale)))
+} # checked 10/24/2018 # debug mode with print
 
 ##--- Returns value of inverse gamma pdf ---##
 dinvGamma = function(x, shape, scale, log = FALSE){
@@ -531,7 +533,9 @@ HDDLislie.sampler <-
     }
     logit.curr.s = logitf(start.s)
 	  logit.curr.H = logitf(start.H)
-    log.curr.K0 = estK0 * log(start.K0) + (!estK0) * log(K0)
+	  if(estK0){log.curr.K0=log(start.K0)}
+	  else{log.curr.K0=log(K0)}
+    #log.curr.K0 = estK0 * log(start.K0) + (!estK0) * log(K0)
     log.curr.b = log(start.b)
 
     curr.sigmasq.f = start.sigmasq.f
@@ -619,6 +623,7 @@ HDDLislie.sampler <-
           }
 
     for(i in 1:(n.iter + burn.in)) {
+       
 
       # k is the index into the storage objects
       k <- (i - burn.in - 1) / thin.by + 1
@@ -1017,7 +1022,7 @@ HDDLislie.sampler <-
             if(runif(1) <= ar) {
                 if(i > burn.in) acc.count$K0[j] <-
                     acc.count$K0[j] + 1/n.iter
-                curr.K0 = prop.K0
+                log.curr.K0 = log.prop.K0
                 log.curr.proj = log.prop.proj
                 log.curr.posterior = log.prop.posterior
             } 
@@ -1356,7 +1361,7 @@ HDDLislie.sampler <-
 # restart here 10/23/2018 14:34	
       ##...... Carrying Capacity ......##	
 	  if(estK0){
-		prop.sigmasq.K0 = rinvGamma(1,al.K0+0.5,be.K0 + 0.5*sum((log.curr.K0-log.mean.K0)^2))
+		prop.sigmasq.K0 = rinvGamma(1,al.K0+0.5,be.K0 + 0.5*sum((log.curr.K0-log.mean.K0)^2)) #bug here give NA
 		    log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
@@ -1522,7 +1527,11 @@ HDDLislie.sampler <-
 
       if(verb && identical(i%%1000, 0)) cat("\n\n")
 
-  } # Ends outer-most loop
+  
+      print(i)
+      warnings() # debug mode 
+      #Sys.sleep(5)
+      } # Ends outer-most loop
 
     ## ......... End Loop ........ ##
     #...............................#
