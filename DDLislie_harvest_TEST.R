@@ -2,11 +2,11 @@ source('DDLislie_harvest.R')
 
 Survival = matrix(c(0.8,0.6,0.4),nrow = 3,ncol = 1)
 Ferc = matrix(c(0,1.3,1.5),nrow = 3,ncol = 1)
-Harvpar = as.matrix(c(0.1,0.05,0.05))
+Harvpar = as.matrix(c(0.2,0.15,0.15))
 non0ferc = c(2,3)
 nage = 3
 K0 = 800
-period = 7
+period = 10
 Survival_inhomo = matrix( rep((Survival),period),nrow = nage,ncol = period )
 Ferc_inhomo = matrix( rep((Ferc),period),nrow = nage,ncol = period )
 
@@ -17,10 +17,10 @@ H_prime = GetHarvest(0.05,nage) # age imspecific harvest rate
 D = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),K0,T)
 I = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),K0,T)
 ProjectHarvest_helper(c(1,1,1), Lislie, H, global=T, E0=NULL, K0=K0, null = F)
-data_homo = ProjectHarvest_homo(Survival=Survival,Harvpar=Harvpar,Ferc=Ferc,E0=NULL,K0=K0,global = T,null=T,bl=c(1,1,1),period = period,nage)
-data_inhomo = ProjectHarvest_inhomo(Survival=Survival_inhomo,Harvpar=Harvpar,Ferc=Ferc_inhomo,E0=NULL,K0=K0,global = T,null=T,bl=as.matrix(c(1,1,1)),period = period,nage)
+data_homo = ProjectHarvest_homo(Survival=Survival,Harvpar=Harvpar,Ferc=Ferc,E0=NULL,K0=K0,global = T,null=F,bl=c(10,10,10),period = period,nage)
+data_inhomo = ProjectHarvest_inhomo(Survival=Survival_inhomo,Harvpar=Harvpar,Ferc=Ferc_inhomo,E0=NULL,K0=K0,global = T,null=F,bl=as.matrix(c(1,1,1)),period = period,nage)
 living_homo = getLivingIdividuals(H,data_homo)
-log.lhood(log(data_homo),log(data_inhomo+matrix(rnorm(24,0,0.05),3,8)),1)
+log.lhood(log(data_homo),log(data_inhomo+matrix(rnorm(24,0,0.05),3,11)),1)
 
 # skip the simplest functions
 
@@ -42,10 +42,32 @@ ptm = proc.time()
 
 ### SIMULATION START HERE
 
-SIMULATION_RES = HDDLislie.sampler(n.iter = 1000, burn.in = 10, mean.f = mean.f
-                                   ,al.f = 1, be.f = 0.0001, al.s = 1, be.s = 0.0001
-                                   , al.K0 = 1, be.K0 = 0.0001, al.n = 0.0001
-                                   , be.n = 0.0001, al.H = 1, be.H = 0.0001
+SIMULATION_RES = HDDLislie.sampler(n.iter = 5000, burn.in = 300, mean.f = mean.f
+                                   ,al.f = 1, be.f = 1, al.s = 1, be.s = 1
+                                   , al.K0 = 1, be.K0 = 1, al.n = 1
+                                   , be.n = 1, al.H = 1, be.H = 1
                                   , mean.s = mean.s, mean.b=mean.b,mean.K0 = mean.K0
                                   , mean.H = mean.H, Harv.data = (Harv.data+1e-4 * (Harv.data==0))
                                   , prop.vars = prop.vars)
+mean.surv = apply(SIMULATION_RES$surv.prop.mcmc,2,mean)
+mean.surv.2 = mean.surv[(1:21)%%3==2]
+plot(mean.surv.2)
+
+mean.harv = apply(SIMULATION_RES$lx.mcmc,2,mean)
+mean.harv.2 = mean.harv[(1:21)%%3==2]
+plot(mean.harv.2,mean.surv.2)
+
+data.age.2 = data.frame(mean.harv.2,mean.surv.2)
+
+require(ggplot2)
+
+ggplot(data.age.2,aes(x=mean.harv.2,y=mean.surv.2) )+
+  geom_point()+
+  geom_line()+
+  stat_smooth(method = "lm")
+
+data.harvest = data.frame(t=1:11,harv = apply(Harv.data,2,sum))
+ggplot(data.harvest,aes(x=t,y=harv))+
+  geom_point()+
+  geom_line()
+  #stat_smooth(method = "lm")
