@@ -224,7 +224,7 @@ log.post = function(## estimated vitals
   log.sigmasq.n.prior =
         log(dinvGamma(sigmasq.n, alpha.n, beta.n))
 	log.sigmasq.H.prior =
-        log(dinvGamma(sigmasq.H, alpha.n, beta.n))
+        log(dinvGamma(sigmasq.H, alpha.H, beta.H))
 	
     ##-- The log posterior is the SUM of these with the log.like --##
 
@@ -1395,9 +1395,9 @@ HDDLislie.sampler <-
       ar = acc.ra.var(log.prop.post = log.prop.posterior
                              ,log.curr.post = log.curr.posterior
                              ,log.prop.var = dinvGamma(prop.sigmasq.K0
-                              ,al.K0 + length(mean.H)/2
-                              ,be.K0 + 0.5*sum((logit.curr.H -
-                                               logit.mean.H)^2)
+                              ,al.K0 + length(mean.K0)/2
+                              ,be.K0 + 0.5*sum((logit.curr.K0 -
+                                               logit.mean.K0)^2)
                               ,log = TRUE)
                              ,log.curr.var = dinvGamma(curr.sigmasq.K0
                               ,al.K0 + length(mean.K0)/2
