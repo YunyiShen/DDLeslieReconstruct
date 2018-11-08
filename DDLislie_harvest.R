@@ -291,7 +291,7 @@ HDDLislie.sampler <-
 			 
 			       ,estFer=T, Ferc=rep(1,nage), estK0 = T
 			       ,E0=NULL , K0 = 0, global = T, null = T # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
-			       ,timehomo = F # whether assume time homogeneous 
+			       ,homo = F # whether assume time homogeneous 
 
              #.. print algorithm progress
              ,verb = FALSE
@@ -387,7 +387,7 @@ HDDLislie.sampler <-
     ## How many (samples) stored?
 	
     n.stored = ceiling(n.iter / thin.by)
-	ntimes = (!timehomo) * ncol(start.s) + (timehomo) # whether assume time homogeneous of survival etc.
+	ntimes = (!homo) * ncol(start.s) + (homo) # whether assume time homogeneous of survival etc.
       # Fertility
 	  if(estFer){
       fert.rate.mcmc =
@@ -561,7 +561,7 @@ HDDLislie.sampler <-
     log.Harv.mat = log(Harv.data)
 
 
-    #.. Set current projection: base on initial values # timehomo or not is important, determin it use homo = T
+    #.. Set current projection: base on initial values # homo or not is important, determin it use homo = T
 	if(homo){
 	  log.curr.proj =
         log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = exp(log.curr.K0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
