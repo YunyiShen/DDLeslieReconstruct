@@ -1396,8 +1396,8 @@ HDDLislie.sampler <-
                              ,log.curr.post = log.curr.posterior
                              ,log.prop.var = dinvGamma(prop.sigmasq.K0
                               ,al.K0 + length(mean.K0)/2
-                              ,be.K0 + 0.5*sum((logit.curr.K0 -
-                                               logit.mean.K0)^2)
+                              ,be.K0 + 0.5*sum((log.curr.K0 -
+                                               log.mean.K0)^2)
                               ,log = TRUE)
                              ,log.curr.var = dinvGamma(curr.sigmasq.K0
                               ,al.K0 + length(mean.K0)/2
