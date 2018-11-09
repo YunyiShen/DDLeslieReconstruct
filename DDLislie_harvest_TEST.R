@@ -32,10 +32,10 @@ mean.b = as.matrix( c(1,1,1))
 mean.K0 = as.matrix(K0)
 mean.H = Harvpar
 Harv.data = floor(data_homo+0.5) # this harv have density dependency
-prop.vars = list(fert.rate = matrix(1,nrow = length(non0ferc),ncol = period),
+prop.vars = list(fert.rate = matrix(.1,nrow = length(non0ferc),ncol = period),
                  surv.prop = matrix(1,nrow = nage, ncol = period),
                  H = matrix(1,nrow = nage,ncol = 1),
-                 K0=1,
+                 K0=.1,
                  baseline.pop.count = matrix(1,nrow = nage,ncol = 1)) # should be a list, fert.rate for all age classes can give birth to new 
 proj.periods = (ncol(Harv.data)-1)
 ptm = proc.time()
@@ -45,26 +45,26 @@ ptm = proc.time()
 ##without assume DD
 
 SIMULATION_RES = HDDLislie.sampler(n.iter = 5000, burn.in = 300, mean.f = mean.f
-                                   ,al.f = 1, be.f = .5, al.s = 1, be.s = .5
+                                   ,al.f = 1, be.f = 1, al.s = 1, be.s = .5
                                    , al.K0 = 1, be.K0 = .01, al.n = 1
                                    , be.n = .01, al.H = 1, be.H = .01
                                   , mean.s = mean.s, mean.b=mean.b,mean.K0 = mean.K0
                                   , mean.H = mean.H, Harv.data = (Harv.data+1e-4 * (Harv.data==0))
-                                  , prop.vars = prop.vars)
+                                  , prop.vars = prop.vars, estFer = T)
 mean.surv = apply(SIMULATION_RES$surv.prop.mcmc,2,mean)
-mean.surv.2 = mean.surv[(1:21)%%3==2]
+mean.surv.2 = mean.surv[(1:30)%%3==2]
 plot(mean.surv.2)
 
 mean.harv = apply(SIMULATION_RES$lx.mcmc,2,mean)
-mean.harv.2 = mean.harv[(1:21)%%3==2]
+mean.harv.2 = mean.harv[(1:30)%%3==2]
 plot(mean.harv.2,mean.surv.2)
 
 data.age.2 = data.frame(mean.harv.2,mean.surv.2)
 DDsurv = lm(mean.surv.2~.,data.age.2)
 
 mean.f.est = apply(SIMULATION_RES$fert.rate.mcmc,2,mean)
-mean.f.2 = mean.f[(1:21)%%3==2]
-plot(mean.f.2)
+mean.f.2 = mean.f.est[(1:20)%%2==1]
+plot(mean.harv.2,mean.f.2)
 
 require(ggplot2)
 
