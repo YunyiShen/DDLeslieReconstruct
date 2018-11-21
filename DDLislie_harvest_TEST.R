@@ -18,7 +18,7 @@ D = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),K0,T)
 I = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),K0,T)
 ProjectHarvest_helper(c(1,1,1), Lislie, H, global=T, E0=NULL, K0=K0, null = F)
 data_homo = ProjectHarvest_homo(Survival=Survival,Harvpar=Harvpar,Ferc=Ferc,E0=NULL,K0=K0,global = T,null=F,bl=c(10,10,10),period = period,nage)
-data_inhomo = ProjectHarvest_inhomo(Survival=Survival_inhomo,Harvpar=Harvpar,Ferc=Ferc_inhomo,E0=NULL,K0=K0,global = T,null=F,bl=as.matrix(c(1,1,1)),period = period,nage)
+data_inhomo = ProjectHarvest_inhomo(Survival=Survival_inhomo,Harvpar=Harvpar,Ferc=Ferc_inhomo,E0=NULL,K0=K0,global = T,null=F,bl=as.matrix(c(10,10,10)),period = period,nage)
 living_homo = getLivingIdividuals(H,data_homo)
 log.lhood(log(data_homo),log(data_inhomo+matrix(rnorm(24,0,0.05),3,11)),1)
 
@@ -28,7 +28,7 @@ log.lhood(log(data_homo),log(data_inhomo+matrix(rnorm(24,0,0.05),3,11)),1)
 
 mean.f = Ferc_inhomo
 mean.s = Survival_inhomo
-mean.b = as.matrix( c(1,1,1))
+mean.b = as.matrix( c(10,10,10)/Harvpar)
 mean.K0 = as.matrix(K0)
 mean.H = Harvpar
 Harv.data = floor(data_homo+0.5) # this harv have density dependency
@@ -44,7 +44,7 @@ ptm = proc.time()
 
 ##without assume DD
 
-SIMULATION_RES = HDDLislie.sampler(n.iter = 5000, burn.in = 300, mean.f = mean.f
+SIMULATION_RES = HDDLislie.sampler(n.iter = 50, burn.in = 3, mean.f = mean.f
                                    ,al.f = 1, be.f = 1, al.s = 1, be.s = .5
                                    , al.K0 = 1, be.K0 = .01, al.n = 1
                                    , be.n = .01, al.H = 1, be.H = .01

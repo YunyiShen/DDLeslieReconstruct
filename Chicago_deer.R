@@ -14,7 +14,7 @@ mean.s = mean.s[,-1]
 mean.f = read.csv("./data/Fecundity_mean.csv")
 mean.f = mean.f[,-1]
 Harv.data = read.csv("./data/Culling.csv")
-Harv.data = Harv.data[,c(-1,-2)]
+Harv.data = Harv.data[,-1]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.7
 
 Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 300, mean.f = as.matrix( mean.f)
@@ -29,7 +29,8 @@ mean.surv = apply(Chicago_RES$surv.prop.mcmc,2,mean)
 mean.ferc = apply(Chicago_RES$fert.rate.mcmc,2,mean)
 
 mean.harv = apply(Chicago_RES$lx.mcmc,2,mean)
-mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
+mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period-1)
+mean.harv.matrix = cbind(mean.harv.matrix,Harv.data[,14])
 mean.total.harv = apply(mean.harv.matrix,2,sum)
 
 mean.age.surv = list()
