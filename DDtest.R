@@ -11,12 +11,6 @@ getLislie = function(Survival,Ferc,minus1=F){
 } #checked 10/24/2018
 
 # Linear density dependency matrix, can be global of age specific, or null = T for no density dependency. in estimaton process, if E0 is not fixed, it should be estimated as kk = solve(H, data[,1]) E0 = kk/sum(kk), by assuming that first year is at equalibrium
-# get age specific harvest proportion matrix
-GetHarvest = function(Harvpar,nage){
-  Harvest = matrix(0,nage,nage)
-  diag(Harvest) = Harvpar
-  return(Harvest)
-} # checked 10/24/2018, if not age-specific, give a single Harvpar
 
 # Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
 ProjectHarvest_helper = function(data_n, Lislie, Harvpar, aK0, null = F){
@@ -32,7 +26,7 @@ ProjectHarvest_helper = function(data_n, Lislie, Harvpar, aK0, null = F){
 # Project harvest model from a initial harvest, survival is col vector with all survival rate of all age class, this nrow(Survival)=nage
 ProjectHarvest_homo = function(Survival, Harvpar,Ferc, aK0 , period, nage,bl){
   Lislie = getLislie(Survival,Ferc = Ferc,minus1=T)
-  H = GetHarvest(Harvpar,nage)
+  #H = GetHarvest(Harvpar,nage)
   Harvest = matrix(0,nage,period)
   Harvest[,1] = bl 
   for(i in 2 : period ){
