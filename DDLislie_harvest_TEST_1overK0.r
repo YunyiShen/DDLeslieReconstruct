@@ -10,7 +10,7 @@ period = 10
 Survival_inhomo = matrix( rep((Survival),period),nrow = nage,ncol = period )
 Ferc_inhomo = matrix( rep((Ferc),period),nrow = nage,ncol = period )
 
-### Test of helper functions
+### Test of helper functions, DONE 0122
 Lislie = getLislie(Survival,Ferc,T)
 H = GetHarvest(Harvpar,nage)
 H_prime = GetHarvest(0.05,nage) # age imspecific harvest rate
@@ -19,8 +19,8 @@ I = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),aK0,T)
 ProjectHarvest_helper(c(1,1,1), Lislie, Harvpar, global=T, E0=NULL, aK0=aK0, null = F)
 data_homo = ProjectHarvest_homo(Survival=Survival,Harvpar=Harvpar,Ferc=Ferc,E0=NULL,aK0=aK0,global = T,null=F,bl=c(10,10,10),period = period,nage)
 data_inhomo = ProjectHarvest_inhomo(Survival=Survival_inhomo,Harvpar=Harvpar,Ferc=Ferc_inhomo,E0=NULL,K0=K0,global = T,null=F,bl=as.matrix(c(10,10,10)),period = period,nage)
-living_homo = getLivingIdividuals(H,data_homo)
-log.lhood(log(data_homo),log(data_inhomo+matrix(rnorm(24,0,0.05),3,11)),1)
+living_homo = getLivingIdividuals(Harvpar,data_homo)
+log.lhood(log(data_homo),log(data_homo+matrix(rnorm(24,0,0.05),3,11)),1)
 
 # skip the simplest functions
 
