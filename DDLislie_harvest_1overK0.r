@@ -27,7 +27,7 @@ DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
   else{
     D = 1-(1-null)* aK0 * Xn/(E0)
   }
-  return(D)
+  return(as.numeric(D))
 } #checked 10/24/2018
 
 # get age specific harvest proportion matrix
@@ -49,7 +49,7 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
   } # checked 10/24/2018
 
 # Project harvest model from a initial harvest, survival is col vector with all survival rate of all age class, this nrow(Survival)=nage
-ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, global = F, null = F,bl , period, nage){
+ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, aK0 = NULL, global = F, null = F,bl , period, nage){
   Lislie = getLislie(Survival,Ferc=Ferc,minus1=T)
   # H = GetHarvest(Harvpar,nage)
   Harvest = matrix(0,nage,period + 1)
@@ -60,7 +60,7 @@ ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, K0 = NULL, globa
   }
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
-	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, K0=K0, H=Harvpar,null = null) # project harvest from very initial
+	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, aK0=aK0, H=Harvpar,null = null) # project harvest from very initial
   }              
   return(Harvest)
 } #checked 10/24/2018
