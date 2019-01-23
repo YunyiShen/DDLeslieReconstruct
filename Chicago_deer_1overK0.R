@@ -18,9 +18,9 @@ Harv.data = Harv.data[,-1]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.7
 
 Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 300, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = .01
+                                   ,al.f = 1, be.f = .005, al.s = 1, be.s = .01
                                    , al.aK0 = 1, be.aK0 = .1, al.n = 1
-                                   , be.n = .01, al.H = 1, be.H = .1
+                                   , be.n = .01, al.H = 1, be.H = .01
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(0,1,1)
                                    , mean.H = matrix(0.7,nage,1), Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = T)
