@@ -157,7 +157,7 @@ log.lhood =function(log.n.census, log.n.hat, ll.var){
 ## ..................................... ##  keep it, change in sampler function, but no migration here, should add estaK0
 
 log.post = function(## estimated vitals
-                           f, s, baseline.n, K0, H
+                           f, s, baseline.n, aK0, H
 						               ,estFer, estaK0
                            ## fixed prior means on vitals
                            ,prior.mean.f, prior.mean.s
@@ -183,6 +183,7 @@ log.post = function(## estimated vitals
     ##     in, s, prior.mean.s is logit transformed coming in, g and
     ##     prior.mean.g are not transformed coming in.
 	##-- prior for f and baseline K0 if needed to be estimatedd --##
+	
 	if(estFer){
 	  log.f.prior = dnorm(as.vector(f[non.zero.fert,])
                          ,mean = as.vector(prior.mean.f[non.zero.fert,])
@@ -303,7 +304,7 @@ HDDLislie.sampler <-
     ## .............. Sampler .............. ##
     ## ..................................... ##
 
-
+  mean.aK0 = as.matrix(mean.aK0)
     ## -------- Begin timing ------- ##
 
     ptm <- proc.time()
@@ -384,7 +385,7 @@ HDDLislie.sampler <-
     # _____________________________________________________
 
     ## How many (samples) stored?
-	
+	cat("Allocating for RAMs...\n")
     n.stored = ceiling(n.iter / thin.by)
 	ntimes = (!homo) * ncol(start.s) + (homo) # whether assume time homogeneous of survival etc.
       # Fertility
@@ -453,28 +454,28 @@ HDDLislie.sampler <-
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(variances.mcmc) =
-          c("fert.rate.var", "surv.prop.var", "H.var", "K0.var"
+          c("fert.rate.var", "surv.prop.var", "H.var", "aK0.var"
             ,"population.count.var") # may need check here since K0 and fert can be known (though I prefer estimating it)
 
     #.. Record acceptance rate
 
     acc.count <-
-        list(fert.rate = matrix(0, nrow = nrow(mean.f[fert.rows,])
-             ,ncol = ncol(mean.f[fert.rows,])
-             ,dimnames = dimnames(mean.f[fert.rows,])
+        list(fert.rate = matrix(0, nrow = nrow(as.matrix( mean.f[fert.rows,]))
+             ,ncol = ncol(as.matrix( mean.f[fert.rows,]))
+             ,dimnames = dimnames(( mean.f[fert.rows,]))
              )
-             ,surv.prop = matrix(0, nrow = nrow(mean.s)
-              ,ncol = ncol(mean.s)
+             ,surv.prop = matrix(0, nrow = nrow(as.matrix( mean.s))
+              ,ncol = ncol(as.matrix( mean.s))
               ,dimnames = dimnames(mean.s)
               )
-             ,H = matrix(0, nrow = nrow(mean.H), ncol = ncol(mean.H)
+             ,H = matrix(0, nrow = nrow(as.matrix(mean.H)), ncol = ncol(as.matrix( mean.H))
               ,dimnames = dimnames(mean.H)
               )
-			 ,aK0 = matrix(0, nrow = nrow(mean.aK0), ncol = ncol(mean.aK0)
+			 ,aK0 = matrix(0, nrow = nrow(as.matrix( mean.aK0)), ncol = ncol( as.matrix(mean.aK0))
               ,dimnames = dimnames(mean.aK0)
               )
-             ,baseline.count = matrix(0, nrow = nrow(mean.b)
-              ,dimnames = dimnames(mean.b)
+             ,baseline.count = matrix(0, nrow = nrow(as.matrix( mean.b))
+              ,dimnames = dimnames( mean.b)
               )
              ,sigmasq.f = 0
              ,sigmasq.s = 0
@@ -492,20 +493,20 @@ HDDLislie.sampler <-
     #.. Count how often projection gives negative population
 
     pop.negative <-
-        list(fert.rate = matrix(0, nrow = nrow(mean.f[fert.rows,])
-             ,ncol = ncol(mean.f[fert.rows,])
+        list(fert.rate = matrix(0, nrow = nrow(as.matrix( mean.f[fert.rows,]))
+             ,ncol = ncol(as.matrix( mean.f[fert.rows,]))
              ,dimnames = dimnames(mean.f[fert.rows,])
              )
-             ,surv.prop = matrix(0, nrow = nrow(mean.s)
-              ,ncol = ncol(mean.s)
+             ,surv.prop = matrix(0, nrow = nrow(as.matrix( mean.s))
+              ,ncol = ncol(as.matrix( mean.s))
               ,dimnames = dimnames(mean.s)
               )
-             ,H = matrix(0, nrow = nrow(mean.H), ncol = ncol(mean.H)
+             ,H = matrix(0, nrow = nrow(as.matrix(mean.H)), ncol = ncol(as.matrix(mean.H))
               ,dimnames = dimnames(mean.H)
               )
 			 ,aK0 = matrix(0, nrow = nrow(mean.aK0), ncol = ncol(mean.aK0)
               ,dimnames = dimnames(mean.aK0))
-             ,baseline.count = matrix(0, nrow = nrow(mean.b)
+             ,baseline.count = matrix(0, nrow = nrow(as.matrix(mean.b))
               ,dimnames = dimnames(mean.b)
               )
              )
@@ -580,7 +581,7 @@ HDDLislie.sampler <-
         log.post(f = log.curr.f
                        ,s = logit.curr.s
                        ,H = logit.curr.H
-					   ,aaK0 = curr.aK0
+					   ,aK0 = curr.aK0
                        ,baseline.n = log.curr.b
 					   ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
@@ -620,9 +621,9 @@ HDDLislie.sampler <-
             ,"iter ", " quantity\n", "---- ", " --------"
             ,sep = "")
           }
-
+	cat("Initializing...\n")
     for(i in 1:(n.iter + burn.in)) {
-       
+       if(i %% 100==0) cat("Iteration #",i,"out of",n.iter + burn.in,"total\n")
 
       # k is the index into the storage objects
       k <- (i - burn.in - 1) / thin.by + 1
@@ -958,12 +959,12 @@ HDDLislie.sampler <-
 	  
 	        if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = prop.aK0 #<-- use proposal
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = prop.aK0 #<-- use proposal
 				, global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
-				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, K0 = prop.aK0#<-- use proposal
+				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = prop.aK0#<-- use proposal
 				, global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
 			}
 
@@ -1421,7 +1422,7 @@ HDDLislie.sampler <-
             } #.. if reject, leave current and posterior
         } # close else after checking for ar=na, nan, zero
 
-      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"K0.var"] <- curr.sigmasq.aK0
+      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"aK0.var"] <- curr.sigmasq.aK0
 
 	  
 	  
@@ -1527,8 +1528,8 @@ HDDLislie.sampler <-
       if(verb && identical(i%%1000, 0)) cat("\n\n")
 
   
-      print(i)
-      warnings() # debug mode 
+      #print(i)
+      #warnings() # debug mode 
       #Sys.sleep(5)
       } # Ends outer-most loop
 
