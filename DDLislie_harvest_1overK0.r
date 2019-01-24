@@ -876,12 +876,12 @@ HDDLislie.sampler <-
       if(homo){
 				full.proj =
 				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.prop.H)#<-- use proposal
-				,Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
+				,Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.prop.H) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
 				(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.prop.H)#<-- use proposal
-				,Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
+				,Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.prop.H) , period = proj.periods, nage = nage))
 			}
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
