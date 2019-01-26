@@ -22,8 +22,8 @@ data_homo =
 data_homo = data_homo + matrix(rnorm(nrow(data_homo)*ncol(data_homo)),nrow = nrow(data_homo),ncol(data_homo))
 data_homo = round(data_homo)
 #data_inhomo = ProjectHarvest_inhomo(Survival=Survival_inhomo,Harvpar=Harvpar,Ferc=Ferc_inhomo,E0=NULL,K0=K0,global = T,null=F,bl=as.matrix(c(10,10,10)),period = period,nage)
-living_homo = getLivingIdividuals(Harvpar,data_homo)
-log.lhood(log(data_homo),log(data_homo+matrix(rnorm(24,0,0.05),3,11)),1)
+#living_homo = getLivingIdividuals(Harvpar,data_homo)
+#log.lhood(log(data_homo),log(data_homo+matrix(rnorm(24,0,0.05),3,11)),1)
 
 # skip the simplest functions
 
@@ -70,12 +70,12 @@ mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
 mean.total.harv = apply(mean.harv.matrix,2,sum)
 plot(mean.total.harv)
 
-BI.low.harv = apply(SIMULATION_RESDD$lx.mcmc,2,quantile,probs = .05)
+BI.low.harv = apply(SIMULATION_RESDD$lx.mcmc,2,quantile,probs = .025)
 BI.low.harv.matrix = matrix(BI.low.harv,nrow = nage,ncol = period)
 BI_harv_low = data.frame(age = 1:3,BI.low.harv.matrix)
 
 
-BI.high.harv = apply(SIMULATION_RESDD$lx.mcmc,2,quantile,probs = .95)
+BI.high.harv = apply(SIMULATION_RESDD$lx.mcmc,2,quantile,probs = .975)
 BI.high.harv.matrix = matrix(BI.high.harv,nrow = nage,ncol = period)
 BI_harv_high = data.frame(age = 1:3,BI.high.harv.matrix)
 
@@ -108,12 +108,12 @@ for(i in 1:3){
 
 
 mean.ferc = apply(SIMULATION_RESDD$fert.rate.mcmc,2,mean)
-BI.low.ferc = apply(SIMULATION_RESDD$fert.rate.mcmc,2,quantile,probs = .05)
-BI.high.ferc = apply(SIMULATION_RESDD$fert.rate.mcmc,2,quantile,probs = .95)
+BI.low.ferc = apply(SIMULATION_RESDD$fert.rate.mcmc,2,quantile,probs = .025)
+BI.high.ferc = apply(SIMULATION_RESDD$fert.rate.mcmc,2,quantile,probs = .975)
 
 
 require(ggplot2)
-ferc_post = data.frame(age = 1:8,mean_ferc = mean.ferc,BI_low = BI.low.ferc,BI_high = BI.high.ferc)
+ferc_post = data.frame(age = 2:3,mean_ferc = mean.ferc,BI_low = BI.low.ferc,BI_high = BI.high.ferc)
 write.csv(ferc_post,paste0("./figs/Simu/ferc_post",".csv"))
 ggplot(ferc_post, aes(x=age, y=mean_ferc)) + 
   geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
@@ -122,8 +122,8 @@ ggplot(ferc_post, aes(x=age, y=mean_ferc)) +
 #ggsave("./ferc.jpg")
 
 mean.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,mean)
-BI.low.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,quantile,probs = .05)
-BI.high.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,quantile,probs = .95)
+BI.low.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,quantile,probs = .025)
+BI.high.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,quantile,probs = .975)
 
 
 require(ggplot2)

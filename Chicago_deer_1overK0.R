@@ -48,12 +48,12 @@ mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
 mean.total.harv = apply(mean.harv.matrix,2,sum)
 plot(mean.total.harv)
 
-BI.low.harv = apply(Chicago_RES$lx.mcmc,2,quantile,probs = .05)
+BI.low.harv = apply(Chicago_RES$lx.mcmc,2,quantile,probs = .025)
 BI.low.harv.matrix = matrix(BI.low.harv,nrow = nage,ncol = period)
 BI_harv_low = data.frame(age = 1:8,BI.low.harv.matrix)
 
 
-BI.high.harv = apply(Chicago_RES$lx.mcmc,2,quantile,probs = .95)
+BI.high.harv = apply(Chicago_RES$lx.mcmc,2,quantile,probs = .975)
 BI.high.harv.matrix = matrix(BI.high.harv,nrow = nage,ncol = period)
 BI_harv_high = data.frame(age = 1:8,BI.high.harv.matrix)
 
@@ -90,8 +90,8 @@ for(i in 1:8){
 
 
 mean.ferc = apply(Chicago_RES$fert.rate.mcmc,2,mean)
-BI.low.ferc = apply(Chicago_RES$fert.rate.mcmc,2,quantile,probs = .05)
-BI.high.ferc = apply(Chicago_RES$fert.rate.mcmc,2,quantile,probs = .95)
+BI.low.ferc = apply(Chicago_RES$fert.rate.mcmc,2,quantile,probs = .025)
+BI.high.ferc = apply(Chicago_RES$fert.rate.mcmc,2,quantile,probs = .975)
 
 
 require(ggplot2)
@@ -104,8 +104,8 @@ ggplot(ferc_post, aes(x=age, y=mean_ferc)) +
 ggsave("./figs/Harv_reconstruct/ferc.jpg")
 
 mean.surv = apply(Chicago_RES$surv.prop.mcmc,2,mean)
-BI.low.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .05)
-BI.high.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .95)
+BI.low.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .025)
+BI.high.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .975)
 
 
 require(ggplot2)
@@ -118,8 +118,8 @@ ggplot(surv_post, aes(x=age, y=mean_surv)) +
 ggsave("./figs/Harv_reconstruct/surv_post.jpg")
 
 mean.harv = apply(Chicago_RES$H.mcmc,2,mean)
-BI.low.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .05)
-BI.high.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .95)
+BI.low.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .025)
+BI.high.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .975)
 
 
 require(ggplot2)
