@@ -5,7 +5,7 @@ Ferc = matrix(c(0,1.3,1.5),nrow = 3,ncol = 1)
 Harvpar = as.matrix(c(0.2,0.15,0.15))
 non0ferc = c(2,3)
 nage = 3
-aK0 = 0
+aK0 = 1/1000
 period = 10
 #Survival_inhomo = matrix( rep((Survival),period),nrow = nage,ncol = period )
 #Ferc_inhomo = matrix( rep((Ferc),period),nrow = nage,ncol = period )
@@ -119,7 +119,7 @@ ggplot(ferc_post, aes(x=age, y=mean_ferc)) +
   geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
   geom_line() +
   geom_point()
-#ggsave("./ferc.jpg")
+ggsave("./ferc.jpg")
 
 mean.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,mean)
 BI.low.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,quantile,probs = .025)
@@ -127,7 +127,7 @@ BI.high.surv = apply(SIMULATION_RESDD$surv.prop.mcmc,2,quantile,probs = .975)
 
 
 require(ggplot2)
-surv_post = data.frame(age = 1:8,mean_surv = mean.surv,BI_low = BI.low.surv,BI_high = BI.high.surv)
+surv_post = data.frame(age = 1:3,mean_surv = mean.surv,BI_low = BI.low.surv,BI_high = BI.high.surv)
 write.csv(surv_post,"./figs/Simu/surv_post.csv")
 ggplot(surv_post, aes(x=age, y=mean_surv)) + 
   geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +

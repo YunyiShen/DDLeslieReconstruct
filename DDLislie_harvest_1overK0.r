@@ -25,7 +25,7 @@ DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
     D = (1-null)*den + null
   }
   else{
-    D = 1-(1-null)* aK0 * Xn/(E0)
+    D = 1-(1-null)* aK0 * Xn
   }
   return(as.numeric(D))
 } #checked 10/24/2018
