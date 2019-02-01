@@ -42,8 +42,9 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
 	I = matrix(0,length(data_n),length(data_n))	
 	diag(I) = 1
     X_n1 = (1-H) * (data_n/H)
-    D = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0, null = null)
-	data_n1 = H * (Lislie %*% (D * X_n1) + X_n1)
+    #D = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0, null = null)
+	Lislie[1,] = (1-aK0 * sum( X_n1)) * Lislie[1,]
+	data_n1 = H * (Lislie %*% (X_n1))
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018
