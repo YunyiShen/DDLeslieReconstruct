@@ -21,7 +21,7 @@ DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
   nage = length(Xn)
   #D = matrix(0,ncol = nage,nrow = nage)
   if(global){
-    den = as.matrix( 1-aK0 * sum(Xn))
+    den = as.matrix( 1-t(aK0) %*% (Xn))
     D = (1-null)*den + null
   }
   else{
@@ -42,9 +42,9 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
 	I = matrix(0,length(data_n),length(data_n))	
 	diag(I) = 1
     X_n1 = (1-H) * (data_n/H)
-    #D = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0, null = null)
-	Lislie[1,] = (1-aK0 * sum( X_n1)) * Lislie[1,]
-	data_n1 = H * (Lislie %*% (X_n1))
+    D = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0, null = null)
+	#Lislie[1,] = (1-as.numeric(aK0) * ( X_n1[1,])) * (Lislie[1,])
+	data_n1 = H * (Lislie %*% (D * X_n1)+X_n1)
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018
@@ -424,7 +424,7 @@ HDDLislie.sampler <-
 	  if(estaK0){
 		aK0.mcmc =
           mcmc(matrix(nrow = n.stored
-                      ,ncol = 1)
+                      ,ncol = length(mean.aK0))
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(aK0.mcmc) = NULL
@@ -956,7 +956,7 @@ HDDLislie.sampler <-
 
       ##...... Carrying Capacity ......##
 	if(estaK0){
-	  prop.aK0 = curr.aK0 + rnorm(1, 0, sqrt(prop.vars$aK0))
+	  prop.aK0 = curr.aK0 + rnorm(length(curr.aK0), 0, sqrt(prop.vars$aK0))
 	  
 	        if(homo){
 				full.proj =
