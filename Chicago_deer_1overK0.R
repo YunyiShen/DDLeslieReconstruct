@@ -33,7 +33,7 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 300, mean.f = as.matr
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = T)
 
 
-plot(Chicago_RES$invK0.mcmc[,2])
+plot(Chicago_RES$invK0.mcmc[,1])
 hist(Chicago_RES$invK0.mcmc)
 invK0_post = data.frame(invK0 = Chicago_RES$invK0.mcmc)
 
