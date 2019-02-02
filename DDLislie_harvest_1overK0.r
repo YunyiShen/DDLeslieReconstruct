@@ -21,7 +21,7 @@ DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
   nage = length(Xn)
   #D = matrix(0,ncol = nage,nrow = nage)
   if(global){
-    den = as.matrix( 1-t(aK0) %*% (Xn))
+    den = as.matrix( 1 + (aK0) * sum(Xn) )
     D = (1-null)*den + null
   }
   else{
@@ -43,12 +43,13 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
   I = matrix(0,length(data_n),length(data_n))	
 	diag(I) = 1
     X_n1 = (1-H) * (data_n/H)
-    #D = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0, null = null)
-	Lislie[1,] =  as.numeric(1+c(aK0[1:nage,]) * ( X_n1)) *(Lislie[1,])
+    D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
+	  D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], null = null)
+    #Lislie[1,] =  as.numeric(1+c(aK0[1:nage,]) * ( X_n1)) *(Lislie[1,])
 	#Lislie[2:nage,] = as.numeric(1+t(aK0[1:nage+nage,]) %*% ( X_n1)) * Lislie[2:nage,]
 	#Lislie = as.numeric(1+t(aK0[1:nage,]) %*% ( X_n1)) * Lislie
-    #data_n1 = H * (Lislie %*% (D * X_n1)+X_n1)
-	data_n1 = H * (Lislie %*% ( X_n1))
+  data_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
+	#data_n1 = H * (Lislie %*% ( X_n1))
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018

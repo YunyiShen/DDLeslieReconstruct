@@ -24,16 +24,16 @@ prop.vars = list(fert.rate = matrix(.001,nrow = nage,ncol = period),
                  baseline.pop.count = matrix(.001,nrow = nage,ncol = 1))
 
 set.seed(42)
-Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 300, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 300, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .01, al.s = 1, be.s = .01
-                                   , al.aK0 = 1, be.aK0 = 4e-4, al.n = 1
+                                   , al.aK0 = 1, be.aK0 = .01, al.n = 1
                                    , be.n = .1, al.H = 1, be.H = .1
-                                   , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(rep(0,nage))
+                                   , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(rep(0,2))
                                    , mean.H = matrix(0.8,nage,1), Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = T)
 
 
-plot(Chicago_RES$invK0.mcmc[,8])
+plot(Chicago_RES$invK0.mcmc[,2])
 hist(Chicago_RES$invK0.mcmc)
 invK0_post = data.frame(invK0 = Chicago_RES$invK0.mcmc)
 
@@ -66,7 +66,7 @@ for(i in 1:8){
   temp = data.frame(age = i,mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1:14)
   har_data = rbind(har_data,temp)
 }
-
+require(ggplot2)
 
 for(i in 1:8){
   temp1 = data.frame(point = "model predict",mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1:14)
