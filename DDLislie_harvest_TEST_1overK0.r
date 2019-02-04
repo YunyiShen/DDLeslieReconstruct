@@ -5,18 +5,18 @@ Ferc = matrix(c(0,1.3,1.5),nrow = 3,ncol = 1)
 Harvpar = as.matrix(c(0.2,0.15,0.15))
 non0ferc = c(2,3)
 nage = 3
-aK0 = 1/1000
+aK0 = c(-1/1000,-1/1000)
 period = 10
 #Survival_inhomo = matrix( rep((Survival),period),nrow = nage,ncol = period )
 #Ferc_inhomo = matrix( rep((Ferc),period),nrow = nage,ncol = period )
 
 ### Test of helper functions, DONE 0122
-Lislie = getLislie(Survival,Ferc,T)
+Lislie = getLislie(Survival,Ferc,F)
 H = GetHarvest(Harvpar,nage)
 H_prime = GetHarvest(0.05,nage) # age imspecific harvest rate
 D = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),aK0,F)
 I = DensityDependcy(T,c(1,1,1),E0=c(0.8,.1,0.1),aK0,T)
-ProjectHarvest_helper(c(1,1,1), Lislie, Harvpar, global=T, E0=NULL, aK0=aK0, null = F)
+ProjectHarvest_helper(c(5,5,5), Lislie, Harvpar, global=T, E0=NULL, aK0=aK0, null = F)
 data_homo = 
   ProjectHarvest_homo(Survival=Survival,Harvpar=Harvpar,Ferc=Ferc,E0=NULL,aK0=aK0,global = T,null=F,bl=c(10,10,10),period = period,nage)
 data_homo = data_homo + matrix(rnorm(nrow(data_homo)*ncol(data_homo)),nrow = nrow(data_homo),ncol(data_homo))
@@ -38,7 +38,7 @@ Harv.data = floor(data_homo) # this harv have density dependency
 prop.vars = list(fert.rate = matrix(.01,nrow = length(non0ferc),ncol = period),
                  surv.prop = matrix(.01,nrow = nage, ncol = period),
                  H = matrix(.01,nrow = nage,ncol = 1),
-                 aK0=.0001,
+                 aK0=.001,
                  baseline.pop.count = matrix(.01,nrow = nage,ncol = 1)) # should be a list, fert.rate for all age classes can give birth to new 
 proj.periods = (ncol(Harv.data)-1)
 ptm = proc.time()
@@ -54,6 +54,7 @@ SIMULATION_RESDD = HDDLislie.sampler(n.iter = 50000, burn.in = 300, mean.f = mea
                                    , mean.H = mean.H, Harv.data = (Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, null = F, estaK0 = T,homo = T)
 mean.invK0 = apply(SIMULATION_RESDD$invK0.mcmc,2,mean)
+plot(SIMULATION_RESDD$invK0.mvmv[,1])
 hist(SIMULATION_RESDD$invK0.mcmc)
 sum(SIMULATION_RESDD$invK0.mcmc>0)/50000
 
