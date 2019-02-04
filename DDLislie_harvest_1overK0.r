@@ -85,7 +85,7 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Ferc, E0=NULL, aK0 = NULL, gl
   }
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
-    Lislie = getLislie(Survival[,i-1],Ferc[,i-1],minus1=T) # inhomo, Survival rows are age structure, cols are time
+    Lislie = getLislie(Survival[,i-1],Ferc[,i-1],minus1=F) # inhomo, Survival rows are age structure, cols are time
     Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, aK0=aK0, H=Harvpar,null = null)
   }
   return(Harvest)
