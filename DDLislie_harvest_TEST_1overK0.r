@@ -38,7 +38,7 @@ Harv.data = floor(data_homo) # this harv have density dependency
 prop.vars = list(fert.rate = matrix(.01,nrow = length(non0ferc),ncol = period),
                  surv.prop = matrix(.01,nrow = nage, ncol = period),
                  H = matrix(.01,nrow = nage,ncol = 1),
-                 aK0=.001,
+                 aK0=1e-7,
                  baseline.pop.count = matrix(.01,nrow = nage,ncol = 1)) # should be a list, fert.rate for all age classes can give birth to new 
 proj.periods = (ncol(Harv.data)-1)
 ptm = proc.time()
@@ -46,15 +46,15 @@ ptm = proc.time()
 ### SIMULATION START HERE ###
 
  ## statistical inference of 1/K0
-SIMULATION_RESDD = HDDLislie.sampler(n.iter = 50000, burn.in = 300, mean.f = mean.f
+SIMULATION_RESDD = HDDLislie.sampler(n.iter = 5000, burn.in = 300, mean.f = mean.f
                                    ,al.f = 1, be.f = .1, al.s = 1, be.s = .1
-                                   , al.aK0 = 1, be.aK0 = 4e-6, al.n = 1
+                                   , al.aK0 = 1, be.aK0 = .01, al.n = 1
                                    , be.n = .1, al.H = 1, be.H = .1
-                                   , mean.s = mean.s, mean.b=mean.b,mean.aK0 = 0
+                                   , mean.s = mean.s, mean.b=mean.b,mean.aK0 = c(0,0)
                                    , mean.H = mean.H, Harv.data = (Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, null = F, estaK0 = T,homo = T)
 mean.invK0 = apply(SIMULATION_RESDD$invK0.mcmc,2,mean)
-plot(SIMULATION_RESDD$invK0.mvmv[,1])
+plot(SIMULATION_RESDD$invK0.mcmc[,1])
 hist(SIMULATION_RESDD$invK0.mcmc)
 sum(SIMULATION_RESDD$invK0.mcmc>0)/50000
 
