@@ -41,6 +41,7 @@ GetHarvest = function(Harvpar,nage){
 ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
 	nage = ncol(Lislie)
   I = matrix(0,length(data_n),length(data_n))	
+  H = as.numeric(H)
 	diag(I) = 1
     X_n1 = (1-H) * (data_n/H)
     D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
@@ -63,7 +64,7 @@ ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, aK0 = NULL, glob
   Harvest = matrix(0,nage,period + 1)
   Harvest[,1] = bl 
   if(length(E0)==0){
-	E0 = (bl/Harvpar)
+	E0 = (bl/as.numeric( Harvpar))
 	E0 = E0/(sum(E0))
   }
   else E0 = E0/(sum(E0))
@@ -572,7 +573,7 @@ HDDLislie.sampler <-
     #.. Set current projection: base on initial values # homo or not is important, determin it use homo = T
 	if(homo){
 	  log.curr.proj =
-        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric(invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
 	}
 	else{
 	  log.curr.proj =
@@ -661,7 +662,7 @@ HDDLislie.sampler <-
 		if(homo){
 			full.proj =
 				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.prop.f) #<-- use proposal
-				, E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
+				, E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric( invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
 		}
 		else{
 			full.proj =
@@ -779,7 +780,7 @@ HDDLislie.sampler <-
             if(homo){
 				full.proj =
 				(ProjectHarvest_homo(Survival = invlogit(logit.prop.s) #<-- use proposal
-				, Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
+				, Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric(invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
@@ -884,7 +885,7 @@ HDDLislie.sampler <-
       if(homo){
 				full.proj =
 				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.prop.H)#<-- use proposal
-				,Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.prop.H) , period = proj.periods, nage = nage))
+				,Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric( invlogit(logit.prop.H)) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
@@ -968,7 +969,7 @@ HDDLislie.sampler <-
 	        if(homo){
 				full.proj =
 				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = prop.aK0 #<-- use proposal
-				, global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
+				, global = global, null = null, bl = exp(log.curr.b) * as.numeric( invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
@@ -1065,7 +1066,7 @@ HDDLislie.sampler <-
       #   ** Don't allow negative population
 	        if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.prop.b) * invlogit(logit.curr.H) #<-- use proposal
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.prop.b) * as.numeric( invlogit(logit.curr.H)) #<-- use proposal
 				, period = proj.periods, nage = nage))
 			}
 			else{
@@ -1522,7 +1523,7 @@ HDDLislie.sampler <-
       ## ------- Store current population ------- ##
 			if(homo){
 				full.proj =
-				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H) , period = proj.periods, nage = nage))
+				(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Ferc=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric( invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
 			}
 			else{
 				full.proj =
