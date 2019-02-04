@@ -443,7 +443,7 @@ HDDLislie.sampler <-
       # Harvest proportion, can be either time homo or not
       H.mcmc =
           mcmc(matrix(nrow = n.stored
-                      ,ncol = nrow(start.H) * ntimes)
+                      ,ncol = length(start.H) * ntimes)
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(H.mcmc) = NULL
@@ -870,7 +870,7 @@ HDDLislie.sampler <-
 
         #.. make a matrix conformable w rate matrix
         prop.H.mat <-
-            matrix(0, nrow = nrow(logit.curr.H), ncol = ncol(logit.curr.H))
+            matrix(0, nrow = length(logit.curr.H), ncol = 1)
         prop.H.mat[j] <- rnorm(1, 0, sqrt(prop.vars$H[j])) # if need age-imspecific harvest, simply give a 1 by 1 start.H
 
         #.. make proposal

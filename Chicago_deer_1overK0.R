@@ -29,7 +29,9 @@ Chicago_RES = HDDLislie.sampler( n.iter = 10000, burn.in = 100, mean.f = as.matr
                                    , al.aK0 = 1, be.aK0 = .01, al.n = 1
                                    , be.n = .05, al.H = 1, be.H = .05
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(rep(0,2))
-                                   , mean.H = matrix(0.8,nage,1), Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
+                                   #, mean.H = matrix(0.8,nage,1)
+                                   , mean.H = 0.8
+                                   , Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = T)
 
 
