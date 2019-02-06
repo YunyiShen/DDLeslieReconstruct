@@ -42,8 +42,13 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
 	nage = ncol(Lislie)
   I = matrix(0,length(data_n),length(data_n))	
   H = as.numeric(H)
+  H_logit = logitf(H)
+  
+  
 	diag(I) = 1
     X_n1 = (1-H) * (data_n/H)
+    DDH = (1+aK0[3]*sum(X_n1))*H_logit
+    H = invlogit(DDH)
     D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
 	  D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], null = null)
     #Lislie[1,] =  as.numeric(1+c(aK0[1:nage,]) * ( X_n1)) *(Lislie[1,])

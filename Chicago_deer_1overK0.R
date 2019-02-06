@@ -24,19 +24,19 @@ prop.vars = list(fert.rate = matrix(.01,nrow = nage,ncol = period),
                  baseline.pop.count = matrix(.01,nrow = nage,ncol = 1))
 
 set.seed(42)
-Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 100, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 300, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .05, al.s = 1, be.s = .05
-                                   , al.aK0 = 1, be.aK0 = .01, al.n = 1
+                                   , al.aK0 = 1, be.aK0 = 1e-4, al.n = 1
                                    , be.n = .05, al.H = 1, be.H = .05
-                                   , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(rep(0,2))
-                                   , mean.H = matrix(0.8,nage,1)
+                                   , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(rep(0,3))
+                                   , mean.H = matrix(0.6,nage,1)
                                    #, mean.H = 0.6
                                    , Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = T)
 
 
 br_K0 = Chicago_RES$invK0.mcmc
-plot(Chicago_RES$invK0.mcmc[,1])
+plot(Chicago_RES$invK0.mcmc[,2])
 hist(Chicago_RES$invK0.mcmc)
 invK0_post = data.frame(invK0 = Chicago_RES$invK0.mcmc)
 
@@ -44,7 +44,7 @@ ggplot(invK0_post,aes(x=invK0)) +
   #geom_histogram(aes(y=..density..), colour="black", fill="white")+
   geom_density(alpha=.05) +
   geom_vline(xintercept = 0)
-ggsave("./figs/Harv_reconstruct/invK0post.jpg")
+ggsave("./figs/temp/invK0post.jpg")
 
 mean.harv = apply(Chicago_RES$lx.mcmc,2,mean)
 mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
@@ -76,10 +76,10 @@ for(i in 1:8){
   temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:15]),low =t( Harv.data[i,2:15]),high = t(Harv.data[i,2:15]),time = 1:14)
   colnames(temp2) = colnames(temp1)
   temp = rbind(temp1,temp2)
-  write.csv(temp,paste0("./figs/Harv_reconstruct/age",i,".csv"))
+  write.csv(temp,paste0("./figs/temp/age",i,".csv"))
   rm(temp1)
   rm(temp2)
-  filename = paste0("./figs/Harv_reconstruct/age",i,".jpg")
+  filename = paste0("./figs/temp/age",i,".jpg")
   #jpeg(filename)
   ggplot(data.frame(temp),aes(x=time, y=mean, colour = point)) + 
     geom_errorbar(aes(ymin=low, ymax=high), width=.1) +
@@ -100,12 +100,12 @@ BI.high.ferc = apply(Chicago_RES$fert.rate.mcmc,2,quantile,probs = .975)
 
 require(ggplot2)
 ferc_post = data.frame(age = 1:8,mean_ferc = mean.ferc,BI_low = BI.low.ferc,BI_high = BI.high.ferc)
-write.csv(ferc_post,paste0("./figs/Harv_reconstruct/ferc_post",".csv"))
+write.csv(ferc_post,paste0("./figs/temp/ferc_post",".csv"))
 ggplot(ferc_post, aes(x=age, y=mean_ferc)) + 
   geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
   geom_line() +
   geom_point()
-ggsave("./figs/Harv_reconstruct/ferc.jpg")
+ggsave("./figs/temp/ferc.jpg")
 
 mean.surv = apply(Chicago_RES$surv.prop.mcmc,2,mean)
 BI.low.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .025)
@@ -114,12 +114,12 @@ BI.high.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .975)
 
 require(ggplot2)
 surv_post = data.frame(age = 1:8,mean_surv = mean.surv,BI_low = BI.low.surv,BI_high = BI.high.surv)
-write.csv(surv_post,"./figs/Harv_reconstruct/surv_post.csv")
+write.csv(surv_post,"./figs/temp/surv_post.csv")
 ggplot(surv_post, aes(x=age, y=mean_surv)) + 
   geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
   geom_line() +
   geom_point()
-ggsave("./figs/Harv_reconstruct/surv_post.jpg")
+ggsave("./figs/temp/surv_post.jpg")
 
 mean.harv = apply(Chicago_RES$H.mcmc,2,mean)
 BI.low.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .025)
@@ -128,9 +128,9 @@ BI.high.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .975)
 
 require(ggplot2)
 harv_post = data.frame(age = 1:8,mean_Harv = mean.harv,BI_low = BI.low.harv,BI_high = BI.high.harv)
-write.csv(harv_post,"./figs/Harv_reconstruct/harv_post.csv")
+write.csv(harv_post,"./figs/temp/harv_post.csv")
 ggplot(harv_post, aes(x=age, y=mean_Harv)) + 
   geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
   geom_line() +
   geom_point()
-ggsave("./figs/Harv_reconstruct/harv_post.jpg")
+ggsave("./figs/temp/harv_post.jpg")
