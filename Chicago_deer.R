@@ -17,8 +17,8 @@ Harv.data = read.csv("./data/Culling.csv")
 Harv.data = Harv.data[,-1]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.7
 
-Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 500, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = .01
+Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 500, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
                                    , al.K0 = 1, be.K0 = .01, al.n = 1
                                    , be.n = .0001, al.H = 1, be.H = .01
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.K0 = matrix(700,1,1)
