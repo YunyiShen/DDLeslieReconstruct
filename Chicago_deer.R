@@ -5,7 +5,7 @@ period = 14
 
 prop.vars = list(fert.rate = matrix(.1,nrow = nage,ncol = period),
                  surv.prop = matrix(1,nrow = nage, ncol = period),
-                 H = matrix(1,nrow = nage,ncol = 1),
+                 H = matrix(1,nrow = nage,ncol = period),
                  K0=.1,
                  baseline.pop.count = matrix(1,nrow = nage,ncol = 1))
 
@@ -17,12 +17,12 @@ Harv.data = read.csv("./data/Culling.csv")
 Harv.data = Harv.data[,-1]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.7
 
-Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 500, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = 1
-                                   , al.K0 = 1, be.K0 = .001, al.n = 1
-                                   , be.n = .001, al.H = 1, be.H = .001
+Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 500, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = .01
+                                   , al.K0 = 1, be.K0 = .01, al.n = 1
+                                   , be.n = .0001, al.H = 1, be.H = .01
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.K0 = matrix(700,1,1)
-                                   , mean.H = matrix(0.7,nage,1), Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
+                                   , mean.H = matrix(0.7,nage,period), Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, estFer = T,nage = nage)
 
 mean.surv = apply(Chicago_RES$surv.prop.mcmc,2,mean)
@@ -32,6 +32,7 @@ mean.harv = apply(Chicago_RES$lx.mcmc,2,mean)
 mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
 #mean.harv.matrix = cbind(mean.harv.matrix)
 mean.total.harv = apply(mean.harv.matrix,2,sum)
+mean.harv.por = apply(Chicago_RES$H.mcmc,2,mean)
 
 mean.age.surv = list()
 mean.age.ferc = list()
