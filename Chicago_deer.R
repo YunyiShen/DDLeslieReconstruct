@@ -18,7 +18,7 @@ Harv.data = Harv.data[,-1]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.7
 
 Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 500, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
+                                   ,al.f = 1, be.f = .01, al.s = 1, be.s = .01
                                    , al.K0 = 1, be.K0 = .01, al.n = 1
                                    , be.n = .0001, al.H = 1, be.H = .01
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.K0 = matrix(700,1,1)
@@ -30,38 +30,46 @@ mean.ferc = apply(Chicago_RES$fert.rate.mcmc,2,mean)
 
 mean.harv = apply(Chicago_RES$lx.mcmc,2,mean)
 mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
-#mean.harv.matrix = cbind(mean.harv.matrix)
+mean.harv.matrix = cbind(mean.harv.matrix)
 mean.total.harv = apply(mean.harv.matrix,2,sum)
 mean.harv.por = apply(Chicago_RES$H.mcmc,2,mean)
+mean.harv.por_matrix = matrix(mean.harv.por,nrow = nage,ncol = period)
+
+mean.living = (mean.harv.matrix/mean.harv.por_matrix)*(1-mean.harv.por_matrix)
+mean.living.total = apply(mean.living,2,sum)
 
 mean.age.surv = list()
 mean.age.ferc = list()
+mean.age.harv = list()
 DDsurv = list()
 DDferc = list()
+harv_surv = list()
+harv_ferc = list()
 
-for(i in 1:7){
+for(i in 1:8){
   
-  mean.age.surv[[i]] = mean.surv[(1:(nage*period))%%nage==i]
-  mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==i]
+  mean.age.surv[[i]] = mean.surv[(1:(nage*period))%%nage==(i%%nage)]
+  mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==(i%%nage)]
+  mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
   data.temp = data.frame(mean.age.surv = mean.age.surv[[i]]
                          ,mean.age.ferc = mean.age.ferc[[i]]
-                         ,mean.total.harv)
+                         ,mean.total.harv
+                         ,mean.age.harv = mean.age.harv[[i]])
+  
   DDsurv[[i]] = lm(mean.age.surv~mean.total.harv,data = data.temp)
   DDferc[[i]] = lm(mean.age.ferc~mean.total.harv,data = data.temp)
+  harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp)
+  harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp)
   
 }
 
-mean.age.surv[[8]] = mean.surv[(1:(nage*period))%%nage==0]
-mean.age.ferc[[8]] = mean.ferc[(1:(nage*period))%%nage==0]
-data.temp = data.frame(mean.age.surv = mean.age.surv[[8]]
-                       ,mean.age.ferc = mean.age.ferc[[8]]
-                       ,mean.total.harv)
-DDsurv[[8]] = lm(mean.age.surv~mean.total.harv,data = data.temp)
-DDferc[[8]] = lm(mean.age.ferc~mean.total.harv,data = data.temp)
+
 #mean.surv.1 = mean.surv[(1:(nage*period))%%nage==1]
 
 lapply(DDsurv, summary)
 lapply(DDferc, summary)
+lapply(harv_surv, summary)
+lapply(harv_ferc, summary)
 
 
 #mean.harv.2 = mean.harv[(1:(nage*period))%%nage==2]
