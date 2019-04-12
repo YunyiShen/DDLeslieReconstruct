@@ -19,15 +19,15 @@ mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.8
 
 prop.vars = list(fert.rate = matrix(.01,nrow = nage,ncol = period),
                  surv.prop = matrix(.01,nrow = nage, ncol = period),
-                 H = matrix(.01,nrow = nage,ncol = 1),
+                 H = matrix(.01,nrow = nage,ncol = period),
                  aK0=1e-5,
                  baseline.pop.count = matrix(.01,nrow = nage,ncol = 1))
 
 set.seed(42)
-Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 300, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 1000, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
                                    , al.aK0 = 1, be.aK0 = 1e-2, al.n = 1
-                                   , be.n = .005, al.H = 1, be.H = .05
+                                   , be.n = .0005, al.H = 1, be.H = .05
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(rep(0,3))
                                    , mean.H = matrix(0.8,nage,period)
                                    #, mean.H = 0.6
