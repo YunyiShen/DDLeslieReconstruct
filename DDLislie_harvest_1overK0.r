@@ -47,15 +47,15 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
   
 	diag(I) = 1
     X_n1 = (1-H) * (data_n/H)
-    DDH = (1+aK0[3]*sum(X_n1))*H_logit
-    H = invlogit(DDH)
+    #DDH = (1+aK0[3]*sum(X_n1))*H_logit
+    #H = invlogit(DDH)
     D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
 	  D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], null = null)
     #Lislie[1,] =  as.numeric(1+c(aK0[1:nage,]) * ( X_n1)) *(Lislie[1,])
 	#Lislie[2:nage,] = as.numeric(1+t(aK0[1:nage+nage,]) %*% ( X_n1)) * Lislie[2:nage,]
 	#Lislie = as.numeric(1+t(aK0[1:nage,]) %*% ( X_n1)) * Lislie
-  data_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
-	#data_n1 = H * (Lislie %*% ( X_n1))
+  #data_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
+	data_n1 = H * (Lislie %*% ( X_n1))
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018
@@ -156,8 +156,8 @@ log.lhood =function(log.n.census, log.n.hat, ll.var){
 
     ##-- value of log likelihoods --##
 
-    density = dnorm(log.n.census,
-                     mean = log.n.hat,
+    density = dnorm(log.n.hat,
+                     mean = log.n.census,
                      sd = sqrt(ll.var),
                      log = TRUE
                      )
