@@ -54,8 +54,8 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
     #Lislie[1,] =  as.numeric(1+c(aK0[1:nage,]) * ( X_n1)) *(Lislie[1,])
 	#Lislie[2:nage,] = as.numeric(1+t(aK0[1:nage+nage,]) %*% ( X_n1)) * Lislie[2:nage,]
 	#Lislie = as.numeric(1+t(aK0[1:nage,]) %*% ( X_n1)) * Lislie
-  #data_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
-	data_n1 = H * (Lislie %*% ( X_n1))
+  data_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
+	#data_n1 = H * (Lislie %*% ( X_n1))
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018
@@ -449,7 +449,7 @@ HDDLislie.sampler <-
       # Harvest proportion, can be either time homo or not
       H.mcmc =
           mcmc(matrix(nrow = n.stored
-                      ,ncol = length(start.H) * ntimes)
+                      ,ncol = nrow(start.H) * ntimes)
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(H.mcmc) = NULL
@@ -542,13 +542,13 @@ HDDLislie.sampler <-
       
     }
     else{
-      log.curr.f =  (!estFer)*log(Ferc) #<-- log(0) stored as "-Inf". Gets
-      log.prop.f =  (!estFer)*log(Ferc) #    converted to 0 under exponentiation
+      log.curr.f =  (!estFer)*log(start.f) #<-- log(0) stored as "-Inf". Gets
+      log.prop.f =  (!estFer)*log(start.f) #    converted to 0 under exponentiation
     }
     logit.curr.s = logitf(start.s)
 	  logit.curr.H = logitf(start.H)
-	  if(estaK0){curr.aK0=(start.aK0)}
-	  else{curr.aK0=(aK0)}
+	  curr.aK0=(start.aK0)
+	  #curr.aK0=(aK0)}
     #curr.aK0 = estaK0 * log(start.aK0) + (!estaK0) * log(K0)
     log.curr.b = log(start.b)
 
@@ -1046,10 +1046,10 @@ HDDLislie.sampler <-
     } # close else after checking for negative population
 	}
       #.. Store proposed K0 matrix
-      if(k %% 1 == 0 && k > 0) aK0.mcmc[k,] <- as.vector((curr.aK0))    
+      if(k %% 1 == 0 && k > 0 && estaK0)  aK0.mcmc[k,] <- as.vector((curr.aK0))    
       
 # stop here for flu shot 10/22/2018	  17:07
-# restart here 10/22/2018 20:45. Left arm is So0o0o0o0o painful after the flu shot!!!!! 
+
 	  ##...... Baseline population ......##
 
       if(verb && identical(i%%1000, 0)) cat("\n", i, " Baseline")
