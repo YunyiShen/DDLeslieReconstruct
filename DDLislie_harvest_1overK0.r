@@ -51,11 +51,11 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
     #H = invlogit(DDH)
     D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
 	  D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], null = null)
-    #Lislie[1,] =  as.numeric(1+c(aK0[1:nage,]) * ( X_n1)) *(Lislie[1,])
-	#Lislie[2:nage,] = as.numeric(1+t(aK0[1:nage+nage,]) %*% ( X_n1)) * Lislie[2:nage,]
+    Lislie[1,] =  D_bir *(Lislie[1,])
+	  Lislie[2:nage,] = D_dea * Lislie[2:nage,]
 	#Lislie = as.numeric(1+t(aK0[1:nage,]) %*% ( X_n1)) * Lislie
-  data_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
-	#data_n1 = H * (Lislie %*% ( X_n1))
+  #ata_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
+	  data_n1 = H * (Lislie %*% ( X_n1))
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018
@@ -103,6 +103,52 @@ getLivingIdividuals = function(H,data){
   LivingIdividuals = apply(data,2,function(ww,H,IminusH){IminusH*(ww/H)},H=H,IminusH=IminusH)
   return(LivingIdividuals)
 } # checked 10/24/2018
+
+plotthings = function(YD_obj,pathsave="./figs/temp/age",nage,nperiod,years){
+  mean.harv = apply(YD_obj,2,mean)
+  mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
+  #harv_mean = data.frame(age = 1:8,mean.harv.matrix)
+  #mean.total.harv = apply(mean.harv.matrix,2,sum)
+  #plot(mean.total.harv)
+  
+  BI.low.harv = apply(YD_obj,2,quantile,probs = .025)
+  BI.low.harv.matrix = matrix(BI.low.harv,nrow = nage,ncol = period)
+  BI_harv_low = data.frame(age = 1:nage,BI.low.harv.matrix)
+  
+  
+  BI.high.harv = apply(YD_obj,2,quantile,probs = .975)
+  BI.high.harv.matrix = matrix(BI.high.harv,nrow = nage,ncol = period)
+  BI_harv_high = data.frame(age = 1:nage,BI.high.harv.matrix)
+  
+  har_data = data.frame(matrix(nrow = 1,ncol = 5))
+  colnames(har_data) = c("age","mean","low","high","time")
+  har_data = har_data[-1,]
+  
+  for(i in 1:nage){
+    temp = data.frame(age = i,mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = years)
+    har_data = rbind(har_data,temp)
+  }
+  require(ggplot2)
+  
+  for(i in 1:nage){
+    temp = data.frame(point = "model predict (95% CI)",mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = years)
+    #temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:12]),low =t( Harv.data[i,2:12]),high = t(Harv.data[i,2:12]),time = 1996:2006)
+    #colnames(temp2) = colnames(temp1)
+    #temp = rbind(temp1)
+    write.csv(temp,paste0(pathsave,i,".csv"))
+    #rm(temp1)
+    #rm(temp2)
+    filename = paste0(pathsave,i,".jpg")
+    #jpeg(filename)
+    ggplot(data.frame(temp),aes(x=time, y=mean, colour = point)) + 
+      geom_errorbar(aes(ymin=low, ymax=high), width=.1) +
+      #geom_line() +
+      geom_point()
+    #Sys.sleep(5)
+    ggsave(filename, plot = last_plot())
+    #dev.off()
+  }
+}
 
 
 ########

@@ -33,7 +33,7 @@ mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
 mean.harv.matrix = cbind(mean.harv.matrix)
 mean.total.harv = apply(mean.harv.matrix,2,sum)
 mean.harv.por = apply(Chicago_RES$H.mcmc,2,mean)
-#mean.harv.por_matrix = matrix(mean.harv.por,nrow = nage,ncol = period)
+mean.harv.por_matrix = matrix(mean.harv.por,nrow = nage,ncol = period)
 
 mean.living = (mean.harv.matrix/mean.harv.por_matrix)*(1-mean.harv.por_matrix)
 mean.living.total = apply(mean.living,2,sum)
@@ -43,6 +43,7 @@ mean.age.ferc = list()
 mean.age.harv = list()
 DDsurv = list()
 DDferc = list()
+DDharv = list()
 harv_surv = list()
 harv_ferc = list()
 
@@ -50,16 +51,17 @@ for(i in 1:8){
   
   mean.age.surv[[i]] = mean.surv[(1:(nage*period))%%nage==(i%%nage)]
   mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==(i%%nage)]
-  #mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
+  mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
   data.temp = data.frame(mean.age.surv = mean.age.surv[[i]]
                          ,mean.age.ferc = mean.age.ferc[[i]]
                          ,mean.total.harv
-                         ,mean.age.harv = mean.harv.por)# = mean.age.harv[[i]])
+                         ,mean.age.harv  = mean.age.harv[[i]])
   
-  DDsurv[[i]] = lm(mean.age.surv~mean.total.harv,data = data.temp)
-  DDferc[[i]] = lm(mean.age.ferc~mean.total.harv,data = data.temp)
-  harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp)
-  harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp)
+  DDsurv[[i]] = lm(mean.age.surv~mean.total.harv,data = data.temp[-1,])
+  DDferc[[i]] = lm(mean.age.ferc~mean.total.harv,data = data.temp[-1,])
+  DDharv[[i]] = lm(mean.age.harv~mean.total.harv,data = data.temp[-1,])
+  harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp[-1,])
+  harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp[-1,])
   
 }
 
@@ -68,6 +70,7 @@ for(i in 1:8){
 
 lapply(DDsurv, summary)
 lapply(DDferc, summary)
+lapply(DDharv, summary)
 lapply(harv_surv, summary)
 lapply(harv_ferc, summary)
 
