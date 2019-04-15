@@ -1,6 +1,6 @@
 source('DDLislie_harvest_1overK0.r')
 nage = 8
-period = 11
+period = 14
 
 
 prop.vars = list(fert.rate = matrix(.01,nrow = nage,ncol = period),
@@ -10,14 +10,14 @@ prop.vars = list(fert.rate = matrix(.01,nrow = nage,ncol = period),
                  baseline.pop.count = matrix(.01,nrow = nage,ncol = 1))
 
 mean.s = read.csv("./data/Survival_mean_Etter.csv")
-mean.s = mean.s[,-(1:4)]
+mean.s = mean.s[,-(1)]
 mean.f = read.csv("./data/Fecundity_mean.csv")
-mean.f = mean.f[,-(1:4)]
+mean.f = mean.f[,-(1)]
 Harv.data = read.csv("./data/Culling.csv")
-Harv.data = Harv.data[,-(1:4)]
+Harv.data = Harv.data[,-(1)]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.8
-mean.b[7]=10
-mean.H = matrix(c(0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
+#mean.b[7]=10
+mean.H = matrix(c(.5,.4,.8,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
 mean.H = matrix(rep(mean.H,nage),nage,period,byrow = T)
 mean.H[1,]=0.5*mean.H[1,]
 
@@ -29,10 +29,10 @@ prop.vars = list(fert.rate = matrix(.1,nrow = nage,ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 1000, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .5, al.s = 1, be.s = .5
+Chicago_RES = HDDLislie.sampler( n.iter = 10000, burn.in = 1000, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = .01, al.s = 1, be.s = .1
                                    , al.aK0 = 1, be.aK0 = 1e-2, al.n = 1
-                                   , be.n = .5, al.H = 1, be.H = .5
+                                   , be.n = .01, al.H = 1, be.H = .1
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(0,1,2)
                                    , mean.H = (mean.H)
                                    #, mean.H = 0.6
@@ -96,52 +96,6 @@ for(i in 1:8){
   #dev.off()
 }
 
-
-
-
-mean.ferc = apply(Chicago_RES$fert.rate.mcmc,2,mean)
-BI.low.ferc = apply(Chicago_RES$fert.rate.mcmc,2,quantile,probs = .025)
-BI.high.ferc = apply(Chicago_RES$fert.rate.mcmc,2,quantile,probs = .975)
-
-
-require(ggplot2)
-ferc_post = data.frame(age = 1:8,mean_ferc = mean.ferc,BI_low = BI.low.ferc,BI_high = BI.high.ferc)
-write.csv(ferc_post,paste0("./figs/temp/ferc_post",".csv"))
-ggplot(ferc_post, aes(x=age, y=mean_ferc)) + 
-  geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
-  geom_line() +
-  geom_point()
-ggsave("./figs/temp/ferc.jpg")
-
-mean.surv = apply(Chicago_RES$surv.prop.mcmc,2,mean)
-BI.low.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .025)
-BI.high.surv = apply(Chicago_RES$surv.prop.mcmc,2,quantile,probs = .975)
-
-
-require(ggplot2)
-surv_post = data.frame(age = 1:8,mean_surv = mean.surv,BI_low = BI.low.surv,BI_high = BI.high.surv)
-write.csv(surv_post,"./figs/temp/surv_post.csv")
-ggplot(surv_post, aes(x=age, y=mean_surv)) + 
-  geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
-  geom_line() +
-  geom_point()
-ggsave("./figs/temp/surv_post.jpg")
-
-mean.harv = apply(Chicago_RES$H.mcmc,2,mean)
-BI.low.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .025)
-BI.high.harv = apply(Chicago_RES$H.mcmc,2,quantile,probs = .975)
-
-
-require(ggplot2)
-harv_post = data.frame(age = 1:8,mean_Harv = mean.harv,BI_low = BI.low.harv,BI_high = BI.high.harv)
-write.csv(harv_post,"./figs/temp/harv_post.csv")
-ggplot(harv_post, aes(x=age, y=mean_Harv)) + 
-  geom_errorbar(aes(ymin=BI_low, ymax=BI_high), width=.1) +
-  geom_line() +
-  geom_point()
-ggsave("./figs/temp/harv_post.jpg")
-
-
 living_inid = (Chicago_RES$lx.mcmc/Chicago_RES$H.mcmc)*(1-Chicago_RES$H.mcmc)
 
 plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",nage,period,1996:2006)
@@ -152,5 +106,7 @@ for(i in 1:period){
   total_living[,i] = rowSums(living_inid[,1:nage+(i-1)*nage])
   
 }
+plotthings(YD_obj=total_living,pathsave="./figs/temp/living_af_culling_all",1,period,1996:2006)
 
 plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=8,period,1996:2006)
+plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/ferc_age",nage=8,period,1996:2006)
