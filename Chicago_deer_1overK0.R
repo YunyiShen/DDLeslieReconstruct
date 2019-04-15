@@ -72,14 +72,14 @@ colnames(har_data) = c("age","mean","low","high","time")
 har_data = har_data[-1,]
 
 for(i in 1:8){
-  temp = data.frame(age = i,mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1996:2006)
+  temp = data.frame(age = i,mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1993:2006)
   har_data = rbind(har_data,temp)
 }
 require(ggplot2)
 
 for(i in 1:8){
   temp1 = data.frame(point = "model predict (95% CI)",mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1996:2006)
-  temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:12]),low =t( Harv.data[i,2:12]),high = t(Harv.data[i,2:12]),time = 1996:2006)
+  temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:12]),low =t( Harv.data[i,2:15]),high = t(Harv.data[i,2:15]),time = 1993:2006)
   colnames(temp2) = colnames(temp1)
   temp = rbind(temp1,temp2)
   write.csv(temp,paste0("./figs/temp/age",i,".csv"))
@@ -98,7 +98,7 @@ for(i in 1:8){
 
 living_inid = (Chicago_RES$lx.mcmc/Chicago_RES$H.mcmc)*(1-Chicago_RES$H.mcmc)
 
-plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",nage,period,1996:2006)
+plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",nage,period,1993:2006)
 
 total_living = matrix(0,nrow(living_inid),ncol = period)
 
@@ -106,7 +106,8 @@ for(i in 1:period){
   total_living[,i] = rowSums(living_inid[,1:nage+(i-1)*nage])
   
 }
-plotthings(YD_obj=total_living,pathsave="./figs/temp/living_af_culling_all",1,period,1996:2006)
+plotthings(YD_obj=total_living,pathsave="./figs/temp/living_af_culling_all",1,period,1993:2006)
 
-plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=8,period,1996:2006)
-plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/ferc_age",nage=8,period,1996:2006)
+plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=8,period,1993:2006)
+plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/ferc_age",nage=8,period,1993:2006)
+
