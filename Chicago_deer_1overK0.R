@@ -153,4 +153,4 @@ for(i in 1:period){
   
 }
 
-plotthings(YD_obj=(total_living),pathsave="./figs/temp/tol_living_af_culling",nage=1,period,1996:2006)
+plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=8,period,1996:2006)
