@@ -42,7 +42,8 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
 	nage = ncol(Lislie)
   I = matrix(0,length(data_n),length(data_n))	
   H = as.numeric(H)
-  H_logit = logitf(H)
+  H[2:nage]=H[2]
+  #H_logit = logitf(H)
   
   
 	diag(I) = 1

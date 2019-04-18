@@ -18,7 +18,7 @@ Harv.data = Harv.data[,-(1)]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.8
 #mean.b[7]=10
 mean.H = matrix(c(.5,.4,.8,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
-mean.H = matrix(rep(mean.H,nage),nage,period,byrow = T)
+mean.H = matrix(rep(mean.H,nage),2,period,byrow = T)
 mean.H[1,]=0.5*mean.H[1,]
 
 prop.vars = list(fert.rate = matrix(.1,nrow = nage,ncol = period),
@@ -29,7 +29,7 @@ prop.vars = list(fert.rate = matrix(.1,nrow = nage,ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 10000, burn.in = 1000, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 1000, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .01, al.s = 1, be.s = .1
                                    , al.aK0 = 1, be.aK0 = 1e-2, al.n = 1
                                    , be.n = .01, al.H = 1, be.H = .1
@@ -78,8 +78,8 @@ for(i in 1:8){
 require(ggplot2)
 
 for(i in 1:8){
-  temp1 = data.frame(point = "model predict (95% CI)",mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1996:2006)
-  temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:12]),low =t( Harv.data[i,2:15]),high = t(Harv.data[i,2:15]),time = 1993:2006)
+  temp1 = data.frame(point = "model predict (95% CI)",mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1993:2006)
+  temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:15]),low =t( Harv.data[i,2:15]),high = t(Harv.data[i,2:15]),time = 1993:2006)
   colnames(temp2) = colnames(temp1)
   temp = rbind(temp1,temp2)
   write.csv(temp,paste0("./figs/temp/age",i,".csv"))
@@ -95,7 +95,7 @@ for(i in 1:8){
   ggsave(filename, plot = last_plot())
   #dev.off()
 }
-
+H_full = 
 living_inid = (Chicago_RES$lx.mcmc/Chicago_RES$H.mcmc)*(1-Chicago_RES$H.mcmc)
 
 plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",nage,period,1993:2006)
