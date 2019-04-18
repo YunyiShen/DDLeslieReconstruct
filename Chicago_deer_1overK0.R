@@ -95,8 +95,20 @@ for(i in 1:8){
   ggsave(filename, plot = last_plot())
   #dev.off()
 }
-H_full = 
-living_inid = (Chicago_RES$lx.mcmc/Chicago_RES$H.mcmc)*(1-Chicago_RES$H.mcmc)
+H_full = 0 * Chicago_RES$lx.mcmc
+
+for(i in 1:period){
+  for(j in 1:nage){
+    ind = (i-1)*nage + j
+    plc = (i-1)*2 + 2 - (j==1)
+    H_full[,ind]=Chicago_RES$H.mcmc[,plc]
+    
+  }
+}
+
+
+
+living_inid = (Chicago_RES$lx.mcmc/H_full)*(1-H_full)
 
 plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",nage,period,1993:2006)
 
