@@ -17,8 +17,8 @@ Harv.data = read.csv("./data/Culling.csv")
 Harv.data = Harv.data[,-(1)]
 mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.8
 #mean.b[7]=10
-mean.H = matrix(c(.5,.4,.8,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
-mean.H = matrix(rep(mean.H,nage),2,period,byrow = T)
+mean.H = matrix(c(.8,.5,.4,.8,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
+mean.H = matrix(rep(mean.H,nage),2,period+1,byrow = T)
 mean.H[1,]=0.5*mean.H[1,]
 
 prop.vars = list(fert.rate = matrix(.1,nrow = nage,ncol = period),

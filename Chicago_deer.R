@@ -52,16 +52,16 @@ for(i in 1:8){
   mean.age.surv[[i]] = mean.surv[(1:(nage*period))%%nage==(i%%nage)]
   mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==(i%%nage)]
   mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
-  data.temp = data.frame(mean.age.surv = mean.age.surv[[i]]
-                         ,mean.age.ferc = mean.age.ferc[[i]]
-                         ,mean.living.total
-                         ,mean.age.harv  = mean.age.harv[[i]])
+  data.temp = data.frame(mean.age.surv = mean.age.surv[[i]][2:14]
+                         ,mean.age.ferc = mean.age.ferc[[i]][2:14]
+                         ,mean.living.total = mean.living.total[1:13]
+                         ,mean.age.harv  = mean.age.harv[[i]][2:14])
   
-  DDsurv[[i]] = lm(mean.age.surv~mean.living.total,data = data.temp[-4,])
-  DDferc[[i]] = lm(mean.age.ferc~mean.living.total,data = data.temp[-4,])
-  DDharv[[i]] = lm(mean.age.harv~mean.living.total,data = data.temp[-4,])
-  harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp[-4,])
-  harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp[-4,])
+  DDsurv[[i]] = lm(mean.age.surv~mean.living.total,data = data.temp)
+  DDferc[[i]] = lm(mean.age.ferc~mean.living.total,data = data.temp)
+  DDharv[[i]] = lm(mean.age.harv~mean.living.total,data = data.temp)
+  harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp)
+  harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp)
   
 }
 

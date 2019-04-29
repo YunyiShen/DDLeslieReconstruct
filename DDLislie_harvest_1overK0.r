@@ -38,16 +38,18 @@ GetHarvest = function(Harvpar,nage){
 } # checked 10/24/2018, if not age-specific, give a single Harvpar
 
 # Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
-ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
+ProjectHarvest_helper = function(data_n, Lislie, H_n,H_np1, global, E0, aK0, null = F){
 	nage = ncol(Lislie)
   I = matrix(0,length(data_n),length(data_n))	
-  H = as.numeric(H)
-  H[2:nage]=H[2]
+  H_n = as.numeric(H_n)
+  H_np1 = as.numeric(H_np1)
+  H_n[2:nage]=H_n[2]
+  H_np1[2:nage]=H_np1[2]
   #H_logit = logitf(H)
   
   
 	diag(I) = 1
-    X_n1 = (1-H) * (data_n/H)
+    X_n1 = (1-H_n) * (data_n/H_n)
     #DDH = (1+aK0[3]*sum(X_n1))*H_logit
     #H = invlogit(DDH)
     D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
@@ -56,7 +58,7 @@ ProjectHarvest_helper = function(data_n, Lislie, H, global, E0, aK0, null = F){
 	  Lislie[2:nage,] = D_dea * Lislie[2:nage,]
 	#Lislie = as.numeric(1+t(aK0[1:nage,]) %*% ( X_n1)) * Lislie
   #ata_n1 = H * (Lislie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
-	  data_n1 = H * (Lislie %*% ( X_n1))
+	  data_n1 = H_np1 * (Lislie %*% ( X_n1))
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018
@@ -75,7 +77,7 @@ ProjectHarvest_homo = function(Survival, Harvpar,Ferc, E0=NULL, aK0 = NULL, glob
   }
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
-	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, aK0=aK0, H=Harvpar,null = null) # project harvest from very initial
+	Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, aK0=aK0, H_n=Harvpar,H_np1 = Harvpar,null = null) # project harvest from very initial
   }              
   return(Harvest)
 } #checked 10/24/2018
@@ -92,7 +94,7 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Ferc, E0=NULL, aK0 = NULL, gl
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
     Lislie = getLislie(Survival[,i-1],Ferc[,i-1],minus1=F) # inhomo, Survival rows are age structure, cols are time
-    Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, aK0=aK0, H=Harvpar[,i-1],null = null)
+    Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Lislie = Lislie, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null)
   }
   return(Harvest)
 } # checked 10/24/2018
