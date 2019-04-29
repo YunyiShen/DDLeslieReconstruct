@@ -107,7 +107,7 @@ getLivingIdividuals = function(H,data){
   return(LivingIdividuals)
 } # checked 10/24/2018
 
-plotthings = function(YD_obj,pathsave="./figs/temp/age",nage,nperiod,years){
+plotthings = function(YD_obj,pathsave="./figs/temp/age",nage,period,years){
   mean.harv = apply(YD_obj,2,mean)
   mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
   #harv_mean = data.frame(age = 1:8,mean.harv.matrix)
@@ -498,7 +498,7 @@ HDDLislie.sampler <-
       # Harvest proportion, can be either time homo or not
       H.mcmc =
           mcmc(matrix(nrow = n.stored
-                      ,ncol = nrow(start.H) * ntimes)
+                      ,ncol = nrow(start.H) * (ntimes+!homo))
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(H.mcmc) = NULL
@@ -582,7 +582,7 @@ HDDLislie.sampler <-
 
 
     ## -------- Initialize -------- ## Restart here in 10/19/2018
-
+    cat("Initializing...")
     #.. Set current vitals and variances to inital values
     #   Take logs/logits here where required
     if(estFer){
@@ -683,11 +683,12 @@ HDDLislie.sampler <-
         cat("\n\n"
             ,"iter ", " quantity\n", "---- ", " --------"
             ,sep = "")
-          }
-	cat("Initializing...\n")
+    }
+    cat("done\n")
+	cat("Start sampling...\n")
     for(i in 1:(n.iter + burn.in)) {
-       if(i %% 100==0) cat("Iteration #",i,"out of",n.iter + burn.in,"total\n")
-
+       #if(i %% 100==0) cat("Iteration #",i,"out of",n.iter + burn.in,"total\n")
+      svMisc::progress(((i-1)/(n.iter + burn.in))*100,progress.bar = T)
       # k is the index into the storage objects
       k <- (i - burn.in - 1) / thin.by + 1
 
@@ -1683,7 +1684,7 @@ HDDLislie.sampler <-
                   ,start.vals = start.vals
                   ,alg.params = alg.params
                   )
-
+    cat("\n done \n")
     return(ret.list)
 # stop here 10/23/2018 15:51 start to test tomorrow.
 # TEST of code done here, start SIMULATION

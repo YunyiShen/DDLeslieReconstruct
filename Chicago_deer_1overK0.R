@@ -15,9 +15,9 @@ mean.f = read.csv("./data/Fecundity_mean.csv")
 mean.f = mean.f[,-(1)]
 Harv.data = read.csv("./data/Culling.csv")
 Harv.data = Harv.data[,-(1)]
-mean.b = (584 * Harv.data[,1]/sum(Harv.data[,1]))/0.8
+mean.b = (977 * Harv.data[,1]/sum(Harv.data[,1]))
 #mean.b[7]=10
-mean.H = matrix(c(.8,.5,.4,.8,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
+mean.H = matrix(c(.3,.5,.4,.5,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
 mean.H = matrix(rep(mean.H,nage),2,period+1,byrow = T)
 mean.H[1,]=0.5*mean.H[1,]
 
@@ -96,8 +96,9 @@ for(i in 1:8){
   #dev.off()
 }
 H_full = 0 * Chicago_RES$lx.mcmc
+H_full = cbind(H_full[,1:nage],H_full)
 
-for(i in 1:period){
+for(i in 0:period+1){
   for(j in 1:nage){
     ind = (i-1)*nage + j
     plc = (i-1)*2 + 2 - (j==1)
@@ -108,7 +109,7 @@ for(i in 1:period){
 
 
 
-living_inid = (Chicago_RES$lx.mcmc/H_full)*(1-H_full)
+living_inid = (Chicago_RES$lx.mcmc/H_full[,-(1:nage)])*(1-H_full[,-(1:nage)])
 
 plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",nage,period,1993:2006)
 
@@ -118,8 +119,13 @@ for(i in 1:period){
   total_living[,i] = rowSums(living_inid[,1:nage+(i-1)*nage])
   
 }
-plotthings(YD_obj=total_living,pathsave="./figs/temp/living_af_culling_all",1,period,1993:2006)
+bl = rowSums(Chicago_RES$baseline.count.mcmc*(1-H_full[,(1:nage)]))
+bl_mean = colMeans(Chicago_RES$baseline.count.mcmc*(1-H_full[,(1:nage)]))
+total_living_bl = cbind(bl,total_living)
+
+plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1,period+1,1992:2006)
 
 plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=8,period,1993:2006)
 plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/ferc_age",nage=8,period,1993:2006)
+plotthings(YD_obj=Chicago_RES$H.mcmc,pathsave="./figs/temp/Harvpor",2,period+1,1992:2006)
 
