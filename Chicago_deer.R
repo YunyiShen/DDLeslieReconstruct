@@ -86,11 +86,11 @@ plot(mean.total.harv,mean.age.surv[[7]])
 require(ggplot2)
 
 for(i in 1:8){
-  ggplot(DDsurv[[i]]$model,aes(x=mean.living.total,y=mean.age.surv) )+
+  ggplot(DDferc[[i]]$model,aes(x=mean.living.total,y=mean.age.ferc) )+
     geom_point()+
     #geom_line()+
     stat_smooth(method = "lm")
-  filename = paste0("./figs/temp/DDsurv_age",i,".jpg")
+  filename = paste0("./figs/temp/DDfec_age",i,".jpg")
   
   ggsave(filename, plot = last_plot())
 }

@@ -1,6 +1,7 @@
 ## Model predict percision
 nage = 8
 res_link = "E:/UW Lab jobs/3. Lislie Reconstruction/Lislie_Reconstruct_ChicagoDeer/figs/temp"
+res_link = "C:/Users/yshen99/Documents/GitHub/Lislie_Reconstruct_ChicagoDeer/figs/temp" 
 ### MSE & MPA
 n_data = 0
 MSE = 0
