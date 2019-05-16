@@ -13,6 +13,7 @@ mean.s = read.csv("./data/Survival_mean_Etter.csv")
 mean.s = mean.s[,-(1)]
 mean.f = read.csv("./data/Fecundity_mean.csv")
 mean.f = mean.f[,-(1)]
+mean.f[1,] = mean.f[1,]+1e-6
 Harv.data = read.csv("./data/Culling.csv")
 Harv.data = Harv.data[,-(1)]
 mean.b = (977 * Harv.data[,1]/sum(Harv.data[,1]))
@@ -29,8 +30,8 @@ prop.vars = list(fert.rate = matrix(.1,nrow = nage,ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 1000, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .01, al.s = 1, be.s = .1
+Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1000, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = .08, al.s = 1, be.s = .1
                                    , al.aK0 = 1, be.aK0 = 1e-2, al.n = 1
                                    , be.n = .01, al.H = 1, be.H = .1
                                    , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(0,1,2)
