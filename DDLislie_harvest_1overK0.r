@@ -107,6 +107,14 @@ getLivingIdividuals = function(H,data){
   return(LivingIdividuals)
 } # checked 10/24/2018
 
+getLivingIdividuals_preharv = function(H,data){
+
+  #IminusH = 1-H
+  LivingIdividuals = apply(data,2,function(ww,H){(ww/H)},H=H)
+  return(LivingIdividuals)
+} # checked 10/24/2018
+
+
 plotthings = function(YD_obj,pathsave="./figs/temp/age",nage,period,years){
   mean.harv = apply(YD_obj,2,mean)
   mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
