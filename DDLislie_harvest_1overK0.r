@@ -3,12 +3,16 @@
 ### --------------------------------------------------------------- ###
 
 # get Leslie Matrix using specific parameters, can also return L-I if needed, first nage entries should be survival(no transiform, 0<S<1,transformation occor in sampler function) and next fertility rate, 
-getLislie = function(Survival,Fec,minus1=F){
-  nage = length(Survival)
-  Tr = matrix(0,nage,nage)
-  Tr[1,] = Fec
-  diag(Tr[2:(nage),1:(nage-1)]) = Survival[-nage]
+
+getLeslie = function(Survival,Fec,SRB,minus1=F){ # SRB, sax ratio at birth
+  nage = length(Survival)/2
+  Tr = matrix(0,2*nage,2*nage)
+  Tr[1,1:nage] = Fec*SRB
+  Tr[1,1:nage+nage] = Fec * (1-SRB)
+  diag(Tr[2:(nage),1:(nage-1)]) = Survival[2:nage - 1]
   Tr[nage,nage] = Survival[nage]
+  diag(Tr[2:(nage) + nage,1:(nage-1) + nage]) = Survival[2:nage - 1 + nage]
+  Tr[2*nage,2*nage] = Survival[2*nage]
   if(minus1){
     diag(Tr)=diag(Tr)-1
   }
@@ -30,44 +34,42 @@ DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
   return(as.numeric(D))
 } #checked 10/24/2018
 
-# get age specific harvest proportion matrix
-GetHarvest = function(Harvpar,nage){
-  Harvest = matrix(0,nage,nage)
-  diag(Harvest) = Harvpar
-  return(Harvest)
-} # checked 10/24/2018, if not age-specific, give a single Harvpar
 
 # Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
 ProjectHarvest_helper = function(data_n, Leslie, H_n,H_np1, global, E0, aK0, null = F){
-	nage = ncol(Leslie)
-  I = matrix(0,length(data_n),length(data_n))	
-  H_n = as.numeric(H_n)
-  H_np1 = as.numeric(H_np1)
-  H_n[2:nage]=H_n[2]
-  H_np1[2:nage]=H_np1[2]
+	nage = ncol(Leslie)/2
+  #I = matrix(0,length(data_n),length(data_n))	
+  H_n_temp = as.numeric(H_n)
+  H_np1_temp = as.numeric(H_np1)
+  H_n[2:nage]=H_n_temp[2] # for doe Y+A
+  H_n[c(1,nage + 1)] = H_n_temp[1] # for fawns
+  H_n[2:nage + nage] = H_n_temp[3] # for buck Y+A
+  H_np1[2:nage]=H_np1_temp[2]
+  H_np1[c(1,nage + 1)] = H_np1_temp[1]
+  H_np1[2:nage + nage] = H_np1_temp[3]
   #H_logit = logitf(H)
   
   
-	diag(I) = 1
+	#diag(I) = 1
     X_n1 = (1-H_n) * (data_n/H_n)
     #DDH = (1+aK0[3]*sum(X_n1))*H_logit
     #H = invlogit(DDH)
     D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
-	  D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], null = null)
+	D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], null = null)
     Leslie[1,] =  D_bir *(Leslie[1,])
-	  Leslie[2:nage,] = D_dea * Leslie[2:nage,]
+	Leslie[2:nage,] = D_dea * Leslie[2:(2*nage),]
 	#Leslie = as.numeric(1+t(aK0[1:nage,]) %*% ( X_n1)) * Leslie
   #ata_n1 = H * (Leslie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
-	  data_n1 = H_np1 * (Leslie %*% ( X_n1))
+	data_n1 = H_np1 * (Leslie %*% ( X_n1))
     #Popu_after = (eyes-H)%*%Popu_before_harvest 
     return(data_n1)
   } # checked 10/24/2018
 
 # Project harvest model from a initial harvest, survival is col vector with all survival rate of all age class, this nrow(Survival)=nage
-ProjectHarvest_homo = function(Survival, Harvpar,Fec, E0=NULL, aK0 = NULL, global = F, null = F,bl , period, nage){
+ProjectHarvest_homo = function(Survival, Harvpar,Fec, SRB,E0=NULL, aK0 = NULL, global = F, null = F,bl , period, nage){
   
   
-  Leslie = getLislie(Survival,Fec=Fec,minus1=F)
+  Leslie = getLeslie(Survival,Fec=Fec,SRB = SRB,minus1=F)
   # H = GetHarvest(Harvpar,nage)
   Harvest = matrix(0,nage,period + 1)
   Harvest[,1] = bl 
@@ -83,8 +85,8 @@ ProjectHarvest_homo = function(Survival, Harvpar,Fec, E0=NULL, aK0 = NULL, globa
 } #checked 10/24/2018
 
 # project when time inhomo survival and ferc, survival should be a matrix with nage x period entries, so do ferc
-ProjectHarvest_inhomo = function(Survival, Harvpar,Fec, E0=NULL, aK0 = NULL, global = F, null = F,bl , period, nage){
-  Harvest = matrix(0,nage,period+1)
+ProjectHarvest_inhomo = function(Survival, Harvpar,Fec, SRB,E0=NULL, aK0 = NULL, global = F, null = F,bl , period, nage){
+  Harvest = matrix(0,2*nage,period+1)
   Harvest[,1] = bl
   # H = GetHarvest(Harvpar,nage)
   if(length(E0)==0){
@@ -93,7 +95,7 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Fec, E0=NULL, aK0 = NULL, glo
   }
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
-    Leslie = getLislie(Survival[,i-1],Fec[,i-1],minus1=F) # inhomo, Survival rows are age structure, cols are time
+    Leslie = getLeslie(Survival[,i-1],Fec[,i-1],SRB[i],minus1=F) # inhomo, Survival rows are age structure, cols are time, SRB has only one row or col, for 
     Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Leslie = Leslie, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null)
   }
   return(Harvest)
@@ -114,6 +116,21 @@ getLivingIdividuals_preharv = function(H,data){
   return(LivingIdividuals)
 } # checked 10/24/2018
 
+getLivingIdividuals_inhomo = function(Harv,H){
+	nage = .5 * nrow(Harv)
+	H_temp = H
+	H = 0*Harv
+	H[c(1,nage + 1),] = H_temp[1,] # Fawn
+	H[c(2:nage),] = matrix(H_temp[2,],(nage-1),ncol(H),byrow = T) # Doe Y+A
+	H[c(2:nage+nage),] = matrix(H_temp[3,],(nage-1),ncol(H),byrow = T) # buck
+	Harv*(1/H-1)
+}
+
+getAerialCount = function(Harv,H,A){
+	Xt = getLivingIdividuals_inhomo(Harv,H)
+	Ae = colSums(Xt) * A # aerial counts
+	return(Ae)
+}
 
 plotthings = function(YD_obj,pathsave="./figs/temp/age",nage,period,years){
   mean.harv = apply(YD_obj,2,mean)
@@ -204,7 +221,7 @@ dinvGamma = function(x, shape, scale, log = FALSE){
 ## ..................................... ##
 
 #log likelihood function of gaussian distributed
-log.lhood =function(log.n.census, log.n.hat, ll.var){
+log.lhood =function(log.n.census, log.n.hat, ll.var,log.n.aerial, log.n.aerial.hat, ll.aerial.var){
     ##.. log.n.census and log.n.hat should already be logged
 
     ##.. log.n.hat should be log projected counts for census years
@@ -217,7 +234,12 @@ log.lhood =function(log.n.census, log.n.hat, ll.var){
                      mean = log.n.census,
                      sd = sqrt(ll.var),
                      log = TRUE
-                     )
+                     ) + 
+			  dnorm(log.n.aerial.hat,
+                     mean = log.n.aerial,
+                     sd = sqrt(ll.aerial.var),
+                     log = TRUE
+                     )	 
 
     ##-- joint log likelihood --##
 
@@ -228,19 +250,19 @@ log.lhood =function(log.n.census, log.n.hat, ll.var){
 ## ..................................... ##  keep it, change in sampler function, but no migration here, should add estaK0
 
 log.post = function(## estimated vitals
-                           f, s, baseline.n, aK0, H
+                           f, s, SRB,baseline.n, aK0, A, H # A for Aerial count detection probability
 						               ,estFer, estaK0
                            ## fixed prior means on vitals
-                           ,prior.mean.f, prior.mean.s
+                           ,prior.mean.f, prior.mean.s, prior.mean.SRB
                            ,prior.mean.b, prior.mean.aK0
-						               ,prior.mean.H
+						   ,prior.mean.A, prior.mean.H
                            ## fixed prior parameters on variance distns
-                           ,alpha.f, beta.f, alpha.s, beta.s
+                           ,alpha.f, beta.f, alpha.s, beta.s, alpha.SRB, beta.SRB
                            ,alpha.n, beta.n, alpha.aK0, beta.aK0
-						               ,alpha.H, beta.H
+						    ,alpha.A, beta.A, alpha.H, beta.H
                            ## updated variances on prior distns
-                           ,sigmasq.f, sigmasq.s, sigmasq.n, sigmasq.aK0
-						               ,sigmasq.H
+                           ,sigmasq.f, sigmasq.s, sigmasq.SRB,sigmasq.n, sigmasq.aK0
+						    ,sigmasq.A ,sigmasq.H
                            ## value of the log likelihood
                            ,log.like
                            ## non zero rows of fertility matrix
@@ -283,28 +305,38 @@ log.post = function(## estimated vitals
     ##-- prior for s and baseline n, and hunting rate H --##
 	log.s.prior = dnorm(s, mean = prior.mean.s, sd = sqrt(sigmasq.s)
                          ,log = TRUE)
-  log.b.prior = dnorm(baseline.n, mean = prior.mean.b
+	log.SRB.prior = dnorm(SRB, mean = prior.mean.SRB, sd = sqrt(sigmasq.SRB)
+                         ,log = TRUE)
+    log.b.prior = dnorm(baseline.n, mean = prior.mean.b
                          ,sd = sqrt(sigmasq.n)
                          ,log = TRUE)
 	log.H.prior = dnorm(H, mean = prior.mean.H
                          ,sd = sqrt(sigmasq.H)
                          ,log = TRUE)
-
-  log.sigmasq.s.prior =
+    log.A.prior = dnorm(A, mean = prior.mean.A
+                         ,sd = sqrt(sigmasq.A)
+                         ,log = TRUE)
+    log.sigmasq.s.prior =
         log(dinvGamma(sigmasq.s, alpha.s, beta.s))
-  log.sigmasq.n.prior =
+	log.sigmasq.SRB.prior =
+        log(dinvGamma(sigmasq.SRB, alpha.SRB, beta.SRB))
+    log.sigmasq.n.prior =
         log(dinvGamma(sigmasq.n, alpha.n, beta.n))
+	log.sigmasq.A.prior =
+        log(dinvGamma(sigmasq.A, alpha.A, beta.A))
 	log.sigmasq.H.prior =
         log(dinvGamma(sigmasq.H, alpha.H, beta.H))
 	
     ##-- The log posterior is the SUM of these with the log.like --##
 
-  return(sum(log.f.prior, log.s.prior, log.b.prior, log.aK0.prior, log.H.prior
+  return(sum(log.f.prior, log.s.prior, log.SRB.prior, log.b.prior, log.aK0.prior, log.H.prior,log.A.prior,
                ,log.sigmasq.f.prior
                ,log.sigmasq.s.prior
+			   ,log.sigmasq.SRB.prior
                ,log.sigmasq.n.prior
-			         ,log.sigmasq.aK0.prior
-			         ,log.sigmasq.H.prior
+			   ,log.sigmasq.aK0.prior
+			   ,log.sigmasq.H.prior
+			   ,log.sigmasq.A.prior
                ,log.like))
 
 } # not checked yet, assume to be right
@@ -328,41 +360,43 @@ HDDLislie.sampler <-
              n.iter, burn.in = 0, thin.by = 1
 
              #.. fixed variance hyper-parameters
-             ,al.f = 1, be.f = 0.0109, al.s = 1, be.s = 0.0109
-             , al.aK0 = 1, be.aK0 = 0.0436, al.n = 1
-			       , be.n = 0.0109, al.H = 1, be.H = 0.0436
+             ,al.f = 1, be.f = 0.0109, al.s = 1, be.s = 0.0109,al.SRB = 1,be.SRB = 0.0109
+             , al.aK0 = 1, be.aK0 = 0.0436
+			 , al.n = 1, be.n = 0.0109, al.ae = 1, be.ae = 0.0109
+			 , al.H = 1, be.H = 0.0436, al.A = 1, be.A = 0.0436
 
              #.. fixed prior means
-             ,mean.f, mean.s, mean.b, mean.aK0, mean.H
+             ,mean.f, mean.s, mean.SRB, mean.b, mean.aK0, mean.H, mean.A
 
              #.. inital values for vitals and variances
              #   *vitals not transformed coming in* all not transfer, will 
-             ,start.f = mean.f, start.s = mean.s
-			       ,start.b = mean.b, start.aK0 = mean.aK0, start.H = mean.H
-             ,start.sigmasq.f = 5, start.sigmasq.s = 5
-             ,start.sigmasq.n = 5, start.sigmasq.aK0 = 5, start.sigmasq.H = 5
+             ,start.f = mean.f, start.s = mean.s, start.SRB = mean.SRB
+			 ,start.b = mean.b, start.aK0 = mean.aK0, start.H = mean.H
+			 ,start.A = mean.A
+             ,start.sigmasq.f = 5, start.sigmasq.s = 5, start.sigmasq.SRB = 5
+             ,start.sigmasq.n = 5,start.sigmasq.ae = 5, start.sigmasq.aK0 = 5, start.sigmasq.H = 5
+			 ,start.sigmasq.A = 5
 
              #.. census data
              #   *not transformed coming in*
              ,Harv.data
-
+			 ,Aerial.data
              #.. **variances** for proposal distributions used in M-H
              #   steps which update vital rates.
              ,prop.vars # col names should be "fert.rate", 
-			       # "fert.rate.var", "surv.prop.var", "H.var", "K0.var"
-			       # ,"population.count.var"
-             #.. ccmp function
+			       # "fert.rate.var", "surv.prop.var", "SRB.var","H.var", "K0.var"
+			       # ,"culling.count.var", "aerial.count.var"
 
              #.. number of periods to project forward over (e.g.,
              #     number of five-year steps)
              ,proj.periods = (ncol(Harv.data)-1)
 
              #.. age group width
-             ,nage = 3 
+             ,nage = 8 
 			 
-			       ,estFer=T, Fec=rep(1,nage), estaK0 = T
-			       ,E0=NULL , aK0 = 0, global = T, null = T # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
-			       ,homo = F # whether assume time homogeneous 
+			 ,estFer=T, Fec=rep(1,nage), estaK0 = T
+			 ,E0=NULL , aK0 = 0, global = T, null = T # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
+			 ,homo = F # whether assume time homogeneous 
 
              #.. print algorithm progress
              ,verb = FALSE
@@ -375,7 +409,7 @@ HDDLislie.sampler <-
     ## .............. Sampler .............. ##
     ## ..................................... ##
 
-  mean.aK0 = as.matrix(mean.aK0)
+    mean.aK0 = as.matrix(mean.aK0)
     ## -------- Begin timing ------- ##
 
     ptm <- proc.time()
@@ -479,6 +513,14 @@ HDDLislie.sampler <-
                ,thin = thin.by
                )
       colnames(surv.prop.mcmc) = NULL
+	   # Sex Ratio at Birth
+      SRB.mcmc <-
+          mcmc(matrix(nrow = n.stored
+                      ,ncol = ntimes)
+               ,start = burn.in + 1
+               ,thin = thin.by
+               )
+      colnames(surv.prop.mcmc) = NULL
 
       # lx
 	  # this is for current population, for us, it is current culling data
@@ -489,6 +531,8 @@ HDDLislie.sampler <-
                ,thin = thin.by
                )
       colnames(lx.mcmc) = NULL
+	  
+	  ae.mcmc = lx.mcmc # this is for aerial count
 	  
 	  # carrying capacity assumed to be time homogeneous
 	  if(estaK0){
@@ -510,7 +554,13 @@ HDDLislie.sampler <-
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(H.mcmc) = NULL
-      
+	  # Aerial counts
+      A.mcmc =
+          mcmc(matrix(nrow = n.stored
+                      ,ncol = nrow(start.A) * (ntimes+!homo))
+               ,start = burn.in + 1
+               ,thin = thin.by)
+      colnames(H.mcmc) = NULL
 	  
       # baseline counts
       baseline.count.mcmc =
@@ -525,7 +575,7 @@ HDDLislie.sampler <-
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(variances.mcmc) =
-          c("fert.rate.var", "surv.prop.var", "H.var", "aK0.var"
+          c("fert.rate.var", "surv.prop.var", "SRB.var","H.var", ,"A.var","aK0.var"
             ,"population.count.var") # may need check here since K0 and fert can be known (though I prefer estimating it)
 
     #.. Record acceptance rate
@@ -539,6 +589,12 @@ HDDLislie.sampler <-
               ,ncol = ncol(as.matrix( mean.s))
               ,dimnames = dimnames(mean.s)
               )
+			 ,SRB = matrix(0, nrow = nrow(as.matrix( mean.SRB))
+              ,ncol = ncol(as.matrix( mean.SRB))
+              ,dimnames = dimnames(mean.SRB)
+			 ,A = matrix(0, nrow = nrow(as.matrix(mean.A)), ncol = ncol(as.matrix( mean.A))
+              ,dimnames = dimnames(mean.A)
+              )
              ,H = matrix(0, nrow = nrow(as.matrix(mean.H)), ncol = ncol(as.matrix( mean.H))
               ,dimnames = dimnames(mean.H)
               )
@@ -550,9 +606,12 @@ HDDLislie.sampler <-
               )
              ,sigmasq.f = 0
              ,sigmasq.s = 0
+			 ,sigmasq.SRB = 0
+			 ,sigmasq.A = 0
              ,sigmasq.H = 0
 			 ,sigmasq.aK0 = 0
              ,sigmasq.n = 0
+			 ,sigmasq.ae = 0 # aerial counts
              )
 
 
@@ -566,19 +625,26 @@ HDDLislie.sampler <-
     pop.negative <-
         list(fert.rate = matrix(0, nrow = nrow(as.matrix( mean.f[fert.rows,]))
              ,ncol = ncol(as.matrix( mean.f[fert.rows,]))
-             ,dimnames = dimnames(mean.f[fert.rows,])
+             ,dimnames = dimnames(( mean.f[fert.rows,]))
              )
              ,surv.prop = matrix(0, nrow = nrow(as.matrix( mean.s))
               ,ncol = ncol(as.matrix( mean.s))
               ,dimnames = dimnames(mean.s)
               )
-             ,H = matrix(0, nrow = nrow(as.matrix(mean.H)), ncol = ncol(as.matrix(mean.H))
+			 ,SRB = matrix(0, nrow = nrow(as.matrix( mean.SRB))
+              ,ncol = ncol(as.matrix( mean.SRB))
+              ,dimnames = dimnames(mean.SRB)
+			 ,A = matrix(0, nrow = nrow(as.matrix(mean.A)), ncol = ncol(as.matrix( mean.A))
+              ,dimnames = dimnames(mean.A)
+              )
+             ,H = matrix(0, nrow = nrow(as.matrix(mean.H)), ncol = ncol(as.matrix( mean.H))
               ,dimnames = dimnames(mean.H)
               )
-			 ,aK0 = matrix(0, nrow = nrow(mean.aK0), ncol = ncol(mean.aK0)
-              ,dimnames = dimnames(mean.aK0))
-             ,baseline.count = matrix(0, nrow = nrow(as.matrix(mean.b))
-              ,dimnames = dimnames(mean.b)
+			 ,aK0 = matrix(0, nrow = nrow(as.matrix( mean.aK0)), ncol = ncol( as.matrix(mean.aK0))
+              ,dimnames = dimnames(mean.aK0)
+              )
+             ,baseline.count = matrix(0, nrow = nrow(as.matrix( mean.b))
+              ,dimnames = dimnames( mean.b)
               )
              )
 
@@ -603,7 +669,9 @@ HDDLislie.sampler <-
       log.prop.f =  (!estFer)*log(start.f) #    converted to 0 under exponentiation
     }
     logit.curr.s = logitf(start.s)
+	logit.curr.SRB = logitf(start.SRB)
 	  logit.curr.H = logitf(start.H)
+	  logit.curr.A = logitf(start.A)
 	  curr.aK0=(start.aK0)
 	  #curr.aK0=(aK0)}
     #curr.aK0 = estaK0 * log(start.aK0) + (!estaK0) * log(K0)
@@ -611,9 +679,12 @@ HDDLislie.sampler <-
 
     curr.sigmasq.f = start.sigmasq.f
     curr.sigmasq.s = start.sigmasq.s
+	curr.sigmasq.SRB = start.sigmasq.SRB
+	curr.sigmasq.A = start.sigmasq.A
     curr.sigmasq.H = start.sigmasq.H
 	curr.sigmasq.aK0 = start.sigmasq.aK0
     curr.sigmasq.n = start.sigmasq.n
+	curr.sigmasq.ae = start.sigmasq.ae
 
 
     #.. Fixed means for vitals and baseline
@@ -621,8 +692,9 @@ HDDLislie.sampler <-
 
     log.mean.f = log(mean.f)
     logit.mean.s = logitf(mean.s)
+	logit.mean.SRB = logitf(mean.SRB)
+	logit.mean.A = logitf(mean.A)
     logit.mean.H = logitf(mean.H)
-	# mean.aK0 = log(mean.aK0)
     log.mean.b = log(mean.b)
 
 
@@ -630,17 +702,19 @@ HDDLislie.sampler <-
     #   Take logs here
 
     log.Harv.mat = log(Harv.data)
+	log.Aeri.mat = log(Aerial.data)
 
 
     #.. Set current projection: base on initial values # homo or not is important, determin it use homo = T
 	if(homo){
 	  log.curr.proj =
-        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric(invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric(invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
 	}
 	else{
 	  log.curr.proj =
-        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
 	}
+	log.curr.aeri = log( gerAerialCount(Harv = log.curr.proj,H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 ## stop here 10/19/2018   
 ## restart here 10/22/2018
 
@@ -673,7 +747,9 @@ HDDLislie.sampler <-
                        ,log.like = log.lhood(
                         log.n.census = log.Harv.mat
                         ,log.n.hat = log.curr.proj
-                        ,ll.var = curr.sigmasq.n)
+						,log.n.aerial = log.Aeri.mat
+						,log.n.aerial.hat = log.curr.aeri
+                        ,ll.var = curr.sigmasq.n,ll.var.aerial = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows # tell algorithm where the fert has to be 0
                        )
 
