@@ -530,7 +530,11 @@ HDDLislie.sampler <-
                )
       colnames(lx.mcmc) = NULL
       
-      ae.mcmc = lx.mcmc # this is for aerial count
+      ae.mcmc = 
+          mcmc(matrix(nrow = n.stored,
+		              ,ncol = proj.periods+1
+					  ,start = burn.in + 1
+					  ,thin = thin.by))	  # this is for aerial count
       
       # carrying capacity assumed to be time homogeneous
       if(estaK0){
@@ -569,12 +573,12 @@ HDDLislie.sampler <-
 
       # variances
       variances.mcmc =
-          mcmc(matrix(nrow = n.stored, ncol = 5)
+          mcmc(matrix(nrow = n.stored, ncol = 8)
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(variances.mcmc) =
           c("fert.rate.var", "surv.prop.var", "SRB.var","H.var", ,"A.var","aK0.var"
-            ,"population.count.var") # may need check here since K0 and fert can be known (though I prefer estimating it)
+            ,"population.count.var","aerial.count.var") # may need check here since K0 and fert can be known (though I prefer estimating it)
 
     #.. Record acceptance rate
 
@@ -1733,30 +1737,40 @@ HDDLislie.sampler <-
         log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
+					   ,SRB = logit.curr.SRB 
+					   ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
+					   ,prior.mean.SRB = logit.mean.SRB
+					   ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
+					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+					   ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
+					   ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = prop.sigmasq.s #<-- use proposal
+					   ,sigmasq.SRB = curr.sigmasq.SRB
+					   ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
+					   ,sigmasq.ae = curr.sigmasq.ae
 					   ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
-                                ,ll.var = curr.sigmasq.n) +
+                                ,ll.var = curr.sigmasq.n) +#<-- use current
                             log.lhood(
                                 ,log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
@@ -1798,7 +1812,177 @@ HDDLislie.sampler <-
 
       if(k %% 1 == 0 && k > 0) variances.mcmc[k,"surv.prop.var"] <- curr.sigmasq.s
 
+      
+	  ##...... Sex Ratio at Birth ......## 
+      prop.sigmasq.SRB <-
+        rinvGamma(1, al.SRB + length(mean.SRB)/2,
+                  be.SRB +
+                    0.5*sum((logit.curr.SRB - logit.mean.SRB)^2))
 
+        # - Calculate log posterior of proposed vital under projection
+        log.prop.posterior <-
+              log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+					   ,SRB = logit.curr.SRB 
+					   ,A = logit.curr.A
+                       ,H = logit.curr.H 
+                       ,aK0 = curr.aK0 
+                       ,baseline.n = log.curr.b 
+                       ,estFer=estFer, estaK0=estaK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+					   ,prior.mean.SRB = logit.mean.SRB
+					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.H = logit.mean.H
+                       ,prior.mean.aK0 = mean.aK0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.H = al.H, beta.H = be.H
+                       ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
+                       ,alpha.n = al.n, beta.n = be.n
+					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s
+					   ,sigmasq.SRB = prop.sigmasq.SRB #<-- use proposal
+					   ,sigmasq.A = curr.sigmasq.A
+                       ,sigmasq.H = curr.sigmasq.H
+                       ,sigmasq.aK0 = curr.sigmasq.aK0
+                       ,sigmasq.n = curr.sigmasq.n
+					   ,sigmasq.ae = curr.sigmasq.ae
+					   ,log.like = 
+                            log.lhood(
+                                log.n.census = log.Harv.mat 
+                                ,log.n.hat = log.curr.proj#<-- use current
+                                ,ll.var = curr.sigmasq.n) +#<-- use current
+                            log.lhood(
+                                ,log.n.census = log.Aeri.mat
+                                ,log.n.hat = log.curr.aeri#<-- use current
+                                ,ll.var = curr.sigmasq.ae)#<-- use current
+                       ,non.zero.fert = fert.rows 
+                       )
+
+      #- Acceptance ratio
+      ar <- acc.ra.var(log.prop.post = log.prop.posterior
+                             ,log.curr.post = log.curr.posterior
+                             ,log.prop.var = dinvGamma(prop.sigmasq.SRB
+                              ,al.SRB + length(mean.SRB)/2
+                              ,be.SRB + 0.5*sum((logit.curr.SRB -
+                                               logit.mean.SRB)^2)
+                              ,log = TRUE)
+                             ,log.curr.var = dinvGamma(curr.sigmasq.SRB
+                              ,al.SRB + length(mean.SRB)/2
+                              ,be.SRB + 0.5*sum((logit.curr.SRB -
+                                               logit.mean.SRB)^2)
+                              ,log = TRUE)
+                             )
+
+        # - Move or stay
+        #.. stay if acceptance ratio 0, missing, infinity, etc.
+        if(is.na(ar) || is.nan(ar) || ar < 0) {
+            if(i > burn.in) ar.na$sigmasq.SRB <-
+                ar.na$sigmasq.SRB + 1/n.iter
+        } else {
+            #.. if accept, update current, store proposed
+            #   and count acceptance
+            if(runif(1) <= ar) {
+                if(i > burn.in) acc.count$sigmasq.SRB <-
+                    acc.count$sigmasq.s + 1/n.iter
+                curr.sigmasq.SRB <- prop.sigmasq.SRB
+                log.curr.posterior <- log.prop.posterior
+            } #.. if reject, leave current and posterior
+        } # close else after checking for ar=na, nan, zero
+
+      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"SRB.var"] <- curr.sigmasq.SRB  
+	  
+	  
+	  ##...... Aerial Count Detection ......## not changed yet
+      prop.sigmasq.A <-
+        rinvGamma(1, al.A + length(mean.A)/2,
+                  be.A +
+                    0.5*sum((logit.curr.A - logit.mean.A)^2))
+
+        # - Calculate log posterior of proposed vital under projection
+        log.prop.posterior <-
+              log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+					   ,SRB = logit.curr.SRB 
+					   ,A = logit.curr.A
+                       ,H = logit.curr.H 
+                       ,aK0 = curr.aK0 
+                       ,baseline.n = log.curr.b 
+                       ,estFer=estFer, estaK0=estaK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+					   ,prior.mean.SRB = logit.mean.SRB
+					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.H = logit.mean.H
+                       ,prior.mean.aK0 = mean.aK0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.H = al.H, beta.H = be.H
+                       ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
+                       ,alpha.n = al.n, beta.n = be.n
+					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s 
+					   ,sigmasq.SRB = curr.sigmasq.SRB
+					   ,sigmasq.A = prop.sigmasq.A #<-- use proposal
+                       ,sigmasq.H = curr.sigmasq.H
+                       ,sigmasq.aK0 = curr.sigmasq.aK0
+                       ,sigmasq.n = curr.sigmasq.n
+					   ,sigmasq.ae = curr.sigmasq.ae
+					   ,log.like = 
+                            log.lhood(
+                                log.n.census = log.Harv.mat 
+                                ,log.n.hat = log.curr.proj#<-- use current
+                                ,ll.var = curr.sigmasq.n) +#<-- use current
+                            log.lhood(
+                                ,log.n.census = log.Aeri.mat
+                                ,log.n.hat = log.curr.aeri#<-- use current
+                                ,ll.var = curr.sigmasq.ae)#<-- use current
+                       ,non.zero.fert = fert.rows 
+                       )
+        #pause here 20190520 during adding aerial count
+
+      #- Acceptance ratio
+      ar <- acc.ra.var(log.prop.post = log.prop.posterior
+                             ,log.curr.post = log.curr.posterior
+                             ,log.prop.var = dinvGamma(prop.sigmasq.A
+                              ,al.A + length(mean.A)/2
+                              ,be.A + 0.5*sum((logit.curr.A -
+                                               logit.mean.A)^2)
+                              ,log = TRUE)
+                             ,log.curr.var = dinvGamma(curr.sigmasq.A
+                              ,al.A + length(mean.A)/2
+                              ,be.A + 0.5*sum((logit.curr.A -
+                                               logit.mean.A)^2)
+                              ,log = TRUE)
+                             )
+
+        # - Move or stay
+        #.. stay if acceptance ratio 0, missing, infinity, etc.
+        if(is.na(ar) || is.nan(ar) || ar < 0) {
+            if(i > burn.in) ar.na$sigmasq.A <-
+                ar.na$sigmasq.A + 1/n.iter
+        } else {
+            #.. if accept, update current, store proposed
+            #   and count acceptance
+            if(runif(1) <= ar) {
+                if(i > burn.in) acc.count$sigmasq.A <-
+                    acc.count$sigmasq.A + 1/n.iter
+                curr.sigmasq.A <- prop.sigmasq.A
+                log.curr.posterior <- log.prop.posterior
+            } #.. if reject, leave current and posterior
+        } # close else after checking for ar=na, nan, zero
+
+      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"A.var"] <- curr.sigmasq.A	  
+	  
       ##...... Harvest Proportion ......##
 
       prop.sigmasq.H <-
@@ -1810,29 +1994,44 @@ HDDLislie.sampler <-
         log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
+					   ,SRB = logit.curr.SRB 
+					   ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
+					   ,prior.mean.SRB = logit.mean.SRB
+					   ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
+					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+					   ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
+					   ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
+					   ,sigmasq.SRB = curr.sigmasq.SRB 
+					   ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = prop.sigmasq.H #<-- use proposal
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-                       ,log.like = log.lhood(
-                        log.n.census = log.Harv.mat
-                        ,log.n.hat = log.curr.proj 
-                        ,ll.var = curr.sigmasq.n) #<-- use current
+					   ,sigmasq.ae = curr.sigmasq.ae
+                       ,log.like = 
+                            log.lhood(
+                                log.n.census = log.Harv.mat 
+                                ,log.n.hat = log.curr.proj#<-- use current
+                                ,ll.var = curr.sigmasq.n) +#<-- use current
+                            log.lhood(
+                                ,log.n.census = log.Aeri.mat
+                                ,log.n.hat = log.curr.aeri#<-- use current
+                                ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
                        )
 
@@ -1868,38 +2067,49 @@ HDDLislie.sampler <-
         } # close else after checking for ar=na, nan, zero
 
       if(k %% 1 == 0 && k > 0) variances.mcmc[k,"H.var"] <- curr.sigmasq.H
-
-# stop here 10/22/2018 21:36 Left arm is too pain to continue.
-# restart here 10/23/2018 14:34    
-      ##...... Carrying Capacity ......##    
+    
+      ##...... Carrying Capacity ......##    # Feel it will not be used  
       if(estaK0){
         prop.sigmasq.aK0 = rinvGamma(1,al.aK0+0.5,be.aK0 + 0.5*sum((curr.aK0-mean.aK0)^2)) #bug here give NA
             log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
+					   ,SRB = logit.curr.SRB 
+					   ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
+					   ,prior.mean.SRB = logit.mean.SRB
+					   ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
+					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+					   ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
+					   ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
                        ,sigmasq.H = curr.sigmasq.H 
                        ,sigmasq.aK0 = prop.sigmasq.aK0 #<-- use proposal
                        ,sigmasq.n = curr.sigmasq.n
-                       ,log.like = log.lhood(
-                        log.n.census = log.Harv.mat
-                        ,log.n.hat = log.curr.proj 
-                        ,ll.var = curr.sigmasq.n) #<-- use current
+					   ,sigmasq.ae = curr.sigmasq.ae
+                       ,log.like = 
+                            log.lhood(
+                                log.n.census = log.Harv.mat 
+                                ,log.n.hat = log.curr.proj#<-- use current
+                                ,ll.var = curr.sigmasq.n) +#<-- use current
+                            log.lhood(
+                                ,log.n.census = log.Aeri.mat
+                                ,log.n.hat = log.curr.aeri#<-- use current
+                                ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
                        )
 
@@ -1941,19 +2151,15 @@ HDDLislie.sampler <-
       
       }
         
-
-
-
-
-
-      ##...... Population Count ......##
+		
+      ##...... Harvest Count ......##
 
       prop.sigmasq.n <-
         rinvGamma(1, al.n + (length(mean.b) +
                                     length(log.Harv.mat))/2,
                 be.n + 0.5 * (
                   sum((log.curr.b - log.mean.b)^2) +
-                  sum((log.Harv.mat - log.curr.proj)^2)
+                  sum((log.Harv.mat - log.curr.proj)^2) # be careful if we add reconstruction, things may go into here
                   )
                               )
 
@@ -1961,29 +2167,44 @@ HDDLislie.sampler <-
                 log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
+					   ,SRB = logit.curr.SRB 
+					   ,A = logit.curr.A 
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
+					   ,prior.mean.SRB = logit.mean.SRB
+					   ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
+					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+					   ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
+					   ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
+					   ,sigmasq.SRB = curr.sigmasq.SRB                     
+					   ,sigmasq.A = curr.sigmasq.A 
                        ,sigmasq.H = curr.sigmasq.H 
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = prop.sigmasq.n #<-- use proposal
-                       ,log.like = log.lhood(
-                        log.n.census = log.Harv.mat
-                        ,log.n.hat = log.curr.proj 
-                        ,ll.var = prop.sigmasq.n) #<-- use proposal
+					   ,sigmasq.ae = curr.sigmasq.ae 
+                       ,log.like = 
+                            log.lhood(
+                                log.n.census = log.Harv.mat 
+                                ,log.n.hat = log.curr.proj#<-- use current
+                                ,ll.var = prop.sigmasq.n) +#<-- use proposal
+                            log.lhood(
+                                ,log.n.census = log.Aeri.mat
+                                ,log.n.hat = log.curr.aeri#<-- use current
+                                ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
                        )
 
@@ -2023,6 +2244,102 @@ HDDLislie.sampler <-
       }
 
 
+
+
+
+      ##...... Aerial Count ......##
+
+      prop.sigmasq.n <-
+        rinvGamma(1, al.ae + (length(log.Aeri.mat))/2,
+                be.n + 0.5 * (sum((log.Aeri.mat - log.curr.aeri)^2)))
+
+        # - Calculate log posterior of proposed vital under projection
+                log.prop.posterior <-
+              log.post(f = log.curr.f 
+                       ,s = logit.curr.s 
+					   ,SRB = logit.curr.SRB 
+					   ,A = logit.curr.A 
+                       ,H = logit.curr.H 
+                       ,aK0 = curr.aK0 
+                       ,baseline.n = log.curr.b 
+                       ,estFer=estFer, estaK0=estaK0
+                       ,prior.mean.f = log.mean.f
+                       ,prior.mean.s = logit.mean.s
+					   ,prior.mean.SRB = logit.mean.SRB
+					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.H = logit.mean.H
+                       ,prior.mean.aK0 = mean.aK0
+                       ,prior.mean.b = log.mean.b
+                       ,alpha.f = al.f, beta.f = be.f
+                       ,alpha.s = al.s, beta.s = be.s
+					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.H = al.H, beta.H = be.H
+                       ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
+                       ,alpha.n = al.n, beta.n = be.n
+					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,sigmasq.f = curr.sigmasq.f
+                       ,sigmasq.s = curr.sigmasq.s 
+					   ,sigmasq.SRB = curr.sigmasq.SRB                     
+					   ,sigmasq.A = curr.sigmasq.A 
+                       ,sigmasq.H = curr.sigmasq.H 
+                       ,sigmasq.aK0 = curr.sigmasq.aK0
+                       ,sigmasq.n = curr.sigmasq.n 
+					   ,sigmasq.ae = prop.sigmasq.ae #<-- use proposal
+                       ,log.like = 
+                            log.lhood(
+                                log.n.census = log.Harv.mat 
+                                ,log.n.hat = log.curr.proj#<-- use current
+                                ,ll.var = curr.sigmasq.n) +#<-- use current
+                            log.lhood(
+                                ,log.n.census = log.Aeri.mat
+                                ,log.n.hat = log.curr.aeri#<-- use current
+                                ,ll.var = prop.sigmasq.ae)#<-- use proposal
+                       ,non.zero.fert = fert.rows 
+                       )
+
+      #- Acceptance ratio
+      ar <- acc.ra.var(log.prop.post = log.prop.posterior
+                             ,log.curr.post = log.curr.posterior
+                             ,log.prop.var = dinvGamma(prop.sigmasq.n
+                              ,al.ae + ( length(log.Aeri.mat))/2
+                              ,be.ae + 0.5 * (sum((log.Aeri.mat - log.curr.aeri)^2))
+                              ,log = TRUE)
+                             ,log.curr.var = dinvGamma(curr.sigmasq.ae
+                              ,al.ae + (
+                                       length(log.Aeri.mat))/2
+                              ,be.ae + 0.5 * ( sum((log.Aeri.mat - log.curr.Aeri)^2))
+                              ,log = TRUE)
+                             )
+
+        # - Move or stay
+        #.. stay if acceptance ratio 0, missing, infinity, etc.
+        if(is.na(ar) || is.nan(ar) || ar < 0) {
+            if(i > burn.in) ar.na$sigmasq.ae <-
+                ar.na$sigmasq.ae + 1/n.iter
+        } else {
+            #.. if accept, update current, store proposed
+            #   and count acceptance
+            if(runif(1) <= ar) {
+                if(i > burn.in) acc.count$sigmasq.ae <-
+                    acc.count$sigmasq.ae + 1/n.iter
+                curr.sigmasq.ae <- prop.sigmasq.ae
+                log.curr.posterior <- log.prop.posterior
+            } #.. if reject, leave current and posterior
+        } # close else after checking for ar=na, nan, zero
+
+      if(k %% 1 == 0 && k > 0) {
+        variances.mcmc[k,"aerial.count.var"] <- curr.sigmasq.ae
+      }
+
+
+
+
+
+
+
+
+
       ## ------- Store current population ------- ##
             if(homo){
                 full.proj =
@@ -2035,7 +2352,8 @@ HDDLislie.sampler <-
 
       lx.mcmc[k,] =
           as.vector(full.proj)[-(1:ncol(baseline.count.mcmc))] # to delete all age class' baseline count, because of as.vector,thus need to do like this
-
+      ae.mcmc[k,] = 
+	      as.vector(gerAerialCount(Harv = full.proj,H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 
       if(verb && identical(i%%1000, 0)) cat("\n\n")
 
@@ -2055,15 +2373,21 @@ HDDLislie.sampler <-
     #.. initial values
     start.vals <- list(fert.rate = start.f
                       ,surv.prop = start.s
+					  ,SRB = start.SRB
                       ,H = start.H
+					  ,Aerial.detection = start.A
                       ,K0 = start.aK0
                       ,baseline.count = start.b
                       ,start.sigmasq.f = start.sigmasq.f
                       ,start.sigmasq.s = start.sigmasq.s
+					  ,start.sigmasq.SRB = start.sigmasq.SRB
+					  ,start.sigmasq.A = start.sigmasq.A
                       ,start.sigmasq.H = start.sigmasq.H
                       ,start.sigmasq.aK0 = start.sigmasq.aK0
                       ,start.sigmasq.n = start.sigmasq.n
+					  ,start.sigmasq.ae = start.sigmasq.ae
                       ,Harv.data = Harv.data
+					  ,Aerial.data = Aerial.data
                       )
 
     #.. fixed parameters
@@ -2071,18 +2395,27 @@ HDDLislie.sampler <-
                          ,beta.fert.rate = be.f
                          ,alpha.surv.prop = al.s
                          ,beta.surv.prop = be.s
+						 ,alpha.SRB = al.SRB
+                         ,beta.SRB = be.SRB
+						 ,alpha.aerial.det = al.A
+                         ,beta.aerial.det = be.A
                          ,alpha.Harvest = al.H
                          ,beta.Hervest = be.H
                          ,alpha.1overK = al.aK0
                          ,beta.1overK = be.aK0
-                         ,alpha.population.count = al.n
-                         ,beta.population.count = be.n
+                         ,alpha.harvest.count = al.n
+                         ,beta.harvest.count = be.n
+						 ,alpha.aerial.count = al.ae
+                         ,beta.aerial.count = be.ae
                          ,mean.fert.rate = mean.f
                          ,mean.surv.prop = mean.s
+						 ,mean.SRB = mean.SRB
+						 ,mean.aerial.detection = mean.A
                          ,mean.Harvest.proportion = mean.H
                          ,mean.1overK = mean.aK0
                          ,mean.baseline.count = mean.b
                          ,mean.Harv.data = Harv.data
+						 ,Aerial.data = Aerial.data
                          )
 
 
@@ -2106,9 +2439,10 @@ HDDLislie.sampler <-
     #.. algorithm parameters
     alg.params <- list(prop.vars = prop.vars
                        ,vital.transformations = list(fert.rate = "log"
-                        ,surv.prob = "logit", H = "logit", invK0="identical"
+                        ,surv.prob = "logit",SRB = "logit",aerial.detection="logit", H = "logit", invK0="identical"
                         ,baseline.count = "log"
-                        ,population.count = "log")
+                        ,harvest.count = "log"
+						,aerial.count = "log")
                        ,projection.periods = proj.periods
                        ,age.gp.size = nage
                        ,non.zero.fert.rows = fert.rows
@@ -2121,10 +2455,13 @@ HDDLislie.sampler <-
     #.. results
     ret.list <- list(fert.rate.mcmc = fert.rate.mcmc
                   ,surv.prop.mcmc = surv.prop.mcmc
+				  ,SRB.mcmc = SRB.mcmc
+				  ,aerial.detection.mcmc = A.mcmc
                   ,H.mcmc = H.mcmc
                   ,invK0.mcmc = aK0.mcmc
                   ,baseline.count.mcmc = baseline.count.mcmc
-                  ,lx.mcmc = lx.mcmc
+                  ,harvest.mcmc = lx.mcmc
+				  ,aerial.count.mcmc = ae.mcmc
                   ,variances.mcmc = variances.mcmc
                   ,alg.stats = alg.stats
                   ,fixed.params = fixed.params
