@@ -5,14 +5,15 @@
 # get Leslie Matrix using specific parameters, can also return L-I if needed, first nage entries should be survival(no transiform, 0<S<1,transformation occor in sampler function) and next fertility rate, 
 
 getLeslie = function(Survival,Fec,SRB,minus1=F){ # SRB, sax ratio at birth
-  nage = length(Survival)/2
-  Tr = matrix(0,2*nage,2*nage)
-  Tr[1,1:nage] = Fec*SRB
-  Tr[1,1:nage+nage] = Fec * (1-SRB)
-  diag(Tr[2:(nage),1:(nage-1)]) = Survival[2:nage - 1]
-  Tr[nage,nage] = Survival[nage]
-  diag(Tr[2:(nage) + nage,1:(nage-1) + nage]) = Survival[2:nage - 1 + nage]
-  Tr[2*nage,2*nage] = Survival[2*nage]
+  nage_female = length(Fec)
+  nage_male = length(Survival)-length(Fec)
+  Tr = matrix(0,nage_female+nage_male,nage_female+nage_male)
+  Tr[1,1:nage_female] = Fec*SRB
+  Tr[1+nage_female,1:nage_female] = Fec * (1-SRB)
+  diag(Tr[2:(nage_female),1:(nage_female-1)]) = Survival[2:nage_female - 1]
+  Tr[nage_female,nage_female] = Survival[nage_female]
+  diag(Tr[2:(nage_male) + nage_female,1:(nage_male-1) + nage_female]) = Survival[2:nage_male - 1 + nage_female]
+  Tr[nage_male+nage_female,nage_male+nage_female] = Survival[nage_male+nage_female]
   if(minus1){
     diag(Tr)=diag(Tr)-1
   }
@@ -36,17 +37,18 @@ DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
 
 
 # Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
-ProjectHarvest_helper = function(data_n, Leslie, H_n,H_np1, global, E0, aK0, null = F){
-    nage = ncol(Leslie)/2
+ProjectHarvest_helper = function(data_n, Leslie, H_n,H_np1, global, E0, aK0, null = F,nage_female){
+    nage_tol = ncol(Leslie)
+    nage_male = nage_tol-nage_female
   #I = matrix(0,length(data_n),length(data_n))    
-  H_n_temp = as.numeric(H_n)
-  H_np1_temp = as.numeric(H_np1)
-  H_n[2:nage]=H_n_temp[2] # for doe Y+A
-  H_n[c(1,nage + 1)] = H_n_temp[1] # for fawns
-  H_n[2:nage + nage] = H_n_temp[3] # for buck Y+A
-  H_np1[2:nage]=H_np1_temp[2]
-  H_np1[c(1,nage + 1)] = H_np1_temp[1]
-  H_np1[2:nage + nage] = H_np1_temp[3]
+  #H_n_temp = as.numeric(H_n)
+  #H_np1_temp = as.numeric(H_np1)
+  #H_n[2:nage_female]=H_n_temp[2] # for doe Y+A
+  #H_n[c(1,nage_female + 1)] = H_n_temp[1] # for fawns
+  #H_n[2:nage_male + nage_female] = H_n_temp[3] # for buck Y+A
+  #H_np1[2:nage_female]=H_np1_temp[2]
+  #H_np1[c(1,nage_female + 1)] = H_np1_temp[1]
+  #H_np1[2:nage_male + nage_female] = H_np1_temp[3]
   #H_logit = logitf(H)
   
   
@@ -56,8 +58,8 @@ ProjectHarvest_helper = function(data_n, Leslie, H_n,H_np1, global, E0, aK0, nul
     #H = invlogit(DDH)
     D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], null = null)
     D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], null = null)
-    Leslie[1,] =  D_bir *(Leslie[1,])
-    Leslie[2:nage,] = D_dea * Leslie[2:(2*nage),]
+    Leslie[c(1,nage_female+1),] =  D_bir *(Leslie[c(1,nage_female+1),])
+    Leslie[-c(1,nage_female+1),] = D_dea * Leslie[-c(1,nage_female+1),]
     #Leslie = as.numeric(1+t(aK0[1:nage,]) %*% ( X_n1)) * Leslie
   #ata_n1 = H * (Leslie %*% (D_bir * X_n1) - D_dea * X_n1 +X_n1)
     data_n1 = H_np1 * (Leslie %*% ( X_n1))
@@ -79,27 +81,39 @@ ProjectHarvest_homo = function(Survival, Harvpar,Fec, SRB,E0=NULL, aK0 = NULL, g
   }
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
-    Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Leslie = Leslie, E0=E0, aK0=aK0, H_n=Harvpar,H_np1 = Harvpar,null = null) # project harvest from very initial
+    Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Leslie = Leslie, E0=E0, aK0=aK0, H_n=Harvpar,H_np1 = Harvpar,null = null,nage_female = nage[1]) # project harvest from very initial
   }              
   return(Harvest)
 } #checked 10/24/2018
 
 # project when time inhomo survival and ferc, survival should be a matrix with nage x period entries, so do ferc
 ProjectHarvest_inhomo = function(Survival, Harvpar,Fec, SRB,E0=NULL, aK0 = NULL, global = F, null = F,bl , period, nage){
-  Harvest = matrix(0,2*nage,period+1)
+  Harvest = matrix(0,sum(nage),period+1) # nage is a vector with female first
   Harvest[,1] = bl
   # H = GetHarvest(Harvpar,nage)
+  Harvpar = apply(Harvpar,2,getfullHarvpar,nage = nage)
   if(length(E0)==0){
-    E0 = (bl/Harvpar[,1])
+    E0 = (bl/( Harvpar[,1]))
     E0 = E0/(sum(E0))
   }
   else E0 = E0/(sum(E0))
   for(i in 1 : period + 1){
-    Leslie = getLeslie(Survival[,i-1],Fec[,i-1],SRB[i],minus1=F) # inhomo, Survival rows are age structure, cols are time, SRB has only one row or col, for 
-    Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Leslie = Leslie, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null)
+    Leslie = getLeslie(Survival[,i-1],Fec[,i-1],SRB[i-1],minus1=F) # inhomo, Survival rows are age structure, cols are time, SRB has only one row or col, for 
+    Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Leslie = Leslie, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null,nage_female = nage[1])
   }
   return(Harvest)
 } # checked 10/24/2018
+
+getfullHarvpar = function(H_n,nage){
+  H_n_temp = as.numeric(H_n)
+  H_n[2:nage[1]]=H_n_temp[2] # for doe Y+A
+  H_n[c(1,nage[1] + 1)] = H_n_temp[1] # for fawns
+  H_n[2:nage[2] + nage[1]] = H_n_temp[3] # for buck Y+A
+  return(H_n)
+
+
+}
+
 
 # Given harvest data, calculate the living individual in certain year
 getLivingIdividuals = function(H,data){
@@ -116,18 +130,14 @@ getLivingIdividuals_preharv = function(H,data){
   return(LivingIdividuals)
 } # checked 10/24/2018
 
-getLivingIdividuals_inhomo = function(Harv,H){
-    nage = .5 * nrow(Harv)
-    H_temp = H
-    H = 0*Harv
-    H[c(1,nage + 1),] = H_temp[1,] # Fawn
-    H[c(2:nage),] = matrix(H_temp[2,],(nage-1),ncol(H),byrow = T) # Doe Y+A
-    H[c(2:nage+nage),] = matrix(H_temp[3,],(nage-1),ncol(H),byrow = T) # buck
+getLivingIdividuals_inhomo = function(Harv,H,nage){
+    #nage = .5 * nrow(Harv)
+    H = apply(H,2,getfullHarvpar,nage)
     Harv*(1/H-1)
 }
 
-getAerialCount = function(Harv,H,A){
-    Xt = getLivingIdividuals_inhomo(Harv,H)
+getAerialCount = function(Harv,H,A,nage){
+    Xt = getLivingIdividuals_inhomo(Harv,H,nage)
     Ae = colSums(Xt) * A # aerial counts
     return(Ae)
 }
@@ -326,7 +336,7 @@ log.post = function(## estimated vitals
     ##-- The log posterior is the SUM of these with the log.like --##
 
   return(sum(log.f.prior, log.s.prior, log.SRB.prior, log.b.prior, log.aK0.prior, log.H.prior,log.A.prior,
-               ,log.sigmasq.f.prior
+               log.sigmasq.f.prior
                ,log.sigmasq.s.prior
                ,log.sigmasq.SRB.prior
                ,log.sigmasq.n.prior
@@ -381,8 +391,8 @@ HDDLislie.sampler <-
              #.. **variances** for proposal distributions used in M-H
              #   steps which update vital rates.
              ,prop.vars # col names should be "fert.rate", 
-                   # "fert.rate.var", "surv.prop.var", "SRB.var","H.var", "K0.var"
-                   # ,"culling.count.var", "aerial.count.var"
+                   # "fert.rate", "surv.prop", "SRB","H", "A","aK0"
+                   # ,"baseline.count"
 
              #.. number of periods to project forward over (e.g.,
              #     number of five-year steps)
@@ -531,10 +541,10 @@ HDDLislie.sampler <-
       colnames(lx.mcmc) = NULL
       
       ae.mcmc = 
-          mcmc(matrix(nrow = n.stored,
-		              ,ncol = proj.periods+1
-					  ,start = burn.in + 1
-					  ,thin = thin.by))	  # this is for aerial count
+          mcmc(matrix(nrow = n.stored
+                      ,ncol = proj.periods+1)
+                      ,start = burn.in + 1
+                      ,thin = thin.by)      # this is for aerial count
       
       # carrying capacity assumed to be time homogeneous
       if(estaK0){
@@ -577,7 +587,7 @@ HDDLislie.sampler <-
                ,start = burn.in + 1
                ,thin = thin.by)
       colnames(variances.mcmc) =
-          c("fert.rate.var", "surv.prop.var", "SRB.var","H.var", ,"A.var","aK0.var"
+          c("fert.rate.var", "surv.prop.var", "SRB.var","H.var", "A.var","aK0.var"
             ,"population.count.var","aerial.count.var") # may need check here since K0 and fert can be known (though I prefer estimating it)
 
     #.. Record acceptance rate
@@ -593,7 +603,7 @@ HDDLislie.sampler <-
               )
              ,SRB = matrix(0, nrow = nrow(as.matrix( mean.SRB))
               ,ncol = ncol(as.matrix( mean.SRB))
-              ,dimnames = dimnames(mean.SRB)
+              ,dimnames = dimnames(mean.SRB))
              ,A = matrix(0, nrow = nrow(as.matrix(mean.A)), ncol = ncol(as.matrix( mean.A))
               ,dimnames = dimnames(mean.A)
               )
@@ -634,7 +644,7 @@ HDDLislie.sampler <-
               ,dimnames = dimnames(mean.s)
               )
              ,SRB = matrix(0, nrow = nrow(as.matrix( mean.SRB))
-              ,ncol = ncol(as.matrix( mean.SRB))
+              ,ncol = ncol(as.matrix( mean.SRB)))
               ,dimnames = dimnames(mean.SRB)
              ,A = matrix(0, nrow = nrow(as.matrix(mean.A)), ncol = ncol(as.matrix( mean.A))
               ,dimnames = dimnames(mean.A)
@@ -710,13 +720,13 @@ HDDLislie.sampler <-
     #.. Set current projection: base on initial values # homo or not is important, determin it use homo = T
     if(homo){
       log.curr.proj =
-        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric(invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
     }
     else{
       log.curr.proj =
-        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
     }
-    log.curr.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+    log.curr.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 ## stop here 10/19/2018   
 ## restart here 10/22/2018
 
@@ -761,7 +771,7 @@ HDDLislie.sampler <-
                                 log.n.census = log.Harv.mat
                                 ,log.n.hat = log.curr.proj,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri
                                 ,ll.var = curr.sigmasq.ae) #　both harvest and aerial count, potentially reconstruction?
                        ,non.zero.fert = fert.rows # tell algorithm where the fert has to be 0
@@ -822,7 +832,7 @@ HDDLislie.sampler <-
             full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.prop.f)#<-- use proposal
                 , SRB = invlogit(logit.curr.SRB)
-                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
+                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
         }
 
 
@@ -834,7 +844,7 @@ HDDLislie.sampler <-
             }
         } else {
             log.prop.proj = log(full.proj)
-            log.prop.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+            log.prop.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
           # - Calculate log posterior of proposed vital under projection          
           ## shit again so many parameters to pass here... really hard to read...
 
@@ -861,7 +871,7 @@ HDDLislie.sampler <-
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-                       ,alpha.ae = al.n, beta.n = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
                        ,sigmasq.SRB = curr.sigmasq.SRB
@@ -876,7 +886,7 @@ HDDLislie.sampler <-
                                 ,log.n.hat = log.prop.proj#<-- use proposal
                                 ,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.prop.aeri#<-- use proposal
                                 ,ll.var = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows 
@@ -952,12 +962,12 @@ HDDLislie.sampler <-
             if(homo){
                 full.proj =
                 (ProjectHarvest_homo(Survival = invlogit(logit.prop.s) #<-- use proposal
-                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric(invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
+                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.prop.s)#<-- use proposal
-                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
+                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -968,7 +978,7 @@ HDDLislie.sampler <-
                 }
             } else {
                 log.prop.proj = log(full.proj)
-                log.prop.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+                log.prop.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 
             # - Calculate log posterior of proposed vital under projection
             log.prop.posterior =
@@ -994,7 +1004,7 @@ HDDLislie.sampler <-
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-                       ,alpha.ae = al.ae, beta.n = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
                        ,sigmasq.SRB = curr.sigmasq.SRB
@@ -1009,7 +1019,7 @@ HDDLislie.sampler <-
                                 ,log.n.hat = log.prop.proj#<-- use proposal
                                 ,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.prop.aeri#<-- use proposal
                                 ,ll.var = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows 
@@ -1089,13 +1099,13 @@ HDDLislie.sampler <-
             if(homo){
                 full.proj =
                 (ProjectHarvest_homo(Survival = invlogit(logit.curr.s) , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.prop.SRB)#<-- use proposal
-                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric(invlogit(logit.curr.H)) , period = proj.periods, nage = nage))
+                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s)
                 , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.prop.SRB)#<-- use proposal
-                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
+                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1106,7 +1116,7 @@ HDDLislie.sampler <-
                 }
             } else {
                 log.prop.proj = log(full.proj)
-                log.prop.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+                log.prop.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 
             # - Calculate log posterior of proposed vital under projection
             log.prop.posterior =
@@ -1132,7 +1142,7 @@ HDDLislie.sampler <-
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-                       ,alpha.ae = al.ae, beta.n = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
                        ,sigmasq.SRB = curr.sigmasq.SRB
@@ -1147,7 +1157,7 @@ HDDLislie.sampler <-
                                 ,log.n.hat = log.prop.proj#<-- use proposal
                                 ,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.prop.aeri#<-- use proposal
                                 ,ll.var = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows 
@@ -1212,13 +1222,13 @@ HDDLislie.sampler <-
           #      this as if the proposal were never made
       if(homo){
                 full.proj =
-                (ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.prop.H)#<-- use proposal
+                (ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = ( invlogit(logit.prop.H))#<-- use proposal
                 ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * as.numeric( invlogit(logit.prop.H)) , period = proj.periods, nage = nage))
             }
             else{
                 full.proj =
-                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.prop.H)#<-- use proposal
-                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.prop.H[,1]) , period = proj.periods, nage = nage))
+                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar =( invlogit(logit.prop.H))#<-- use proposal
+                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar( invlogit(logit.prop.H[,1]),nage) , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1229,7 +1239,7 @@ HDDLislie.sampler <-
                 }
             } else {
                 log.prop.proj = log(full.proj)
-                log.prop.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+                log.prop.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 
         # - Calculate log posterior of proposed vital under projection
         log.prop.posterior =
@@ -1255,7 +1265,7 @@ HDDLislie.sampler <-
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-                       ,alpha.ae = al.ae, beta.n = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
                        ,sigmasq.SRB = curr.sigmasq.SRB
@@ -1270,7 +1280,7 @@ HDDLislie.sampler <-
                                 ,log.n.hat = log.prop.proj#<-- use proposal
                                 ,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.prop.aeri#<-- use proposal
                                 ,ll.var = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows 
@@ -1336,18 +1346,18 @@ HDDLislie.sampler <-
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H)
-                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.prop.H[,1]) , period = proj.periods, nage = nage))
+                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar( invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
                || is.nan(sum(full.proj))) {
                 if(i > burn.in) {
-                    pop.negative$surv.prop[j] =
-                        pop.negative$surv.prop[j] + 1/n.iter
+                    pop.negative$A[j] =
+                        pop.negative$A[j] + 1/n.iter
                 }
             } else {
                 log.prop.proj = log(full.proj)
-                log.prop.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.prop.A))) #<-- use proposal
+                log.prop.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.prop.A))) #<-- use proposal
 
         # - Calculate log posterior of proposed vital under projection
         log.prop.posterior =
@@ -1373,7 +1383,7 @@ HDDLislie.sampler <-
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-                       ,alpha.ae = al.ae, beta.n = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
                        ,sigmasq.SRB = curr.sigmasq.SRB
@@ -1388,7 +1398,7 @@ HDDLislie.sampler <-
                                 ,log.n.hat = log.prop.proj#<-- use proposal
                                 ,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.prop.aeri#<-- use proposal
                                 ,ll.var = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows 
@@ -1437,7 +1447,7 @@ HDDLislie.sampler <-
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = prop.aK0#<-- use proposal
-                , global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
+                , global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1448,46 +1458,46 @@ HDDLislie.sampler <-
                 }
             } else {
                 log.prop.proj = log(full.proj)
-                log.prop.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+                log.prop.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 
         # - Calculate log posterior of proposed vital under projection
         log.prop.posterior =
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = prop.aK0 #<-- use proposal
                        ,baseline.n = log.curr.b
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
                        ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
+                       ,sigmasq.ae = curr.sigmasq.ae
                        ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.prop.proj#<-- use proposal
                                 ,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.prop.aeri#<-- use proposal
                                 ,ll.var = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows 
@@ -1548,7 +1558,7 @@ HDDLislie.sampler <-
             }
             else{
                 full.proj =
-                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H), SRB = invlogit(logit.curr.SRB),Fec=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.prop.b) * invlogit(logit.curr.H[,1]) #<-- use proposal
+                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H), SRB = invlogit(logit.curr.SRB),Fec=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.prop.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) #<-- use proposal
                 , period = proj.periods, nage = nage))
             }
 
@@ -1561,46 +1571,48 @@ HDDLislie.sampler <-
         }
       } else {
         log.prop.proj <- log(full.proj)
-        log.prop.aeri = log( gerAerialCount(Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+        log.prop.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 
         # - Calculate log posterior of proposed vital under projection
          log.prop.posterior =
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB
-					   ,A = logit.curr.A
+                       ,SRB = logit.curr.SRB
+                       ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.prop.b #<-- use proposal
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
+                       ,sigmasq.SRB = curr.sigmasq.SRB
+                       ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
+                       ,sigmasq.ae = curr.sigmasq.ae
                        ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.prop.proj#<-- use proposal
                                 ,ll.var = curr.sigmasq.n) +
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.prop.aeri#<-- use proposal
                                 ,ll.var = curr.sigmasq.ae)
                        ,non.zero.fert = fert.rows 
@@ -1657,39 +1669,44 @@ HDDLislie.sampler <-
         log.prop.posterior =
                       log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB
-					   ,A = logit.curr.A 
+                       ,SRB = logit.curr.SRB
+                       ,A = logit.curr.A 
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = prop.sigmasq.f #<-- use proposal
                        ,sigmasq.s = curr.sigmasq.s
-					   ,sigmasq.SRB = curr.sigmasq.SRB
+                       ,sigmasq.SRB = curr.sigmasq.SRB
                        ,sigmasq.A = curr.sigmasq.A
-					   ,sigmasq.H = curr.sigmasq.H
+                       ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
-                       ,log.like = log.lhood(
-                        log.n.census = log.Harv.mat
-                        ,log.n.hat = log.curr.proj 
-                        ,ll.var = curr.sigmasq.n) #<-- use current
+                       ,sigmasq.ae = curr.sigmasq.ae
+                       ,log.like = 
+                            log.lhood(    
+                                log.n.census = log.Harv.mat 
+                                ,log.n.hat = log.curr.proj#<-- use current
+                                ,ll.var = curr.sigmasq.n) +#<-- use current
+                            log.lhood(
+                                log.n.census = log.Aeri.mat
+                                ,log.n.hat = log.curr.aeri#<-- use current
+                                ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
                        )
 
@@ -1737,42 +1754,42 @@ HDDLislie.sampler <-
         log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = prop.sigmasq.s #<-- use proposal
-					   ,sigmasq.SRB = curr.sigmasq.SRB
-					   ,sigmasq.A = curr.sigmasq.A
+                       ,sigmasq.SRB = curr.sigmasq.SRB
+                       ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
-					   ,log.like = 
+                       ,sigmasq.ae = curr.sigmasq.ae
+                       ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
                                 ,ll.var = curr.sigmasq.n) +#<-- use current
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
                                 ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
@@ -1813,7 +1830,7 @@ HDDLislie.sampler <-
       if(k %% 1 == 0 && k > 0) variances.mcmc[k,"surv.prop.var"] <- curr.sigmasq.s
 
       
-	  ##...... Sex Ratio at Birth ......## 
+      ##...... Sex Ratio at Birth ......## 
       prop.sigmasq.SRB <-
         rinvGamma(1, al.SRB + length(mean.SRB)/2,
                   be.SRB +
@@ -1823,42 +1840,42 @@ HDDLislie.sampler <-
         log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
-					   ,sigmasq.SRB = prop.sigmasq.SRB #<-- use proposal
-					   ,sigmasq.A = curr.sigmasq.A
+                       ,sigmasq.SRB = prop.sigmasq.SRB #<-- use proposal
+                       ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
-					   ,log.like = 
+                       ,sigmasq.ae = curr.sigmasq.ae
+                       ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
                                 ,ll.var = curr.sigmasq.n) +#<-- use current
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
                                 ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
@@ -1896,9 +1913,9 @@ HDDLislie.sampler <-
         } # close else after checking for ar=na, nan, zero
 
       if(k %% 1 == 0 && k > 0) variances.mcmc[k,"SRB.var"] <- curr.sigmasq.SRB  
-	  
-	  
-	  ##...... Aerial Count Detection ......## not changed yet
+      
+      
+      ##...... Aerial Count Detection ......## not changed yet
       prop.sigmasq.A <-
         rinvGamma(1, al.A + length(mean.A)/2,
                   be.A +
@@ -1908,42 +1925,42 @@ HDDLislie.sampler <-
         log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
-					   ,sigmasq.SRB = curr.sigmasq.SRB
-					   ,sigmasq.A = prop.sigmasq.A #<-- use proposal
+                       ,sigmasq.SRB = curr.sigmasq.SRB
+                       ,sigmasq.A = prop.sigmasq.A #<-- use proposal
                        ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
-					   ,log.like = 
+                       ,sigmasq.ae = curr.sigmasq.ae
+                       ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
                                 ,ll.var = curr.sigmasq.n) +#<-- use current
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
                                 ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
@@ -1981,8 +1998,8 @@ HDDLislie.sampler <-
             } #.. if reject, leave current and posterior
         } # close else after checking for ar=na, nan, zero
 
-      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"A.var"] <- curr.sigmasq.A	  
-	  
+      if(k %% 1 == 0 && k > 0) variances.mcmc[k,"A.var"] <- curr.sigmasq.A      
+      
       ##...... Harvest Proportion ......##
 
       prop.sigmasq.H <-
@@ -1994,42 +2011,42 @@ HDDLislie.sampler <-
         log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
-					   ,sigmasq.SRB = curr.sigmasq.SRB 
-					   ,sigmasq.A = curr.sigmasq.A
+                       ,sigmasq.SRB = curr.sigmasq.SRB 
+                       ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = prop.sigmasq.H #<-- use proposal
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
+                       ,sigmasq.ae = curr.sigmasq.ae
                        ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
                                 ,ll.var = curr.sigmasq.n) +#<-- use current
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
                                 ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
@@ -2074,40 +2091,42 @@ HDDLislie.sampler <-
             log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
+					   ,sigmasq.SRB = curr.sigmasq.SRB 
+					   ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = curr.sigmasq.H 
                        ,sigmasq.aK0 = prop.sigmasq.aK0 #<-- use proposal
                        ,sigmasq.n = curr.sigmasq.n
-					   ,sigmasq.ae = curr.sigmasq.ae
+                       ,sigmasq.ae = curr.sigmasq.ae
                        ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
                                 ,ll.var = curr.sigmasq.n) +#<-- use current
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
                                 ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
@@ -2151,7 +2170,7 @@ HDDLislie.sampler <-
       
       }
         
-		
+        
       ##...... Harvest Count ......##
 
       prop.sigmasq.n <-
@@ -2167,42 +2186,42 @@ HDDLislie.sampler <-
                 log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A 
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A 
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
-					   ,sigmasq.SRB = curr.sigmasq.SRB                     
-					   ,sigmasq.A = curr.sigmasq.A 
+                       ,sigmasq.SRB = curr.sigmasq.SRB                     
+                       ,sigmasq.A = curr.sigmasq.A 
                        ,sigmasq.H = curr.sigmasq.H 
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = prop.sigmasq.n #<-- use proposal
-					   ,sigmasq.ae = curr.sigmasq.ae 
+                       ,sigmasq.ae = curr.sigmasq.ae 
                        ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
                                 ,ll.var = prop.sigmasq.n) +#<-- use proposal
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
                                 ,ll.var = curr.sigmasq.ae)#<-- use current
                        ,non.zero.fert = fert.rows 
@@ -2249,50 +2268,50 @@ HDDLislie.sampler <-
 
       ##...... Aerial Count ......##
 
-      prop.sigmasq.n <-
+      prop.sigmasq.ae <-
         rinvGamma(1, al.ae + (length(log.Aeri.mat))/2,
-                be.n + 0.5 * (sum((log.Aeri.mat - log.curr.aeri)^2)))
+                be.ae + 0.5 * (sum((log.Aeri.mat - log.curr.aeri)^2)))
 
         # - Calculate log posterior of proposed vital under projection
                 log.prop.posterior <-
               log.post(f = log.curr.f 
                        ,s = logit.curr.s 
-					   ,SRB = logit.curr.SRB 
-					   ,A = logit.curr.A 
+                       ,SRB = logit.curr.SRB 
+                       ,A = logit.curr.A 
                        ,H = logit.curr.H 
                        ,aK0 = curr.aK0 
                        ,baseline.n = log.curr.b 
                        ,estFer=estFer, estaK0=estaK0
                        ,prior.mean.f = log.mean.f
                        ,prior.mean.s = logit.mean.s
-					   ,prior.mean.SRB = logit.mean.SRB
-					   ,prior.mean.A = logit.mean.A
+                       ,prior.mean.SRB = logit.mean.SRB
+                       ,prior.mean.A = logit.mean.A
                        ,prior.mean.H = logit.mean.H
                        ,prior.mean.aK0 = mean.aK0
                        ,prior.mean.b = log.mean.b
                        ,alpha.f = al.f, beta.f = be.f
                        ,alpha.s = al.s, beta.s = be.s
-					   ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-					   ,alpha.A = al.A, beta.A = be.A
+                       ,alpha.SRB = al.SRB, beta.SRB = be.SRB
+                       ,alpha.A = al.A, beta.A = be.A
                        ,alpha.H = al.H, beta.H = be.H
                        ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
                        ,alpha.n = al.n, beta.n = be.n
-					   ,alpha.ae = al.ae, beta.ae = be.ae
+                       ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s 
-					   ,sigmasq.SRB = curr.sigmasq.SRB                     
-					   ,sigmasq.A = curr.sigmasq.A 
+                       ,sigmasq.SRB = curr.sigmasq.SRB                     
+                       ,sigmasq.A = curr.sigmasq.A 
                        ,sigmasq.H = curr.sigmasq.H 
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n 
-					   ,sigmasq.ae = prop.sigmasq.ae #<-- use proposal
+                       ,sigmasq.ae = prop.sigmasq.ae #<-- use proposal
                        ,log.like = 
                             log.lhood(
                                 log.n.census = log.Harv.mat 
                                 ,log.n.hat = log.curr.proj#<-- use current
                                 ,ll.var = curr.sigmasq.n) +#<-- use current
                             log.lhood(
-                                ,log.n.census = log.Aeri.mat
+                                log.n.census = log.Aeri.mat
                                 ,log.n.hat = log.curr.aeri#<-- use current
                                 ,ll.var = prop.sigmasq.ae)#<-- use proposal
                        ,non.zero.fert = fert.rows 
@@ -2308,7 +2327,7 @@ HDDLislie.sampler <-
                              ,log.curr.var = dinvGamma(curr.sigmasq.ae
                               ,al.ae + (
                                        length(log.Aeri.mat))/2
-                              ,be.ae + 0.5 * ( sum((log.Aeri.mat - log.curr.Aeri)^2))
+                              ,be.ae + 0.5 * ( sum((log.Aeri.mat - log.curr.aeri)^2))
                               ,log = TRUE)
                              )
 
@@ -2347,13 +2366,13 @@ HDDLislie.sampler <-
             }
             else{
                 full.proj =
-                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * invlogit(logit.curr.H[,1]) , period = proj.periods, nage = nage))
+                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
 
       lx.mcmc[k,] =
           as.vector(full.proj)[-(1:ncol(baseline.count.mcmc))] # to delete all age class' baseline count, because of as.vector,thus need to do like this
       ae.mcmc[k,] = 
-	      as.vector(gerAerialCount(Harv = full.proj,H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+          as.vector(getAerialCount(nage = nage, Harv = full.proj,H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 
       if(verb && identical(i%%1000, 0)) cat("\n\n")
 
@@ -2373,21 +2392,21 @@ HDDLislie.sampler <-
     #.. initial values
     start.vals <- list(fert.rate = start.f
                       ,surv.prop = start.s
-					  ,SRB = start.SRB
+                      ,SRB = start.SRB
                       ,H = start.H
-					  ,Aerial.detection = start.A
+                      ,Aerial.detection = start.A
                       ,K0 = start.aK0
                       ,baseline.count = start.b
                       ,start.sigmasq.f = start.sigmasq.f
                       ,start.sigmasq.s = start.sigmasq.s
-					  ,start.sigmasq.SRB = start.sigmasq.SRB
-					  ,start.sigmasq.A = start.sigmasq.A
+                      ,start.sigmasq.SRB = start.sigmasq.SRB
+                      ,start.sigmasq.A = start.sigmasq.A
                       ,start.sigmasq.H = start.sigmasq.H
                       ,start.sigmasq.aK0 = start.sigmasq.aK0
                       ,start.sigmasq.n = start.sigmasq.n
-					  ,start.sigmasq.ae = start.sigmasq.ae
+                      ,start.sigmasq.ae = start.sigmasq.ae
                       ,Harv.data = Harv.data
-					  ,Aerial.data = Aerial.data
+                      ,Aerial.data = Aerial.data
                       )
 
     #.. fixed parameters
@@ -2395,9 +2414,9 @@ HDDLislie.sampler <-
                          ,beta.fert.rate = be.f
                          ,alpha.surv.prop = al.s
                          ,beta.surv.prop = be.s
-						 ,alpha.SRB = al.SRB
+                         ,alpha.SRB = al.SRB
                          ,beta.SRB = be.SRB
-						 ,alpha.aerial.det = al.A
+                         ,alpha.aerial.det = al.A
                          ,beta.aerial.det = be.A
                          ,alpha.Harvest = al.H
                          ,beta.Hervest = be.H
@@ -2405,17 +2424,17 @@ HDDLislie.sampler <-
                          ,beta.1overK = be.aK0
                          ,alpha.harvest.count = al.n
                          ,beta.harvest.count = be.n
-						 ,alpha.aerial.count = al.ae
+                         ,alpha.aerial.count = al.ae
                          ,beta.aerial.count = be.ae
                          ,mean.fert.rate = mean.f
                          ,mean.surv.prop = mean.s
-						 ,mean.SRB = mean.SRB
-						 ,mean.aerial.detection = mean.A
+                         ,mean.SRB = mean.SRB
+                         ,mean.aerial.detection = mean.A
                          ,mean.Harvest.proportion = mean.H
                          ,mean.1overK = mean.aK0
                          ,mean.baseline.count = mean.b
                          ,mean.Harv.data = Harv.data
-						 ,Aerial.data = Aerial.data
+                         ,Aerial.data = Aerial.data
                          )
 
 
@@ -2425,11 +2444,11 @@ HDDLislie.sampler <-
     alg.stats <-
         list(acceptance.proportions = acc.count
              ,pop.went.neg = pop.negative
-             ,acc.prop.adj4neg = mapply(FUN = function(a, b, n) {
-                 (a * n) / (n - b)
-             },
-              acc.count[1:5], pop.negative, MoreArgs = list(n = n.iter)
-              )
+             #,acc.prop.adj4neg = mapply(FUN = function(a, b, n) {
+            #     (a * n) / (n - b)
+             #},
+              #acc.count[1:5], pop.negative, MoreArgs = list(n = n.iter)
+              #)
              ,acc.rat.na = ar.na
              ,surv.outside.tol = s.out.tol
              ,run.time = proc.time() - ptm
@@ -2442,7 +2461,7 @@ HDDLislie.sampler <-
                         ,surv.prob = "logit",SRB = "logit",aerial.detection="logit", H = "logit", invK0="identical"
                         ,baseline.count = "log"
                         ,harvest.count = "log"
-						,aerial.count = "log")
+                        ,aerial.count = "log")
                        ,projection.periods = proj.periods
                        ,age.gp.size = nage
                        ,non.zero.fert.rows = fert.rows
@@ -2455,13 +2474,13 @@ HDDLislie.sampler <-
     #.. results
     ret.list <- list(fert.rate.mcmc = fert.rate.mcmc
                   ,surv.prop.mcmc = surv.prop.mcmc
-				  ,SRB.mcmc = SRB.mcmc
-				  ,aerial.detection.mcmc = A.mcmc
+                  ,SRB.mcmc = SRB.mcmc
+                  ,aerial.detection.mcmc = A.mcmc
                   ,H.mcmc = H.mcmc
                   ,invK0.mcmc = aK0.mcmc
                   ,baseline.count.mcmc = baseline.count.mcmc
                   ,harvest.mcmc = lx.mcmc
-				  ,aerial.count.mcmc = ae.mcmc
+                  ,aerial.count.mcmc = ae.mcmc
                   ,variances.mcmc = variances.mcmc
                   ,alg.stats = alg.stats
                   ,fixed.params = fixed.params

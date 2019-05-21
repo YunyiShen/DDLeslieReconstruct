@@ -1,43 +1,57 @@
-source('DDLislie_harvest_1overK0.r')
-nage = 8
+source('DDLeslie_harvest_1overK0.r')
+nage = c(8,3) # nage is female first and then male
 period = 14
 
-
-prop.vars = list(fert.rate = matrix(.01,nrow = nage,ncol = period),
-                 surv.prop = matrix(.01,nrow = nage, ncol = period),
-                 H = matrix(.01,nrow = nage,ncol = 1),
-                 aK0=.01,
-                 baseline.pop.count = matrix(.01,nrow = nage,ncol = 1))
 
 mean.s = read.csv("./data/Survival_mean_Etter.csv")
 mean.s = mean.s[,-(1)]
 mean.f = read.csv("./data/Fecundity_mean.csv")
 mean.f = mean.f[,-(1)]
-mean.f[1,] = mean.f[1,]+1e-6
+mean.SRB = read.csv("./data/SRB_mean.csv")
+mean.SRB = mean.SRB[,-1]
+#mean.f[1,] = mean.f[1,]+1e-6
 Harv.data = read.csv("./data/Culling.csv")
 Harv.data = Harv.data[,-(1)]
+Aeri.data = read.csv("./data/Aerial_count.csv")
+Aeri.data = Aeri.data[,-1]
 mean.b = (977 * Harv.data[,1]/sum(Harv.data[,1]))
+
+
+
 #mean.b[7]=10
 mean.H = matrix(c(.3,.5,.4,.5,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
-mean.H = matrix(rep(mean.H,nage),2,period+1,byrow = T)
+mean.H = matrix(rep(mean.H,3),3,period+1,byrow = T)
 mean.H[1,]=0.5*mean.H[1,]
 
-prop.vars = list(fert.rate = matrix(.1,nrow = nage,ncol = period),
-                 surv.prop = matrix(.1,nrow = nage, ncol = period),
-                 H = matrix(.1,nrow = nage,ncol = period),
+mean.A = matrix(0.7,1,period+1)
+
+prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
+                 surv.prop = matrix(.1,nrow = sum(nage), ncol = period),
+                 SRB = matrix(.1,nage[1],period), # vital rates has period cols
+                 A = matrix(.1,1,period+1),
+                 H = matrix(.1,nrow = 3,ncol = period+1),
                  aK0=1e-3,
-                 baseline.pop.count = matrix(.1,nrow = nage,ncol = 1))
+                 baseline.pop.count = matrix(.1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1000, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 15, burn.in = 10, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .08, al.s = 1, be.s = .1
-                                   , al.aK0 = 1, be.aK0 = 1e-2, al.n = 1
-                                   , be.n = .01, al.H = 1, be.H = .1
-                                   , mean.s = as.matrix(mean.s), mean.b= as.matrix(mean.b),mean.aK0 = matrix(0,1,2)
+                                   , al.SRB = 1, be.SRB = .01
+                                   , al.aK0 = 1, be.aK0 = 1e-2
+                                   , al.n = 1, be.n = .01
+                                   , al.ae = 1, be.ae = .01
+                                   , al.H = 1, be.H = .1
+                                   , al.A = 1, be.A = .1
+                                   , mean.s = as.matrix(mean.s)
+                                   , mean.b= as.matrix(mean.b)
+                                   , mean.aK0 = matrix(0,1,2)
                                    , mean.H = (mean.H)
+                                   , mean.SRB = as.matrix( mean.SRB)
+                                   , mean.A = as.matrix( mean.A)
                                    #, mean.H = 0.6
                                    , Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
+                                   , Aerial.data = as.matrix( Aeri.data)
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = F)
 
 
