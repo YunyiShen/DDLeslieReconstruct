@@ -67,20 +67,20 @@ ggplot(invK0_post,aes(x=invK0)) +
   geom_vline(xintercept = 0)
 ggsave("./figs/temp/invK0post.jpg")
 
-mean.harv = apply(Chicago_RES$lx.mcmc,2,mean)
-mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
+mean.harv = apply(Chicago_RES$harvest.mcmc,2,mean)
+mean.harv.matrix = matrix(mean.harv,nrow = sum(nage),ncol = period)
 #harv_mean = data.frame(age = 1:8,mean.harv.matrix)
 mean.total.harv = apply(mean.harv.matrix,2,sum)
 plot(mean.total.harv)
 
-BI.low.harv = apply(Chicago_RES$lx.mcmc,2,quantile,probs = .025)
-BI.low.harv.matrix = matrix(BI.low.harv,nrow = nage,ncol = period)
-BI_harv_low = data.frame(age = 1:8,BI.low.harv.matrix)
+BI.low.harv = apply(Chicago_RES$harvest.mcmc,2,quantile,probs = .025)
+BI.low.harv.matrix = matrix(BI.low.harv,nrow = sum(nage),ncol = period)
+BI_harv_low = data.frame(age = c(paste0("F",1:8),paste0("M",1:3)),BI.low.harv.matrix)
 
 
-BI.high.harv = apply(Chicago_RES$lx.mcmc,2,quantile,probs = .975)
-BI.high.harv.matrix = matrix(BI.high.harv,nrow = nage,ncol = period)
-BI_harv_high = data.frame(age = 1:8,BI.high.harv.matrix)
+BI.high.harv = apply(Chicago_RES$harvest.mcmc,2,quantile,probs = .975)
+BI.high.harv.matrix = matrix(BI.high.harv,nrow = sum(nage),ncol = period)
+BI_harv_high = data.frame(age = c(paste0("F",1:8),paste0("M",1:3)),BI.high.harv.matrix)
 
 har_data = data.frame(matrix(nrow = 1,ncol = 5))
 colnames(har_data) = c("age","mean","low","high","time")
@@ -92,15 +92,15 @@ for(i in 1:8){
 }
 require(ggplot2)
 
-for(i in 1:8){
+for(i in 1:11){
   temp1 = data.frame(point = "model predict (95% CI)",mean = mean.harv.matrix[i,],low = BI.low.harv.matrix[i,],high = BI.high.harv.matrix[i,],time = 1993:2006)
   temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:15]),low =t( Harv.data[i,2:15]),high = t(Harv.data[i,2:15]),time = 1993:2006)
   colnames(temp2) = colnames(temp1)
   temp = rbind(temp1,temp2)
-  write.csv(temp,paste0("./figs/temp/age",i,".csv"))
+  write.csv(temp,paste0("./figs/temp/",BI_harv_high$age[i],".csv"))
   rm(temp1)
   rm(temp2)
-  filename = paste0("./figs/temp/age",i,".jpg")
+  filename = paste0("./figs/temp/",BI_harv_high$age[i],".jpg")
   #jpeg(filename)
   ggplot(data.frame(temp),aes(x=time, y=mean, colour = point)) + 
     geom_errorbar(aes(ymin=low, ymax=high), width=.1) +
@@ -141,6 +141,6 @@ total_living_bl = cbind(bl,total_living)
 plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1,period+1,1992:2006)
 
 plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=8,period,1993:2006)
-plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/ferc_age",nage=8,period,1993:2006)
+plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/fec_age",nage=7,period,1993:2006)
 plotthings(YD_obj=Chicago_RES$H.mcmc,pathsave="./figs/temp/Harvpor",2,period+1,1992:2006)
 
