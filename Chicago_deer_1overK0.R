@@ -46,7 +46,7 @@ Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 1000, mean.f = as.matr
                                    , mean.s = as.matrix(mean.s)
                                    , mean.b= as.matrix(mean.b)
                                    , mean.aK0 = matrix(0,1,2)
-                                   , mean.H = (mean.H)
+                                   , mean.H = as.matrix(mean.H)
                                    , mean.SRB = as.matrix( mean.SRB)
                                    , mean.A = as.matrix( mean.A)
                                    #, mean.H = 0.6
