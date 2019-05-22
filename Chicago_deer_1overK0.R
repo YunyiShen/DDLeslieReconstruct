@@ -15,13 +15,13 @@ Harv.data = Harv.data[,-(1)]
 Aeri.data = read.csv("./data/Aerial_count.csv")
 Aeri.data = Aeri.data[,-1]
 mean.b = (977 * Harv.data[,1]/sum(Harv.data[,1]))
-
+mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 
 
 #mean.b[7]=10
-mean.H = 0.7 * matrix(c(.3,.5,.4,.5,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
-mean.H = matrix(rep(mean.H,3),3,period+1,byrow = T)
-mean.H[1,]=0.5*mean.H[1,]
+#mean.H = 0.7 * matrix(c(.3,.5,.4,.5,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
+#mean.H = matrix(rep(mean.H,3),3,period+1,byrow = T)
+#mean.H[1,]=0.5*mean.H[1,]
 
 mean.A = matrix(0.7,1,period+1)
 
