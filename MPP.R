@@ -1,6 +1,6 @@
 ## Model predict percision
 nage = 8
-res_link = "E:/UW Lab jobs/3. Lislie Reconstruction/Lislie_Reconstruct_ChicagoDeer/figs/temp"
+res_link = "E:/UW Lab jobs/3. Lislie Reconstruction/Lislie_Reconstruct_ChicagoDeer/figs/15k_high_beta"
 res_link = "C:/Users/yshen99/Documents/GitHub/Lislie_Reconstruct_ChicagoDeer/figs/temp" 
 ### MSE & MPA
 n_data = 0
@@ -8,9 +8,10 @@ MSE = 0
 MPA = 0
 MAD = 0
 MAD_vec = numeric()
+age_name = BI_harv_low$age
 
-for(i in 1:nage){
-  file_temp = paste0(res_link,"/age",i,".csv")
+for(i in age_name){
+  file_temp = paste0(res_link,"/",i,".csv")
   temp = read.csv(file_temp)
   realdata = temp$point=="data"
   realvalue = temp[realdata,]
@@ -37,5 +38,5 @@ MAD = MAD/n_data # mean absolute difference
 SE_MAD = sd(MAD_vec)/sqrt(n_data)
 
 ### MSD # mean standard diviation
-MSD = mean(apply(Chicago_RES$lx.mcmc,2,sd))
-SE_MSD = sd(apply(Chicago_RES$lx.mcmc,2,sd))/sqrt(nrow(Chicago_RES$lx.mcmc))
+MSD = mean(apply(Chicago_RES$harvest.mcmc,2,sd))
+SE_MSD = sd(apply(Chicago_RES$harvest.mcmc,2,sd))/sqrt(nrow(Chicago_RES$harvest.mcmc))

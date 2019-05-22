@@ -19,7 +19,7 @@ mean.b = (977 * Harv.data[,1]/sum(Harv.data[,1]))
 
 
 #mean.b[7]=10
-mean.H = matrix(c(.3,.5,.4,.5,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
+mean.H = 0.7 * matrix(c(.3,.5,.4,.5,0.5,0.6,0.4,0.5,0.4,0.3,0.4,0.5,0.5,0.5,0.5))
 mean.H = matrix(rep(mean.H,3),3,period+1,byrow = T)
 mean.H[1,]=0.5*mean.H[1,]
 
@@ -35,7 +35,7 @@ prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1000, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 1000, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .08, al.s = 1, be.s = .1
                                    , al.SRB = 1, be.SRB = .01
                                    , al.aK0 = 1, be.aK0 = 1e-2
