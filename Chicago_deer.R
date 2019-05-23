@@ -28,8 +28,8 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 500, mean.f = as.matr
 mean.surv = apply(Chicago_RES$surv.prop.mcmc,2,mean)
 mean.ferc = apply(Chicago_RES$fert.rate.mcmc,2,mean)
 
-mean.harv = apply(Chicago_RES$lx.mcmc,2,mean)
-mean.harv.matrix = matrix(mean.harv,nrow = nage,ncol = period)
+mean.harv = apply(Chicago_RES$harvest.mcmc,2,mean)
+mean.harv.matrix = matrix(mean.harv,nrow = sum(nage),ncol = period)
 mean.harv.matrix = cbind(mean.harv.matrix)
 mean.total.harv = apply(mean.harv.matrix,2,sum)
 mean.harv.por = apply(Chicago_RES$H.mcmc,2,mean)
@@ -44,26 +44,44 @@ mean.age.surv = list()
 mean.age.ferc = list()
 mean.age.harv = list()
 DDsurv = list()
-DDferc = list()
+DDfec = list()
 DDharv = list()
 harv_surv = list()
 harv_ferc = list()
 
-for(i in 1:8){
+for(i in 1:11){
   
-  mean.age.surv[[i]] = mean.surv[(1:(nage*period))%%nage==(i%%nage)]
-  mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==(i%%nage)]
-  mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
+  mean.age.surv[[i]] = mean.surv[(1:((sum(nage))*period))%%sum(nage)==(i%%(sum(nage)))]
+  #mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==(i%%nage)]
+  #mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
   data.temp = data.frame(mean.age.surv = mean.age.surv[[i]]
-                         ,mean.age.ferc = mean.age.ferc[[i]]
-                         ,mean.living.total = mean.living.total[1:14]
-                         ,mean.age.harv  = mean.age.harv[[i]][1:14])
+                         #,mean.age.ferc = mean.age.ferc[[i]]
+                         ,mean.living.total = mean.living.total[1:14])
+                         #,mean.age.harv  = mean.age.harv[[i]][1:14])
   
   DDsurv[[i]] = lm(mean.age.surv~mean.living.total,data = data.temp)
-  DDferc[[i]] = lm(mean.age.ferc~mean.living.total,data = data.temp)
-  DDharv[[i]] = lm(mean.age.harv~mean.living.total,data = data.temp)
-  harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp)
-  harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp)
+  #DDferc[[i]] = lm(mean.age.ferc~mean.living.total,data = data.temp)
+  #DDharv[[i]] = lm(mean.age.harv~mean.living.total,data = data.temp)
+  #harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp)
+  #harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp)
+  
+}
+
+for(i in 1:7){
+  
+  mean.age.ferc[[i]] = mean.ferc[(1:(7*period))%%7==(i%%7)]
+  #mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==(i%%nage)]
+  #mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
+  data.temp = data.frame(#mean.age.surv = mean.age.surv[[i]]
+                         mean.age.fec = mean.age.ferc[[i]]
+                         ,mean.living.total = mean.living.total[1:14])
+  #,mean.age.harv  = mean.age.harv[[i]][1:14])
+  
+  #DDsurv[[i]] = lm(mean.age.surv~mean.living.total,data = data.temp)
+  DDfec[[i]] = lm(mean.age.fec~mean.living.total,data = data.temp)
+  #DDharv[[i]] = lm(mean.age.harv~mean.living.total,data = data.temp)
+  #harv_surv[[i]] = lm(mean.age.surv~mean.age.harv,data = data.temp)
+  #harv_ferc[[i]] = lm(mean.age.ferc~mean.age.harv,data = data.temp)
   
 }
 
@@ -71,7 +89,7 @@ for(i in 1:8){
 #mean.surv.1 = mean.surv[(1:(nage*period))%%nage==1]
 
 lapply(DDsurv, summary)
-lapply(DDferc, summary)
+lapply(DDfec, summary)
 lapply(DDharv, summary)
 lapply(harv_surv, summary)
 lapply(harv_ferc, summary)
@@ -85,12 +103,12 @@ plot(mean.total.harv,mean.age.surv[[7]])
 
 require(ggplot2)
 
-for(i in 1:8){
-  ggplot(DDferc[[i]]$model,aes(x=mean.living.total,y=mean.age.ferc) )+
+for(i in 1:11){
+  ggplot(DDsurv[[i]]$model,aes(x=mean.living.total,y=mean.age.surv) )+
     geom_point()+
     #geom_line()+
     stat_smooth(method = "lm")
-  filename = paste0("./figs/temp/DDfec_age",i,".jpg")
+  filename = paste0("./figs/temp/DDsurv_age",i,".jpg")
   
   ggsave(filename, plot = last_plot())
 }

@@ -36,13 +36,13 @@ prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
 set.seed(42)
 
 Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 1000, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .08, al.s = 1, be.s = .1
-                                   , al.SRB = 1, be.SRB = .01
+                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
+                                   , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-2
-                                   , al.n = 1, be.n = .01
-                                   , al.ae = 1, be.ae = .01
-                                   , al.H = 1, be.H = .1
-                                   , al.A = 1, be.A = .1
+                                   , al.n = 1, be.n = .005
+                                   , al.ae = 1, be.ae = .005
+                                   , al.H = 1, be.H = .08
+                                   , al.A = 1, be.A = .08
                                    , mean.s = as.matrix(mean.s)
                                    , mean.b= as.matrix(mean.b)
                                    , mean.aK0 = matrix(0,1,2)
@@ -110,13 +110,13 @@ for(i in 1:11){
   ggsave(filename, plot = last_plot())
   #dev.off()
 }
-H_full = 0 * Chicago_RES$lx.mcmc
-H_full = cbind(H_full[,1:nage],H_full)
+H_full = 0 * Chicago_RES$harvest.mcmc
+H_full = cbind(H_full[,1:sum(nage)],H_full)
 
 for(i in 0:period+1){
-  for(j in 1:nage){
-    ind = (i-1)*nage + j
-    plc = (i-1)*2 + 2 - (j==1)
+  for(j in 1:sum(nage)){
+    ind = (i-1)*sum(nage) + j
+    plc = (i-1)*3 + (j==1 | j==9) + 2 * (j>=2 & j<=8) + 3 * (j>=10)
     H_full[,ind]=Chicago_RES$H.mcmc[,plc]
     
   }
@@ -124,23 +124,27 @@ for(i in 0:period+1){
 
 
 
-living_inid = (Chicago_RES$lx.mcmc/H_full[,-(1:nage)])*(1-H_full[,-(1:nage)])
+living_inid = (Chicago_RES$harvest.mcmc/H_full[,-(1:sum(nage))])*(1-H_full[,-(1:sum(nage))])
 
-plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",nage,period,1993:2006)
+plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",sum(nage),period,1993:2006)
 
 total_living = matrix(0,nrow(living_inid),ncol = period)
 
 for(i in 1:period){
-  total_living[,i] = rowSums(living_inid[,1:nage+(i-1)*nage])
+  total_living[,i] = rowSums(living_inid[,1:sum(nage)+(i-1)*sum(nage)])
   
 }
-bl = rowSums(Chicago_RES$baseline.count.mcmc*(1-H_full[,(1:nage)]))
-bl_mean = colMeans(Chicago_RES$baseline.count.mcmc*(1-H_full[,(1:nage)]))
+bl = rowSums(Chicago_RES$baseline.count.mcmc*(1-H_full[,(1:sum(nage))]))
+bl_mean = colMeans(Chicago_RES$baseline.count.mcmc*(1-H_full[,(1:sum(nage))]))
 total_living_bl = cbind(bl,total_living)
 
 plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1,period+1,1992:2006)
 
-plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=8,period,1993:2006)
+plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=11,period,1993:2006)
 plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/fec_age",nage=7,period,1993:2006)
-plotthings(YD_obj=Chicago_RES$H.mcmc,pathsave="./figs/temp/Harvpor",2,period+1,1992:2006)
+plotthings(YD_obj=Chicago_RES$H.mcmc,pathsave="./figs/temp/Harvpor",3,period+1,1992:2006)
+
+plotthings(YD_obj=Chicago_RES$SRB.mcmc,pathsave="./figs/temp/SRB",1,period,1993:2006)
+
+plotthings(YD_obj=Chicago_RES$aerial.detection.mcmc,pathsave="./figs/temp/Aerial_detectionrate",1,period+1,1992:2006)
 
