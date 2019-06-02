@@ -107,8 +107,9 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Fec, SRB,E0=NULL, aK0 = NULL,
 getfullHarvpar = function(H_n,nage){
   H_n_temp = as.numeric(H_n)
   H_n[2:nage[1]]=H_n_temp[2] # for doe Y+A
-  H_n[c(1,nage[1] + 1)] = H_n_temp[1] # for fawns
-  H_n[2:nage[2] + nage[1]] = H_n_temp[3] # for buck Y+A
+  H_n[1] = H_n_temp[1] # for female fawns
+  H_n[nage[1]+1] = H_n_temp[3] # male fawns
+  H_n[2:nage[2] + nage[1]] = H_n_temp[4] # for buck Y+A
   return(H_n)
 
 
