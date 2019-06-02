@@ -29,13 +29,13 @@ prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
                  surv.prop = matrix(.1,nrow = sum(nage), ncol = period),
                  SRB = matrix(.1,nage[1],period), # vital rates has period cols
                  A = matrix(.1,1,period+1),
-                 H = matrix(.1,nrow = 3,ncol = period+1),
+                 H = matrix(.1,nrow = 4,ncol = period+1),
                  aK0=1e-3,
                  baseline.pop.count = matrix(.1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 5000, burn.in = 1000, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1500, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-2
