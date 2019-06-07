@@ -38,9 +38,9 @@ set.seed(42)
 Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1500, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
-                                   , al.aK0 = 1, be.aK0 = 1e-2
-                                   , al.n = 1, be.n = .005
-                                   , al.ae = 1, be.ae = .005
+                                   , al.aK0 = 1, be.aK0 = 1e-1
+                                   , al.n = 1, be.n = .01
+                                   , al.ae = 1, be.ae = .01
                                    , al.H = 1, be.H = .08
                                    , al.A = 1, be.A = .08
                                    , mean.s = as.matrix(mean.s)
@@ -52,7 +52,7 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1500, mean.f = as.mat
                                    #, mean.H = 0.6
                                    , Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , Aerial.data = as.matrix( Aeri.data)
-                                   , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = F)
+                                   , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = T)
 
 
 br_K0 = Chicago_RES$invK0.mcmc
@@ -142,7 +142,7 @@ plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1
 
 plotthings(YD_obj=(Chicago_RES$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=11,period,1993:2006)
 plotthings(Chicago_RES$fert.rate.mcmc,pathsave="./figs/temp/fec_age",nage=7,period,1993:2006)
-plotthings(YD_obj=Chicago_RES$H.mcmc,pathsave="./figs/temp/Harvpor",3,period+1,1992:2006)
+plotthings(YD_obj=Chicago_RES$H.mcmc,pathsave="./figs/temp/Harvpor",4,period+1,1992:2006)
 
 plotthings(YD_obj=Chicago_RES$SRB.mcmc,pathsave="./figs/temp/SRB",1,period,1993:2006)
 
