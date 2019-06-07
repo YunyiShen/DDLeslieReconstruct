@@ -1488,6 +1488,8 @@ HDDLislie.sampler <-
                        ,alpha.ae = al.ae, beta.ae = be.ae
                        ,sigmasq.f = curr.sigmasq.f
                        ,sigmasq.s = curr.sigmasq.s
+					   ,sigmasq.SRB = curr.sigmasq.SRB
+					   ,sigmasq.A = curr.sigmasq.A
                        ,sigmasq.H = curr.sigmasq.H
                        ,sigmasq.aK0 = curr.sigmasq.aK0
                        ,sigmasq.n = curr.sigmasq.n
