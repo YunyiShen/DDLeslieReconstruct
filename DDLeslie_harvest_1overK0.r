@@ -530,6 +530,13 @@ HDDLislie.sampler <-
                ,thin = thin.by
                )
       colnames(surv.prop.mcmc) = NULL
+	  
+	  log.like.mcmc = 
+	      mcmc(matrix(nrow = n.stored
+		              ,ncol = 1)
+					  ,start = burn.in + 1
+                      ,thin = thin.by)
+	  colnames(log.like.mcmc) = NULL
 
       # lx
       # this is for current population, for us, it is current culling data
@@ -2371,11 +2378,21 @@ HDDLislie.sampler <-
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
             }
-
+			full.aeri = getAerialCount(nage = nage, Harv = full.proj,H = invlogit(logit.curr.H),A = invlogit(logit.curr.A))
+      if(k %% 1 == 0 && k > 0){
       lx.mcmc[k,] =
           as.vector(full.proj)[-(1:ncol(baseline.count.mcmc))] # to delete all age class' baseline count, because of as.vector,thus need to do like this
       ae.mcmc[k,] = 
-          as.vector(getAerialCount(nage = nage, Harv = full.proj,H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+          as.vector(full.aeri)
+	  log.like.mcmc[k,] = 
+                            log.lhood(
+                                log.n.census = log.Harv.mat
+                                ,log.n.hat = log(full.proj),ll.var = curr.sigmasq.n) +
+                            log.lhood(
+                                log.n.census = log.Aeri.mat
+                                ,log.n.hat = log(full.aeri)
+                                ,ll.var = curr.sigmasq.ae) 
+	  }
 
       if(verb && identical(i%%1000, 0)) cat("\n\n")
 
@@ -2387,7 +2404,63 @@ HDDLislie.sampler <-
 
     ## ......... End Loop ........ ##
     #...............................#
-
+	cat("\n","done","\n","model checking...")
+	# calculate DIC
+	mcmc.objs = list(
+	              #fert.rate.mcmc = fert.rate.mcmc
+                  surv.prop.mcmc = surv.prop.mcmc
+                  ,SRB.mcmc = SRB.mcmc
+                  ,aerial.detection.mcmc = A.mcmc
+                  ,H.mcmc = H.mcmc
+                  #,invK0.mcmc = aK0.mcmc
+                  ,baseline.count.mcmc = baseline.count.mcmc
+                  ,harvest.mcmc = lx.mcmc
+                  ,aerial.count.mcmc = ae.mcmc
+                  ,variances.mcmc = variances.mcmc)
+	mean.vital = lapply(mcmc.objs,function(kk){
+		colMeans(as.matrix(kk))
+	})
+	if(estaK0){
+		mcmc.objs$invK0 = aK0.mcmc
+		mean.vital$invK0 = colMeans( as.matrix( aK0.mcmc))
+	}
+	else {mean.vital$invK0.mcmc = c(0,0)}
+  if(estFer){
+		mcmc.objs$fert.rate.mcmc = fert.rate.mcmc
+		mean.vital$fert.rate.mcmc = colMeans( as.matrix( fert.rate.mcmc))
+  }
+	else{mean.vital$fert.rate.mcmc = start.f}
+	#pD_Spie02 = -2 * mean(log.like.mcmc) + 2 * log_likelihood_mean
+  pD_Gelman04 = 2 * var(log.like.mcmc)	
+	#DIC_Spie02 = -2* mean(log.like.mcmc) - 2 * (pD_Spie02)
+	DIC_Gelman04 = -2* mean(log.like.mcmc) - 2 * (pD_Gelman04)
+	DIC = list(pD_Gelman04,DIC_Gelman04)
+	names(DIC) = c("pD_Gelman04","DIC_Gelman04")
+	
+	## abs_dif
+	abs_dif = abs(c((mean.vital$baseline.count.mcmc) * getfullHarvpar(((matrix(mean.vital$H.mcmc,ncol = proj.periods+1))[,1]),nage),mean.vital$harvest.mcmc)-as.vector(Harv.data))
+	mean_abs_dif_harv = mean(abs_dif)
+	se_abs_dif_harv = sd(abs_dif)/(sqrt(proj.periods))
+	
+	abs_dif_aerial = abs(mean.vital$aerial.count.mcmc-as.vector(Aerial.data))
+	mean_abs_dif_ae = mean(abs_dif_aerial)
+	se_abs_dif_ae = sd(abs_dif_aerial)/sqrt(proj.periods)
+	
+	## sd 
+	sd_counts = lapply(list(harvest = lx.mcmc
+                  ,aerial.count = ae.mcmc),function(kk){
+				      apply(kk,2,sd)
+				  })
+	mean_sd_counts = lapply(sd_counts,mean)
+	
+	## precision
+	
+	model.checking = list(
+		DIC=DIC,
+		absolute.difference = list(mean_abs_dif_harv,
+	                               se_abs_dif_harv),
+	  sd = mean_sd_counts
+	)
 
     ## ---------- Output --------- ##
 
@@ -2475,22 +2548,15 @@ HDDLislie.sampler <-
                        
 
     #.. results
-    ret.list <- list(fert.rate.mcmc = fert.rate.mcmc
-                  ,surv.prop.mcmc = surv.prop.mcmc
-                  ,SRB.mcmc = SRB.mcmc
-                  ,aerial.detection.mcmc = A.mcmc
-                  ,H.mcmc = H.mcmc
-                  ,invK0.mcmc = aK0.mcmc
-                  ,baseline.count.mcmc = baseline.count.mcmc
-                  ,harvest.mcmc = lx.mcmc
-                  ,aerial.count.mcmc = ae.mcmc
-                  ,variances.mcmc = variances.mcmc
+    ret.list <- list(mcmc.objs = mcmc.objs
+	              ,log.like.mcmc = log.like.mcmc
                   ,alg.stats = alg.stats
+				  ,model.checking = model.checking
                   ,fixed.params = fixed.params
                   ,start.vals = start.vals
                   ,alg.params = alg.params
                   )
-    cat("\n done \n")
+    cat("done \n","all done \n")
     return(ret.list)
 # stop here 10/23/2018 15:51 start to test tomorrow.
 # TEST of code done here, start SIMULATION

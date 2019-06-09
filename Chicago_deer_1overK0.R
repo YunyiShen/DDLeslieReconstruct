@@ -35,7 +35,7 @@ prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1500, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 300, burn.in = 150, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-1
@@ -52,7 +52,7 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 1500, mean.f = as.mat
                                    #, mean.H = 0.6
                                    , Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , Aerial.data = as.matrix( Aeri.data)
-                                   , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = T)
+                                   , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = F)
 
 
 br_K0 = Chicago_RES$invK0.mcmc
