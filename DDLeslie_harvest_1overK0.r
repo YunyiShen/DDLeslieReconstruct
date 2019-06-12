@@ -905,7 +905,7 @@ HDDLislie.sampler <-
               if(i > burn.in) acc.count$fert.rate[j] <-
                   acc.count$fert.rate[j] + 1/n.iter
               log.curr.f <- log.prop.f
-              log.curr.proj <- log(full.proj)
+              curr.proj = full.proj
               curr.aeri <- (prop.aeri)
               log.curr.posterior <- log.prop.posterior # change log curr
             }
@@ -1039,7 +1039,7 @@ HDDLislie.sampler <-
                 if(i > burn.in) acc.count$surv.prop[j] <-
                     acc.count$surv.prop[j] + 1/n.iter
                 logit.curr.s <- logit.prop.s
-                log.curr.proj <- log(full.proj)
+                curr.proj = full.proj
                 curr.aeri <- (prop.aeri)
                 log.curr.posterior <- log.prop.posterior
               } 
@@ -1177,7 +1177,7 @@ HDDLislie.sampler <-
                 if(i > burn.in) acc.count$SRB[j] <-
                     acc.count$SRB[j] + 1/n.iter
                     logit.curr.SRB <- logit.prop.SRB
-                    log.curr.proj <- log(full.proj)
+                    curr.proj = full.proj
                     curr.aeri <- (prop.aeri)
                     log.curr.posterior <- log.prop.posterior
               } 
@@ -1226,7 +1226,7 @@ HDDLislie.sampler <-
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar =( invlogit(logit.prop.H))#<-- use proposal
-                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar( invlogit(logit.prop.H[,1]),nage) , period = proj.periods, nage = nage))
+                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1237,7 +1237,7 @@ HDDLislie.sampler <-
                 }
             } else {
                 
-                prop.aeri = ( getAerialCount(nage = nage, Harv = ( full.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
+                prop.aeri = ( getAerialCount(nage = nage, Harv = ( full.proj),H = invlogit(logit.prop.H),A = invlogit(logit.curr.A)))
 
         # - Calculate log posterior of proposed vital under projection
         log.prop.posterior =
@@ -1300,7 +1300,7 @@ HDDLislie.sampler <-
                 if(i > burn.in) acc.count$H[j] <-
                     acc.count$H[j] + 1/n.iter
                 logit.curr.H = logit.prop.H
-                log.curr.proj <- log(full.proj)
+                curr.proj = full.proj
                 curr.aeri <- (prop.aeri)
                 log.curr.posterior <- log.prop.posterior
             } 
@@ -1344,7 +1344,7 @@ HDDLislie.sampler <-
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H)
-                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar( invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                ,Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1418,7 +1418,7 @@ HDDLislie.sampler <-
                 if(i > burn.in) acc.count$A[j] <-
                     acc.count$A[j] + 1/n.iter
                 logit.curr.A = logit.prop.A
-                log.curr.proj <- log(full.proj)
+                curr.proj = full.proj
                 curr.aeri <- (prop.aeri)
                 log.curr.posterior <- log.prop.posterior
             } 
@@ -1519,7 +1519,8 @@ HDDLislie.sampler <-
                 if(i > burn.in) acc.count$K0[j] <-
                     acc.count$aK0[j] + 1/n.iter
                 curr.aK0 = prop.aK0
-                log.curr.proj = log.prop.proj
+                curr.proj = full.proj
+				curr.aeri=prop.aeri
                 log.curr.posterior = log.prop.posterior
             } 
 
@@ -1558,7 +1559,7 @@ HDDLislie.sampler <-
             }
             else{
                 full.proj =
-                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H), SRB = invlogit(logit.curr.SRB),Fec=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.prop.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) #<-- use proposal
+                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H), SRB = invlogit(logit.curr.SRB),Fec=exp(log.curr.f), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.prop.b)  #<-- use proposal
                 , period = proj.periods, nage = nage))
             }
 
@@ -1635,7 +1636,8 @@ HDDLislie.sampler <-
                 if(i > burn.in) acc.count$baseline.count[j] <-
                     acc.count$baseline.count[j] + 1/n.iter
                     log.curr.b = log.prop.b
-                    log.curr.proj = log.prop.proj
+                    curr.proj = full.proj
+					curr.aeri = prop.aeri
                     log.curr.posterior = log.prop.posterior
             } #.. if reject, leave current fert rates and projections
             #   alone, store current rate
@@ -1701,7 +1703,7 @@ HDDLislie.sampler <-
                        ,log.like = 
                             log.lhood(    
                                 n.census = Harv.data 
-                                ,n.hat = full.proj#<-- use current
+                                ,n.hat = curr.proj#<-- use current
                                 ) +#<-- use current
                             log.lhood(
                                 n.census = Aerial.data
@@ -1786,7 +1788,7 @@ HDDLislie.sampler <-
                        ,log.like = 
                             log.lhood(    
                                 n.census = Harv.data 
-                                ,n.hat = full.proj#<-- use current
+                                ,n.hat = curr.proj#<-- use current
                                 ) +#<-- use current
                             log.lhood(
                                 n.census = Aerial.data
@@ -1872,7 +1874,7 @@ HDDLislie.sampler <-
                        ,log.like = 
                             log.lhood(    
                                 n.census = Harv.data 
-                                ,n.hat = full.proj#<-- use current
+                                ,n.hat = curr.proj#<-- use current
                                 ) +#<-- use current
                             log.lhood(
                                 n.census = Aerial.data
@@ -1957,7 +1959,7 @@ HDDLislie.sampler <-
                        ,log.like = 
                             log.lhood(    
                                 n.census = Harv.data 
-                                ,n.hat = full.proj#<-- use current
+                                ,n.hat = curr.proj#<-- use current
                                 ) +#<-- use current
                             log.lhood(
                                 n.census = Aerial.data
@@ -2043,7 +2045,7 @@ HDDLislie.sampler <-
                        ,log.like = 
                             log.lhood(    
                                 n.census = Harv.data 
-                                ,n.hat = full.proj#<-- use current
+                                ,n.hat = curr.proj#<-- use current
                                 ) +#<-- use current
                             log.lhood(
                                 n.census = Aerial.data
@@ -2123,7 +2125,7 @@ HDDLislie.sampler <-
                        ,log.like = 
                             log.lhood(    
                                 n.census = Harv.data 
-                                ,n.hat = full.proj#<-- use current
+                                ,n.hat = curr.proj#<-- use current
                                 ) +#<-- use current
                             log.lhood(
                                 n.census = Aerial.data

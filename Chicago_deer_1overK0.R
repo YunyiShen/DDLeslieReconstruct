@@ -27,16 +27,16 @@ mean.A = matrix(0.7,1,period+1)
 
 prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
                  surv.prop = matrix(1,nrow = sum(nage), ncol = period),
-                 SRB = matrix(1,nage[1],period), # vital rates has period cols
-                 A = matrix(1,1,period+1),
-                 H = matrix(1,nrow = 4,ncol = period+1),
+                 SRB = matrix(.1,nage[1],period), # vital rates has period cols
+                 A = matrix(.1,1,period+1),
+                 H = matrix(.1,nrow = 4,ncol = period+1),
                  aK0=1e-3,
-                 baseline.pop.count = matrix(1,nrow = sum(nage),ncol = 1))
+                 baseline.pop.count = matrix(.1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 300, burn.in = 50, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = 1e-8, al.s = 1, be.s = .05
+Chicago_RES = HDDLislie.sampler( n.iter = 1500, burn.in = 500, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-1
                                    #, al.n = 1, be.n = 1e-8
@@ -50,6 +50,9 @@ Chicago_RES = HDDLislie.sampler( n.iter = 300, burn.in = 50, mean.f = as.matrix(
                                    , mean.SRB = as.matrix( mean.SRB)
                                    , mean.A = as.matrix( mean.A)
                                    #, mean.H = 0.6
+                                   ,start.sigmasq.f = .05, start.sigmasq.s = .05, start.sigmasq.SRB = .05
+                                   ,start.sigmasq.aK0 = .05, start.sigmasq.H = .05
+                                   ,start.sigmasq.A = .05
                                    , Harv.data = as.matrix(Harv.data)
                                    , Aerial.data = as.matrix( Aeri.data)
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = F)
