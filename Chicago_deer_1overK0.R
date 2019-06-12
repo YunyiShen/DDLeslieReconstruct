@@ -14,7 +14,7 @@ Harv.data = read.csv("./data/Culling.csv")
 Harv.data = Harv.data[,-(1)]
 Aeri.data = read.csv("./data/Aerial_count.csv")
 Aeri.data = Aeri.data[,-1]
-mean.b = (977 * Harv.data[,1]/sum(Harv.data[,1]))
+mean.b = Harv.data[,1]
 mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 
 
@@ -26,21 +26,21 @@ mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 mean.A = matrix(0.7,1,period+1)
 
 prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
-                 surv.prop = matrix(.1,nrow = sum(nage), ncol = period),
-                 SRB = matrix(.1,nage[1],period), # vital rates has period cols
-                 A = matrix(.1,1,period+1),
-                 H = matrix(.1,nrow = 4,ncol = period+1),
+                 surv.prop = matrix(1,nrow = sum(nage), ncol = period),
+                 SRB = matrix(1,nage[1],period), # vital rates has period cols
+                 A = matrix(1,1,period+1),
+                 H = matrix(1,nrow = 4,ncol = period+1),
                  aK0=1e-3,
-                 baseline.pop.count = matrix(.1,nrow = sum(nage),ncol = 1))
+                 baseline.pop.count = matrix(1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 300, burn.in = 150, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = .001, al.s = 1, be.s = .05
+Chicago_RES = HDDLislie.sampler( n.iter = 15, burn.in = 5, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = 1e-8, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-1
-                                   , al.n = 1, be.n = .01
-                                   , al.ae = 1, be.ae = .01
+                                   , al.n = 1, be.n = 1e-8
+                                   , al.ae = 1, be.ae = 1e-8
                                    , al.H = 1, be.H = .08
                                    , al.A = 1, be.A = .08
                                    , mean.s = as.matrix(mean.s)

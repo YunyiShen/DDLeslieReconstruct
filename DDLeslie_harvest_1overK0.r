@@ -728,11 +728,11 @@ HDDLislie.sampler <-
     #.. Set current projection: base on initial values # homo or not is important, determin it use homo = T
     if(homo){
       log.curr.proj =
-        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_homo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
     }
     else{
       log.curr.proj =
-        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+        log(ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
     }
     log.curr.aeri = log( getAerialCount(nage = nage, Harv = exp( log.curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
 ## stop here 10/19/2018   
@@ -840,7 +840,7 @@ HDDLislie.sampler <-
             full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.prop.f)#<-- use proposal
                 , SRB = invlogit(logit.curr.SRB)
-                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
         }
 
 
@@ -970,12 +970,12 @@ HDDLislie.sampler <-
             if(homo){
                 full.proj =
                 (ProjectHarvest_homo(Survival = invlogit(logit.prop.s) #<-- use proposal
-                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
             }
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.prop.s)#<-- use proposal
-                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1107,13 +1107,13 @@ HDDLislie.sampler <-
             if(homo){
                 full.proj =
                 (ProjectHarvest_homo(Survival = invlogit(logit.curr.s) , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.prop.SRB)#<-- use proposal
-                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
             }
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s)
                 , Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.prop.SRB)#<-- use proposal
-                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1455,7 +1455,7 @@ HDDLislie.sampler <-
             else{
                 full.proj =
                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = prop.aK0#<-- use proposal
-                , global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                , global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
             }
 
             if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -2184,10 +2184,10 @@ HDDLislie.sampler <-
       ##...... Harvest Count ......##
 
       prop.sigmasq.n <-
-        rinvGamma(1, al.n + (length(mean.b) +
+        rinvGamma(1, al.n + (#length(mean.b) +
                                     length(log.Harv.mat))/2,
                 be.n + 0.5 * (
-                  sum((log.curr.b - log.mean.b)^2) +
+                  #sum((log.curr.b - log.mean.b)^2) +
                   sum((log.Harv.mat - log.curr.proj)^2) # be careful if we add reconstruction, things may go into here
                   )
                               )
@@ -2241,14 +2241,16 @@ HDDLislie.sampler <-
       ar <- acc.ra.var(log.prop.post = log.prop.posterior
                              ,log.curr.post = log.curr.posterior
                              ,log.prop.var = dinvGamma(prop.sigmasq.n
-                              ,al.n + (length(mean.b) +
+                              ,al.n + (#length(mean.b) +
                                        length(log.Harv.mat))/2
-                              ,be.n + 0.5 * (sum((log.curr.b - log.mean.b)^2) + sum((log.Harv.mat - log.curr.proj)^2))
+                              ,be.n + 0.5 * (#sum((log.curr.b - log.mean.b)^2) + 
+							  sum((log.Harv.mat - log.curr.proj)^2))
                               ,log = TRUE)
                              ,log.curr.var = dinvGamma(curr.sigmasq.n
-                              ,al.n + (length(mean.b) +
+                              ,al.n + (#length(mean.b) +
                                        length(log.Harv.mat))/2
-                              ,be.n + 0.5 * (sum((log.curr.b - log.mean.b)^2) + sum((log.Harv.mat - log.curr.proj)^2))
+                              ,be.n + 0.5 * (#sum((log.curr.b - log.mean.b)^2) + 
+							  sum((log.Harv.mat - log.curr.proj)^2))
                               ,log = TRUE)
                              )
 
@@ -2376,7 +2378,7 @@ HDDLislie.sampler <-
             }
             else{
                 full.proj =
-                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) * getfullHarvpar(invlogit(logit.curr.H[,1]),nage) , period = proj.periods, nage = nage))
+                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
             }
 			full.aeri = getAerialCount(nage = nage, Harv = full.proj,H = invlogit(logit.curr.H),A = invlogit(logit.curr.A))
       if(k %% 1 == 0 && k > 0){
@@ -2430,12 +2432,30 @@ HDDLislie.sampler <-
 		mean.vital$fert.rate.mcmc = colMeans( as.matrix( fert.rate.mcmc))
   }
 	else{mean.vital$fert.rate.mcmc = start.f}
-	#pD_Spie02 = -2 * mean(log.like.mcmc) + 2 * log_likelihood_mean
-  pD_Gelman04 = 2 * var(log.like.mcmc)	
-	#DIC_Spie02 = -2* mean(log.like.mcmc) - 2 * (pD_Spie02)
+
+    if(homo){
+                full.proj =
+                (ProjectHarvest_homo(Survival = mean.vital$surv.prop.mcmc, Harvpar = mean.vital$H.mcmc,Fec=mean.vital$fert.rate.mcmc, SRB = mean.vital$SRB.mcmc, E0=E0, aK0 = mean.vital$invK0.mcmc, global = global, null = null, bl = mean.vital$baseline.count.mcmc  , period = proj.periods, nage = nage))
+            }
+    else{
+                full.proj =
+                (ProjectHarvest_inhomo(Survival = matrix( mean.vital$surv.prop.mcmc,ncol = proj.periods), Harvpar = matrix( mean.vital$H.mcmc,ncol = proj.periods+1),Fec=matrix(mean.vital$fert.rate.mcmc,ncol = proj.periods), SRB = mean.vital$SRB.mcmc, E0=E0, aK0 = mean.vital$invK0.mcmc, global = global, null = null, bl = mean.vital$baseline.count.mcmc  , period = proj.periods, nage = nage))
+            }
+			full.aeri = getAerialCount(nage = nage, Harv = full.proj,H = matrix( mean.vital$H.mcmc,ncol = proj.periods+1),A = mean.vital$aerial.detection.mcmc)
+	
+	log_likelihood_mean = log.lhood(
+                                log.n.census = log.Harv.mat
+                                ,log.n.hat = log(full.proj),ll.var = mean.vital$variances.mcmc["population.count.var"]) +
+                            log.lhood(
+                                log.n.census = log.Aeri.mat
+                                ,log.n.hat = log(full.aeri)
+                                ,ll.var = mean.vital$variances.mcmc["aerial.count.var"])
+	pD_Spie02 = -2 * mean(log.like.mcmc) + 2 * log_likelihood_mean
+    pD_Gelman04 = 2 * var(log.like.mcmc)	
+	DIC_Spie02 = -2* mean(log.like.mcmc) - 2 * (pD_Spie02)
 	DIC_Gelman04 = -2* mean(log.like.mcmc) - 2 * (pD_Gelman04)
-	DIC = list(pD_Gelman04,DIC_Gelman04)
-	names(DIC) = c("pD_Gelman04","DIC_Gelman04")
+	DIC = list(pD_Spie02,DIC_Spie02,pD_Gelman04,DIC_Gelman04)
+	names(DIC) = c("pD_Spie02","DIC_Spie02","pD_Gelman04","DIC_Gelman04")
 	
 	## abs_dif
 	abs_dif = abs(c((mean.vital$baseline.count.mcmc) * getfullHarvpar(((matrix(mean.vital$H.mcmc,ncol = proj.periods+1))[,1]),nage),mean.vital$harvest.mcmc)-as.vector(Harv.data))
@@ -2457,8 +2477,10 @@ HDDLislie.sampler <-
 	
 	model.checking = list(
 		DIC=DIC,
-		absolute.difference = list(mean_abs_dif_harv,
-	                               se_abs_dif_harv),
+		absolute.difference = list(MAD.harv = mean_abs_dif_harv,
+	                               SEAD.harv = se_abs_dif_harv,
+								   MAD.aerial = mean_abs_dif_ae,
+								   SEAD.aerial = se_abs_dif_ae),
 	  sd = mean_sd_counts
 	)
 
