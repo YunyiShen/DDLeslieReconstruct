@@ -39,8 +39,8 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15, burn.in = 5, mean.f = as.matrix( m
                                    ,al.f = 1, be.f = 1e-8, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-1
-                                   , al.n = 1, be.n = 1e-8
-                                   , al.ae = 1, be.ae = 1e-8
+                                   #, al.n = 1, be.n = 1e-8
+                                   #, al.ae = 1, be.ae = 1e-8
                                    , al.H = 1, be.H = .08
                                    , al.A = 1, be.A = .08
                                    , mean.s = as.matrix(mean.s)
@@ -50,7 +50,7 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15, burn.in = 5, mean.f = as.matrix( m
                                    , mean.SRB = as.matrix( mean.SRB)
                                    , mean.A = as.matrix( mean.A)
                                    #, mean.H = 0.6
-                                   , Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
+                                   , Harv.data = as.matrix(Harv.data)
                                    , Aerial.data = as.matrix( Aeri.data)
                                    , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = F)
 
