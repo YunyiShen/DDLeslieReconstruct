@@ -1,13 +1,13 @@
-mean.total.aeri = apply(Chicago_RES$aerial.count.mcmc,2,median)
+mean.total.aeri = apply(Chicago_RES$mcmc.objs$aerial.count.mcmc,2,median)
 #mean.aeri.matrix = matrix(mean.aeri,nrow = sum(nage),ncol = period)
 #aeri_mean = data.frame(age = 1:8,mean.aeri.matrix)
 #mean.total.aeri = apply(mean.aeri.matrix,2,sum)
 plot(mean.total.aeri)
 
-BI.low.aeri = apply(Chicago_RES$aerial.count.mcmc,2,quantile,probs = .025)
+BI.low.aeri = apply(Chicago_RES$mcmc.objs$aerial.count.mcmc,2,quantile,probs = .025)
 
 
-BI.high.aeri = apply(Chicago_RES$aerial.count.mcmc,2,quantile,probs = .975)
+BI.high.aeri = apply(Chicago_RES$mcmc.objs$aerial.count.mcmc,2,quantile,probs = .975)
 #BI.high.aeri.matrix = matrix(BI.high.aeri,nrow = sum(nage),ncol = period)
 #BI_aeri_high = data.frame(age = c(paste0("F",1:8),paste0("M",1:3)),BI.high.aeri.matrix)
 
