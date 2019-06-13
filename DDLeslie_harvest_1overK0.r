@@ -311,8 +311,8 @@ log.post = function(## estimated vitals
                          ,log = TRUE)
     log.SRB.prior = dnorm(SRB, mean = prior.mean.SRB, sd = sqrt(sigmasq.SRB)
                          ,log = TRUE)
-    log.b.prior = dpois( prior.mean.b,baseline.n
-                         ,log = TRUE)
+    #log.b.prior = dpois( prior.mean.b,baseline.n
+    #                     ,log = TRUE)
     log.H.prior = dnorm(H, mean = prior.mean.H
                          ,sd = sqrt(sigmasq.H)
                          ,log = TRUE)
@@ -330,7 +330,8 @@ log.post = function(## estimated vitals
     
     ##-- The log posterior is the SUM of these with the log.like --##
 
-  return(sum(log.f.prior, log.s.prior, log.SRB.prior, log.b.prior, log.aK0.prior, log.H.prior,log.A.prior,
+  return(sum(log.f.prior, log.s.prior, log.SRB.prior#, log.b.prior
+  , log.aK0.prior, log.H.prior,log.A.prior,
                log.sigmasq.f.prior
                ,log.sigmasq.s.prior
                ,log.sigmasq.SRB.prior
