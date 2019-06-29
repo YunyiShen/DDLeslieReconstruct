@@ -119,7 +119,7 @@ H_full = cbind(H_full[,1:sum(nage)],H_full)
 for(i in 0:period+1){
   for(j in 1:sum(nage)){
     ind = (i-1)*sum(nage) + j
-    plc = (i-1)*3 + (j==1 | j==9) + 2 * (j>=2 & j<=8) + 3 * (j>=10)
+    plc = (i-1)*4 + (j==1) +  3*(j==9) + 2 * (j>=2 & j<=8) + 4 * (j>=10)
     H_full[,ind]=Chicago_RES$mcmc.objs$H.mcmc[,plc]
     
   }
@@ -137,8 +137,8 @@ for(i in 1:period){
   total_living[,i] = rowSums(living_inid[,1:sum(nage)+(i-1)*sum(nage)])
   
 }
-bl = rowSums(Chicago_RES$mcmc.objs$baseline.count.mcmc*(1-H_full[,(1:sum(nage))]))
-bl_mean = colMeans(Chicago_RES$mcmc.objs$baseline.count.mcmc*(1-H_full[,(1:sum(nage))]))
+bl = rowSums(Chicago_RES$mcmc.objs$baseline.count.mcmc/(H_full[,(1:sum(nage))])*(1-H_full[,(1:sum(nage))]))
+bl_mean = colMeans(Chicago_RES$mcmc.objs$baseline.count.mcmc/(H_full[,(1:sum(nage))])*(1-H_full[,(1:sum(nage))]))
 total_living_bl = cbind(bl,total_living)
 
 plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1,period+1,1992:2006)

@@ -115,7 +115,6 @@ getfullHarvpar = function(H_n,nage){
 
 }
 
-
 # Given harvest data, calculate the living individual in certain year
 getLivingIdividuals = function(H,data){
 
@@ -727,13 +726,11 @@ HDDLislie.sampler <-
         (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s), Harvpar = invlogit(logit.curr.H),Fec=exp(log.curr.f), SRB = invlogit(logit.curr.SRB),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)  , period = proj.periods, nage = nage))
     }
     curr.aeri = ( getAerialCount(nage = nage, Harv = ( curr.proj),H = invlogit(logit.curr.H),A = invlogit(logit.curr.A)))
-## stop here 10/19/2018   
-## restart here 10/22/2018
 
-    #.. Current log posterior
-    ## shit so many parameters to pass here... really hard to read...
+                                  
+#.. Current log posterior
     
-# checked here,  solved, -Inf return 10/25/2018 14:31, Done, because of test data has zero likelihood (changed parameter)
+
     log.curr.posterior =
         log.post(f = log.curr.f
                        ,s = logit.curr.s
@@ -773,7 +770,7 @@ HDDLislie.sampler <-
                             log.lhood(
                                 n.census = Aerial.data
                                 ,n.hat = curr.aeri
-                                ) #　both harvest and aerial count, potentially reconstruction?
+                                ) #　both harvest and aerial count
                        ,non.zero.fert = fert.rows # tell algorithm where the fert has to be 0
                        )
 
@@ -1968,7 +1965,6 @@ HDDLislie.sampler <-
                                 )#<-- use current
                        ,non.zero.fert = fert.rows 
                        )
-        #pause here 20190520 during adding aerial count
 
       #- Acceptance ratio
       ar <- acc.ra.var(log.prop.post = log.prop.posterior
@@ -2174,18 +2170,6 @@ HDDLislie.sampler <-
       }
         
         
-      ##...... Harvest Count ......## no more in Poisson model
-
-
-
-
-
-      ##...... Aerial Count ......## no more in Poisson model 
-
- 
-
-
-
       ## ------- Store current population ------- ##
             if(homo){
                 full.proj =
