@@ -392,13 +392,13 @@ HDDLislie.sampler <-
              #     number of five-year steps)
              ,proj.periods = (ncol(Harv.data)-1)
 
-             #.. age group width
+             #.. age group, if multiple sex, the one reproduce should be at first.
              ,nage = 8 
              
              ,estFer=T, Fec=rep(1,nage), estaK0 = T
-             ,E0=NULL , aK0 = 0, global = T, null = T # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency.
+             ,E0=NULL , aK0 = 0, global = T, null = T # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency (True of not ).
              ,homo = F # whether assume time homogeneous 
-
+             ,point.est = mean
              #.. print algorithm progress
              ,verb = FALSE
 
@@ -414,56 +414,6 @@ HDDLislie.sampler <-
     ## -------- Begin timing ------- ##
 
     ptm <- proc.time()
-
-
-    ## ------ Match functions ------ ##
-
-
-    ## ------- Check input dimensions ------- ##
-    ## from popReconstruct, not needed yet.
-    # input.dims <- sapply(list(start.s = start.s[1:(nrow(start.s)-1),]
-                              # , start.g = start.g
-             # ,mean.f = mean.f, mean.s = mean.s[1:(nrow(mean.s)-1),]
-             # ,mean.g = mean.g
-             # )
-           # ,"dim")
-    # mismatch.dims <- apply(input.dims, 2, "identical", dim(start.f))
-    # if(!all(mismatch.dims))
-        # stop("Dims of these inputs do not match 'dim(start.f)'", "\n"
-             # ,paste(names(mismatch.dims)[!mismatch.dims], collapse = "  "))
-
-
-    # ## ------- Check Years --------- ##
-
-    # all.vr.years <-
-        # list(start.s = colnames(start.s), start.g = colnames(start.g)
-             # ,mean.f = colnames(mean.f), mean.s = colnames(mean.s)
-             # ,mean.g = colnames(mean.g)
-             # )
-    # mismatch.yrs <- sapply(all.vr.years, "identical", colnames(start.f))
-    # if(!all(mismatch.dims))
-        # stop("Years of these inputs do not match years of 'start.f'", "\n"
-             # ,paste(names(mismatch.yrs)[!mismatch.yrs], collapse = "  "))
-
-    # all.vr.years.eq <-
-        # sapply(all.vr.years, FUN = function(z) all.equal(colnames(start.f), z))
-    # if(!all(all.vr.years.eq)) {
-        # stop(paste("colnames(", names(all.vr.years)[min(which(!all.vr.years.eq))], ")"
-                   # ," != colnames(start.f). There may be more...", sep = "")
-             # )
-    # }
-
-    # proj.years <-
-        # seq(from = as.numeric(colnames(start.f)[1]), by = age.size
-            # ,length = proj.periods + 1)
-
-    # if(!all.equal(proj.years[1:ncol(start.f)], as.numeric(colnames(start.f))))
-        # stop("colnames(start.f) !=  seq(from = as.numeric(colnames(start.f)[1]), by = age.size, length = ncol(start.f))")
-
-    # vr.years <- as.numeric(colnames(start.f))
-    # baseline.year <- as.numeric(colnames(start.b))
-    # census.years <- as.numeric(colnames(pop.data))
-
 
     # ## ------- Determine fert.rows --------- ##
 
@@ -532,7 +482,7 @@ HDDLislie.sampler <-
 	  colnames(log.like.mcmc) = NULL
 
       # lx
-      # this is for current population, for us, it is current culling data
+      # this is current culling beside baseline year
       lx.mcmc =
           mcmc(matrix(nrow = n.stored
                       ,ncol = nrow(start.b) * (proj.periods))
@@ -541,11 +491,12 @@ HDDLislie.sampler <-
                )
       colnames(lx.mcmc) = NULL
       
+      # this is for aerial count
       ae.mcmc = 
           mcmc(matrix(nrow = n.stored
                       ,ncol = proj.periods+1)
                       ,start = burn.in + 1
-                      ,thin = thin.by)      # this is for aerial count
+                      ,thin = thin.by)      
       
       # carrying capacity assumed to be time homogeneous
       if(estaK0){
@@ -2219,16 +2170,16 @@ HDDLislie.sampler <-
                   ,aerial.count.mcmc = ae.mcmc
                   ,variances.mcmc = variances.mcmc)
 	mean.vital = lapply(mcmc.objs,function(kk){
-		colMeans(as.matrix(kk))
+		apply(as.matrix(kk),2,point.est)
 	})
 	if(estaK0){
 		mcmc.objs$invK0 = aK0.mcmc
-		mean.vital$invK0 = colMeans( as.matrix( aK0.mcmc))
+		mean.vital$invK0 = apply( as.matrix( aK0.mcmc),2,point.est)
 	}
 	else {mean.vital$invK0.mcmc = c(0,0)}
   if(estFer){
 		mcmc.objs$fert.rate.mcmc = fert.rate.mcmc
-		mean.vital$fert.rate.mcmc = colMeans( as.matrix( fert.rate.mcmc))
+		mean.vital$fert.rate.mcmc = apply( as.matrix( fert.rate.mcmc),2,point.est)
   }
 	else{mean.vital$fert.rate.mcmc = start.f}
 
@@ -2328,6 +2279,8 @@ HDDLislie.sampler <-
                          ,mean.baseline.count = mean.b
                          ,mean.Harv.data = Harv.data
                          ,Aerial.data = Aerial.data
+                         
+                         ,point.est = point.est
                          )
 
 
@@ -2375,6 +2328,4 @@ HDDLislie.sampler <-
                   )
     cat("done \n","all done \n")
     return(ret.list)
-# stop here 10/23/2018 15:51 start to test tomorrow.
-# TEST of code done here, start SIMULATION
 }
