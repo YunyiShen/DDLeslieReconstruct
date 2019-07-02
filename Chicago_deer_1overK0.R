@@ -25,24 +25,24 @@ mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 
 mean.A = matrix(0.7,1,period+1)
 
-prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
+prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
                  surv.prop = matrix(1,nrow = sum(nage), ncol = period),
                  SRB = matrix(.1,nage[1],period), # vital rates has period cols
-                 A = matrix(.1,1,period+1),
-                 H = matrix(.1,nrow = 4,ncol = period+1),
+                 A = matrix(1,1,period+1),
+                 H = matrix(1,nrow = 4,ncol = period+1),
                  aK0=1e-3,
-                 baseline.pop.count = matrix(.1,nrow = sum(nage),ncol = 1))
+                 baseline.pop.count = matrix(1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 5000, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = 1e-3, al.s = 1, be.s = .05
+Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 5000,thin.by = 50, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-1
                                    #, al.n = 1, be.n = 1e-8
                                    #, al.ae = 1, be.ae = 1e-8
-                                   , al.H = 1, be.H = .03
-                                   , al.A = 1, be.A = .03
+                                   , al.H = 1, be.H = .05
+                                   , al.A = 1, be.A = .05
                                    , mean.s = as.matrix(mean.s)
                                    , mean.b= as.matrix(mean.b)
                                    , mean.aK0 = matrix(0,1,2)
