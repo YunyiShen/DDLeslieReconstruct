@@ -25,24 +25,24 @@ mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 
 mean.A = matrix(0.7,1,period+1)
 
-prop.vars = list(fert.rate = matrix(.1,nrow = nage[1],ncol = period),
+prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
                  surv.prop = matrix(1,nrow = sum(nage), ncol = period),
                  SRB = matrix(.1,nage[1],period), # vital rates has period cols
-                 A = matrix(.1,1,period+1),
-                 H = matrix(.1,nrow = 4,ncol = period+1),
+                 A = matrix(1,1,period+1),
+                 H = matrix(1,nrow = 4,ncol = period+1),
                  aK0=1e-3,
-                 baseline.pop.count = matrix(.1,nrow = sum(nage),ncol = 1))
+                 baseline.pop.count = matrix(1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 5000, mean.f = as.matrix( mean.f)
-                                   ,al.f = 1, be.f = 1e-3, al.s = 1, be.s = .05
+Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 5000,thin.by = 50, mean.f = as.matrix( mean.f)
+                                   ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-1
                                    #, al.n = 1, be.n = 1e-8
                                    #, al.ae = 1, be.ae = 1e-8
-                                   , al.H = 1, be.H = .03
-                                   , al.A = 1, be.A = .03
+                                   , al.H = 1, be.H = .05
+                                   , al.A = 1, be.A = .05
                                    , mean.s = as.matrix(mean.s)
                                    , mean.b= as.matrix(mean.b)
                                    , mean.aK0 = matrix(0,1,2)
@@ -119,7 +119,7 @@ H_full = cbind(H_full[,1:sum(nage)],H_full)
 for(i in 0:period+1){
   for(j in 1:sum(nage)){
     ind = (i-1)*sum(nage) + j
-    plc = (i-1)*3 + (j==1 | j==9) + 2 * (j>=2 & j<=8) + 3 * (j>=10)
+    plc = (i-1)*4 + (j==1) +  3*(j==9) + 2 * (j>=2 & j<=8) + 4 * (j>=10)
     H_full[,ind]=Chicago_RES$mcmc.objs$H.mcmc[,plc]
     
   }
@@ -137,8 +137,8 @@ for(i in 1:period){
   total_living[,i] = rowSums(living_inid[,1:sum(nage)+(i-1)*sum(nage)])
   
 }
-bl = rowSums(Chicago_RES$mcmc.objs$baseline.count.mcmc*(1-H_full[,(1:sum(nage))]))
-bl_mean = colMeans(Chicago_RES$mcmc.objs$baseline.count.mcmc*(1-H_full[,(1:sum(nage))]))
+bl = rowSums(Chicago_RES$mcmc.objs$baseline.count.mcmc/(H_full[,(1:sum(nage))])*(1-H_full[,(1:sum(nage))]))
+bl_mean = colMeans(Chicago_RES$mcmc.objs$baseline.count.mcmc/(H_full[,(1:sum(nage))])*(1-H_full[,(1:sum(nage))]))
 total_living_bl = cbind(bl,total_living)
 
 plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1,period+1,1992:2006)

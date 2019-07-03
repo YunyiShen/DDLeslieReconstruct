@@ -25,8 +25,8 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 500, mean.f = as.matr
                                    , mean.H = matrix(0.7,nage,period), Harv.data = as.matrix(Harv.data+1e-4 * (Harv.data==0))
                                    , prop.vars = prop.vars, estFer = T,nage = nage)
 
-mean.surv = apply(Chicago_RES$surv.prop.mcmc,2,mean)
-mean.ferc = apply(Chicago_RES$fert.rate.mcmc,2,mean)
+mean.surv = apply(Chicago_RES$mcmc.objs$surv.prop.mcmc,2,median)
+mean.ferc = apply(Chicago_RES$mcmc.objs$fert.rate.mcmc,2,median)
 
 mean.harv = apply(Chicago_RES$harvest.mcmc,2,mean)
 mean.harv.matrix = matrix(mean.harv,nrow = sum(nage),ncol = period)
@@ -38,7 +38,7 @@ mean.harv.por_matrix = matrix(mean.harv.por,nrow = nage,ncol = period+1)
 #mean.living = (mean.harv.matrix/mean.harv.por_matrix)*(1-mean.harv.por_matrix)
 #mean.living.total = apply(mean.living,2,sum)
 
-mean.living.total =c(mean(bl), apply( total_living,2,mean))
+mean.living.total =c(mean(bl), apply( total_living,2,median))
 
 mean.age.surv = list()
 mean.age.ferc = list()
