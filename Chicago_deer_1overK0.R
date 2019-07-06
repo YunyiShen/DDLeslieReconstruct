@@ -144,7 +144,7 @@ total_living_bl = cbind(bl,total_living)
 plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1,period+1,1992:2006)
 
 plotthings(YD_obj=(Chicago_RES$mcmc.objs$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=11,period,1993:2006)
-plotthings(Chicago_RES$mcmc.objs$fert.rate.mcmc,pathsave="./figs/temp/fec_age",nage=7,period,1993:2006)
+plotthings(Chicago_RES$mcmc.objs$fert.rate.mcmc,pathsave="./figs/temp/fec_age",nage=8,period,1993:2006)
 plotthings(YD_obj=Chicago_RES$mcmc.objs$H.mcmc,pathsave="./figs/temp/Harvpor",4,period+1,1992:2006)
 
 plotthings(YD_obj=Chicago_RES$mcmc.objs$SRB.mcmc,pathsave="./figs/temp/SRB",1,period,1993:2006)
