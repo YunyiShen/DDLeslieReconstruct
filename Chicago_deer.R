@@ -38,7 +38,7 @@ mean.harv.por_matrix = matrix(mean.harv.por,nrow = nage,ncol = period+1)
 #mean.living = (mean.harv.matrix/mean.harv.por_matrix)*(1-mean.harv.por_matrix)
 #mean.living.total = apply(mean.living,2,sum)
 
-mean.living.total =c(mean(bl), apply( total_living,2,median))
+mean.living.total =c(median(bl), apply( total_living,2,median))
 
 mean.age.surv = list()
 mean.age.ferc = list()
@@ -67,9 +67,9 @@ for(i in 1:11){
   
 }
 
-for(i in 1:7){
+for(i in 1:8){
   
-  mean.age.ferc[[i]] = mean.ferc[(1:(7*period))%%7==(i%%7)]
+  mean.age.ferc[[i]] = mean.ferc[(1:(8*period))%%8==(i%%8)]
   #mean.age.ferc[[i]] = mean.ferc[(1:(nage*period))%%nage==(i%%nage)]
   #mean.age.harv[[i]] = mean.harv.por[(1:(nage*period))%%nage==(i%%nage)]
   data.temp = data.frame(#mean.age.surv = mean.age.surv[[i]]
@@ -103,12 +103,12 @@ plot(mean.total.harv,mean.age.surv[[7]])
 
 require(ggplot2)
 
-for(i in 1:11){
-  ggplot(DDsurv[[i]]$model,aes(x=mean.living.total,y=mean.age.surv) )+
+for(i in 1:8){
+  ggplot(DDfec[[i]]$model,aes(x=mean.living.total,y=mean.age.fec) )+
     geom_point()+
     #geom_line()+
     stat_smooth(method = "lm")
-  filename = paste0("./figs/temp/DDsurv_age",i,".jpg")
+  filename = paste0("./figs/temp/DDfec_age",i,".jpg")
   
   ggsave(filename, plot = last_plot())
 }
