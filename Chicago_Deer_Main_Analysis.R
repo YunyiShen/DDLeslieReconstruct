@@ -16,7 +16,7 @@ Aeri.data = Aeri.data[,-1]
 mean.b = Harv.data[,1]
 mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 Harv_assump = read.csv("./data/Harv_assump.csv",header = F)
-Harv_assump = as.matrix(Harv_assump)
+Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specific harvest!
 
 mean.A = matrix(0.7,1,period+1)
 
