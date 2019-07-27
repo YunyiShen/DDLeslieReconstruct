@@ -6,12 +6,17 @@ HarvestSen = function(Fec,Surv,SRB,Harvpar,nage,Harv_assump){
     
     EL = H %*% L # effactive growth
     
-    left_eig = eigen(t(EL))$vectors
-    right_eig = eigen(EL)$vectors
-    E_Sen = (left_eig[,1]%*%t(right_eig[,1]))/
-      as.numeric(t(left_eig[,1])%*%EL%*%right_eig[,1]) # sensitivity analysis of the effective growth
+    ev = eigen(EL)
+    lmax = which(Re(ev$values) == max(Re(ev$values)))
+    lambda = Re(ev$values[lmax])
+    W = ev$vectors
+    w = abs(Re(W[, lmax]))
+    V = Conj(solve(W))
+    v = abs(Re(V[lmax, ]))
+    E_Sen = v %o% w # sensitivity analysis of the effective growth
+    
     # apply chain rule:
-    H_Sen = rowSums( t(Harv_assump) %*% (E_Sen*L))
+    H_Sen = rowSums( t(Harv_assump) %*% (E_Sen*L)) # sensitivity of harvest
     return(H_Sen)
 } 
 
