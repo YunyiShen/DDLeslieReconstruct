@@ -15,7 +15,8 @@ Aeri.data = read.csv("./data/Aerial_count.csv")
 Aeri.data = Aeri.data[,-1]
 mean.b = Harv.data[,1]
 mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
-
+Harv_assump = read.csv("./data/Harv_assump.csv",header = F)
+Harv_assump = as.matrix(Harv_assump)
 
 mean.A = matrix(0.7,1,period+1)
 
@@ -41,6 +42,7 @@ Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 5000,thin.by = 25, me
                                    , mean.H = as.matrix(mean.H)
                                    , mean.SRB = as.matrix( mean.SRB)
                                    , mean.A = as.matrix( mean.A)
+                                   , Harv_assump = Harv_assump
                                    , start.sigmasq.f = .05, start.sigmasq.s = .05, start.sigmasq.SRB = .05
                                    , start.sigmasq.aK0 = .05, start.sigmasq.H = .05
                                    , start.sigmasq.A = .05
