@@ -311,6 +311,28 @@ acc.ra.var = function(log.prop.post, log.curr.post, log.prop.var, log.curr.var){
     min(1, exp(log.curr.var + log.prop.post - log.prop.var - log.curr.post))
 } 
 
+## sensitivity analysis
+HarvestSen = function(Fec,Surv,SRB,Harvpar,nage,Harv_assump){
+    L = getLeslie(Surv,Fec,SRB) # intrinsic growth
+    H = matrix(0,sum(nage),sum(nage))
+    diag(H) = Harv_assump %*% Harvpar # propotional harvest
+    
+    EL = H %*% L # effactive growth
+    
+    ev = eigen(EL)
+    lmax = which(Re(ev$values) == max(Re(ev$values)))
+    lambda = Re(ev$values[lmax])
+    W = ev$vectors
+    w = abs(Re(W[, lmax]))
+    V = Conj(solve(W))
+    v = abs(Re(V[lmax, ]))
+    E_Sen = v %o% w # sensitivity analysis of the effective growth
+    
+    # apply chain rule:
+    H_Sen = rowSums( t(Harv_assump) %*% (E_Sen*L)) # sensitivity of harvest
+    return(H_Sen)
+} 
+
 
 ### --------------------------- SAMPLER --------------------------- ###
 ### --------------------------------------------------------------- ### hardest part is coming
@@ -2168,7 +2190,7 @@ HDDLislie.sampler <-
                  "pD_Gelman04","DIC_Gelman04")
 	
 	## abs_dif
-	abs_dif = abs(c((mean.vital$baseline.count.mcmc) * getfullHarvpar(((matrix(mean.vital$H.mcmc,ncol = proj.periods+1))[,1]),Harv_assump),mean.vital$harvest.mcmc)-as.vector(Harv.data))
+	abs_dif = abs(c((mean.vital$baseline.count.mcmc) * (Harv_assump%*%((matrix(mean.vital$H.mcmc,ncol = proj.periods+1))[,1])),mean.vital$harvest.mcmc)-as.vector(Harv.data))
 	mean_abs_dif_harv = mean(abs_dif)
 	se_abs_dif_harv = sd(abs_dif)/(sqrt(proj.periods))
 	
