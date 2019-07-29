@@ -18,6 +18,16 @@ mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 Harv_assump = read.csv("./data/Harv_assump.csv",header = F)
 Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specific harvest!
 
+Assumptions = list()
+
+Assumptions$Fec_assump = list(time = eyes(period),age = eyes((nage[1])))
+Assumptions$Surv_assump = list(time = eyes(period),age = eyes(sum(nage)))                           
+Assumptions$SRB_assump = list(time = eyes(period),age = eyes(1))
+Assumptions$A_assump  = list(time = eyes(period+1),age = eyes(1))
+Assumptions$Harv_assump = list(time = eyes(period+1),age = Harv_assump) # tons of assumptions on vital rates
+
+
+
 mean.A = matrix(0.7,1,period+1)
 
 prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
@@ -25,12 +35,12 @@ prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
                  SRB = matrix(.1,nage[1],period), # vital rates has period cols
                  A = matrix(1,1,period+1),
                  H = matrix(1,nrow = 4,ncol = period+1),
-                 aK0=1e-3,
+                 aK0=list(1e-3,1e-3),
                  baseline.pop.count = matrix(1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 5000,thin.by = 25, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 5, burn.in = 5,thin.by = 1, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = 1, be.aK0 = 1e-1
@@ -38,11 +48,11 @@ Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 5000,thin.by = 25, me
                                    , al.A = 1, be.A = .05
                                    , mean.s = as.matrix(mean.s)
                                    , mean.b= as.matrix(mean.b)
-                                   , mean.aK0 = matrix(0,1,2)
+                                   , mean.aK0 = list(1e-3,1e-3)
                                    , mean.H = as.matrix(mean.H)
                                    , mean.SRB = as.matrix( mean.SRB)
                                    , mean.A = as.matrix( mean.A)
-                                   , Harv_assump = Harv_assump
+                                   , Assumptions = Assumptions
                                    , start.sigmasq.f = .05, start.sigmasq.s = .05, start.sigmasq.SRB = .05
                                    , start.sigmasq.aK0 = .05, start.sigmasq.H = .05
                                    , start.sigmasq.A = .05
