@@ -1111,7 +1111,7 @@ HDDLislie.sampler <-
 
       #.. Store proposed survival probability matrix
       if(k %% 1 == 0 && k > 0) SRB.mcmc[k,] <-
-        as.vector(invlogit(logit.curr.SRB.full))    
+        as.vector(invlogit(logit.curr.SRB))    
         
 
         
@@ -1139,7 +1139,7 @@ HDDLislie.sampler <-
           #      this as if the proposal were never made
             logit.curr.s.full = Surv_assump$age %*% logit.curr.s %*%Surv_assump$time
             log.curr.f.full = Fec_assump$age %*% log.curr.f %*% Fec_assump$time
-            logit.prop.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
+            logit.prop.H.full = Harv_assump$age %*% logit.prop.H %*%Harv_assump$time
             logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
             logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
 
