@@ -2340,6 +2340,8 @@ HDDLislie.sampler =
 
         #.. results
         ret.list = list(mcmc.objs = mcmc.objs
+                         #,aK0.Fec = aK0.Fec.mcmc
+                         #,aK0.Surv = aK0.Surv.mcmc
 	                       ,log.like.mcmc = log.like.mcmc
                          ,alg.stats = alg.stats
 				                 ,model.checking = model.checking
