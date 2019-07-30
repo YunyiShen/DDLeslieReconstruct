@@ -20,6 +20,7 @@ Assumptions$Surv = list(time = eyes(period),age = eyes(sum(nage)))
 Assumptions$SRB = list(time = eyes(period),age = eyes(1))
 Assumptions$AerialDet  = list(time = eyes(period+1),age = eyes(1))
 Assumptions$Harv = list(time = eyes(period+1),age = Harv_assump) # tons of assumptions on vital rates
+Assumptions$aK0 = list(eyes(nage[1]),eyes(sum(nage)))
 # full matrix for e.g. Harvest will be:
 #  Assumptions$Harv$age %*% as.matrix(mean.H) %*% Assumptions$Harv$time
 #  It is a good idea to try the command above to see how to use assumption matrices.
@@ -44,7 +45,7 @@ Chicago_RES = HDDLislie.sampler( n.iter = 5, burn.in = 5,thin.by = 1, mean.f = a
                                    , al.A = 1, be.A = .05
                                    , mean.s = as.matrix(mean.s)
                                    , mean.b= as.matrix(mean.b)
-                                   , mean.aK0 = list(1e-3,1e-3)
+                                   , mean.aK0 = list(matrix(0,nage[1],1),matrix(0,sum(nage),1))
                                    , mean.H = as.matrix(mean.H)
                                    , mean.SRB = as.matrix( mean.SRB)
                                    , mean.A = as.matrix( mean.A)
@@ -54,6 +55,6 @@ Chicago_RES = HDDLislie.sampler( n.iter = 5, burn.in = 5,thin.by = 1, mean.f = a
                                    , start.sigmasq.A = .05
                                    , Harv.data = as.matrix(Harv.data)
                                    , Aerial.data = as.matrix( Aeri.data)
-                                   , prop.vars = prop.vars, estFer = T,nage = nage,homo = F,estaK0 = F)
+                                   , prop.vars = prop.vars, estFer = T,nage = nage,estaK0 = F)
 
 

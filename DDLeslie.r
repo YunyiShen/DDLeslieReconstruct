@@ -37,14 +37,18 @@ DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
 
 
 # Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
-ProjectHarvest_helper = function(data_n, Leslie, H_n,H_np1, global, E0, aK0, null = F,nage_female){
-        nage_tol = ncol(Leslie)
-        nage_male = nage_tol-nage_female
-        X_n1 = (1-H_n) * (data_n/H_n)
+ProjectHarvest_helper = function(data_n, Survival,Fec,SRB, H_n,H_np1, global, E0, aK0, null = F,nage){
+        nage_female = (nage[1])
+        
+        nage_male = nage[2]
+        X_n1 = (1-H_n) * (data_n/H_n) # living after culling
         D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[1]], null = null) # DD of birth part of the Leslie matrix, can be just 1
         D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[2]], null = null) # DD of death part of the Leslie matrix, can be just 1
-        Leslie[c(1,nage_female+1),] =    D_bir *(Leslie[c(1,nage_female+1),])
-        Leslie[-c(1,nage_female+1),] = D_dea * Leslie[-c(1,nage_female+1),]
+        #Leslie[c(1,nage_female+1),] =    D_bir *(Leslie[c(1,nage_female+1),])
+        #Leslie[-c(1,nage_female+1),] = D_dea * Leslie[-c(1,nage_female+1),]
+        Survival = Survival * D_dea
+        Fec = Fec * D_bir
+        Leslie = getLeslie(Survival,Fec,SRB,F)
         data_n1 = H_np1 * (Leslie %*% ( X_n1))
         return(data_n1)
     } 
@@ -60,8 +64,8 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Fec, SRB,E0=NULL, aK0 = NULL,
     }
     else E0 = E0/(sum(E0))
     for(i in 1 : period + 1){
-        Leslie = getLeslie(Survival[,i-1],Fec[,i-1],SRB[i-1],minus1=F) # inhomo, Survival rows are age structure, cols are time, SRB has only one row or col, for 
-        Harvest[,i] = ProjectHarvest_helper(Harvest[,i-1],global = global, Leslie = Leslie, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null,nage_female = nage[1])
+        #Leslie = getLeslie(Survival[,i-1],Fec[,i-1],SRB[i-1],minus1=F) # inhomo, Survival rows are age structure, cols are time, SRB has only one row or col, for 
+        Harvest[,i] = ProjectHarvest_helper(data_n = Harvest[,i-1],Survival = Survival[,i-1],Fec = Fec[,i-1],SRB = SRB[i-1],global = global, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null,nage = nage)
     }
     return(Harvest)
 } # checked 10/24/2018
@@ -227,9 +231,12 @@ log.post = function(## estimated vitals
         }
         
         if(estaK0){
-            log.aK0.prior = dnorm(aK0, mean = prior.mean.aK0
+            log.aK0.prior = sum( dnorm(aK0[[1]], mean = prior.mean.aK0[[1]]
                                   , sd = sqrt(sigmasq.aK0)
-                                  , log = T )
+                                  , log = T ) )+
+                            sum(dnorm(aK0[[2]], mean = prior.mean.aK0[[2]]
+                                  , sd = sqrt(sigmasq.aK0)
+                                  , log = T ))
             log.sigmasq.aK0.prior =
                 log(dinvGamma(sigmasq.aK0, alpha.aK0, beta.aK0))
         }
@@ -350,7 +357,7 @@ HDDLislie.sampler =
                          ,estFer=T, Fec=rep(1,nage), estaK0 = T
                          ,E0=NULL , aK0 = 0, global = T, null = T 
                          # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency (True of not ).
-                         ,homo = F # whether assume time homogeneous of everything, currently homo=T is not stable
+                          # whether assume time homogeneous of everything, currently homo=T is not stable
                          ,point.est = mean
                          #.. print algorithm progress
                          ,verb = FALSE
@@ -362,7 +369,7 @@ HDDLislie.sampler =
         ## .............. Sampler .............. ##
         ## ..................................... ##
 
-        mean.aK0 = as.matrix(mean.aK0)
+       # mean.aK0 = (mean.aK0)
         ## -------- Begin timing ------- ##
 
         ptm = proc.time()
@@ -395,13 +402,13 @@ HDDLislie.sampler =
         ## How many (samples) stored?
         cat("Allocating for RAMs...\n")
         n.stored = ceiling(n.iter / thin.by)
-        ntimes = (!homo) * ncol(start.s) + (homo) # whether assume time homogeneous of survival etc, will influence ncol of the mcmc object
+        #ntimes = (!homo) * ncol(start.s) + (homo) # whether assume time homogeneous of survival etc, will influence ncol of the mcmc object
             # Fertility
                 
             if(estFer){
             fert.rate.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = sum(fert.rows) * ntimes)
+                             ,ncol = length(start.f))
                              ,start = burn.in + 1
                              ,thin = thin.by
                              )
@@ -412,7 +419,7 @@ HDDLislie.sampler =
             # Survival proportions
             surv.prop.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = nrow(start.s) * ntimes)
+                             ,ncol = length(start.s))
                              ,start = burn.in + 1
                              ,thin = thin.by
                              )
@@ -420,7 +427,7 @@ HDDLislie.sampler =
              # Sex Ratio at Birth
             SRB.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = ntimes)
+                             ,ncol = length(start.SRB))
                              ,start = burn.in + 1
                              ,thin = thin.by
                              )
@@ -452,35 +459,42 @@ HDDLislie.sampler =
             
             # carrying capacity assumed to be time homogeneous
             if(estaK0){
-                aK0.mcmc =
+                aK0.Fec.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = length(mean.aK0))
+                             ,ncol = length(mean.aK0[[1]]))
                              ,start = burn.in + 1
                              ,thin = thin.by)
-            colnames(aK0.mcmc) = NULL
+                colnames(aK0.Fec.mcmc) = NULL
+                aK0.Surv.mcmc =
+                    mcmc(matrix(nrow = n.stored
+                             ,ncol = length(mean.aK0[[2]]))
+                             ,start = burn.in + 1
+                             ,thin = thin.by)
+                colnames(aK0.Surv.mcmc) = NULL
             } 
             else{
-                aK0.mcmc = NULL
+                aK0.Fec.mcmc = NULL
+                aK0.Surv.mcmc = NULL
             }
 
             # Harvest proportion, can be either time homo or not
             H.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = nrow(start.H) * (ntimes+!homo))
+                             ,ncol = length(start.H))
                              ,start = burn.in + 1
                              ,thin = thin.by)
             colnames(H.mcmc) = NULL
             # Aerial counts
             A.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = nrow(start.A) * (ntimes+!homo))
+                             ,ncol = length(start.A))
                              ,start = burn.in + 1
                              ,thin = thin.by)
             colnames(H.mcmc) = NULL
             
             # baseline counts
             baseline.count.mcmc =
-                    mcmc(matrix(nrow = n.stored, ncol = nrow(start.b))
+                    mcmc(matrix(nrow = n.stored, ncol = length(start.b))
                              ,start = burn.in + 1
                              ,thin = thin.by)
             colnames(baseline.count.mcmc) = NULL
@@ -623,7 +637,7 @@ HDDLislie.sampler =
         SRB_assump = Assumptions$SRB                                                          
         A_assump = Assumptions$AerialDet                                                         
         Harv_assump = Assumptions$Harv
-        
+        aK0_assump = Assumptions$aK0
 
         #.. Set current projection: base on initial values # homo or not is important, determin it use homo = T
                                                                     
@@ -633,11 +647,13 @@ HDDLislie.sampler =
         logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
         logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-        
+        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+            assump[[i]] %*% aK0[[i]]
+        },aK0 = curr.aK0,assump = aK0_assump)
                                                                     
                                                                     
         curr.proj =
-                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full),E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full),E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
         
         curr.aeri = ( getAerialCount( Harv = ( curr.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
 
@@ -738,12 +754,16 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
+                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                            assump[[i]] %*% aK0[[i]]
+                },aK0 = curr.aK0,assump = aK0_assump)
 
+                
 
                 full.proj =
                                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.prop.f.full)#=- use proposal
                                 , SRB = invlogit(logit.curr.SRB.full)
-                                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                , E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                 
 
 
@@ -874,11 +894,15 @@ HDDLislie.sampler =
                         logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                         logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
+                        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                            assump[[i]] %*% aK0[[i]]
+                        },aK0 = curr.aK0,assump = aK0_assump)
 
+                        
 
                         full.proj =
                                 (ProjectHarvest_inhomo(Survival = invlogit(logit.prop.s.full)#=- use proposal
-                                , Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                , Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1012,11 +1036,17 @@ HDDLislie.sampler =
                         logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                         logit.prop.SRB.full = SRB_assump$age %*% logit.prop.SRB %*%SRB_assump$time
                         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
+                        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                            assump[[i]] %*% aK0[[i]]
+                        },aK0 = curr.aK0,assump = aK0_assump)
 
+
+                    
+                    
                         full.proj =
                                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full)
                                 , Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.prop.SRB.full)#=- use proposal
-                                , E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                , E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1136,10 +1166,14 @@ HDDLislie.sampler =
                         logit.prop.H.full = Harv_assump$age %*% logit.prop.H %*%Harv_assump$time
                         logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
+                        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                            assump[[i]] %*% aK0[[i]]
+                        },aK0 = curr.aK0,assump = aK0_assump)
+
 
                         full.proj =
                                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar =( invlogit(logit.prop.H.full))#=- use proposal
-                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1254,10 +1288,14 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.prop.A.full = A_assump$age %*% logit.prop.A %*%A_assump$time
+                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                    assump[[i]] %*% aK0[[i]]
+                },aK0 = curr.aK0,assump = aK0_assump)
+
 
                 full.proj =
                                 (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full)
-                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1348,18 +1386,23 @@ HDDLislie.sampler =
 
             ##...... Carrying Capacity ......##
         if(estaK0){
-            prop.aK0[[1]] = curr.aK0[[1]] + rnorm(length(curr.aK0[[1]]), 0, sqrt(prop.vars$aK0))
-            prop.aK0[[2]] = curr.aK0[[2]] + rnorm(length(curr.aK0[[2]]), 0, sqrt(prop.vars$aK0))
+            prop.aK0 = list()
+            prop.aK0[[1]] = curr.aK0[[1]] + rnorm(length(curr.aK0[[1]]), 0, sqrt(prop.vars$aK0[[1]]))
+            prop.aK0[[2]] = curr.aK0[[2]] + rnorm(length(curr.aK0[[2]]), 0, sqrt(prop.vars$aK0[[2]]))
             
                 logit.curr.s.full = Surv_assump$age %*% logit.curr.s %*%Surv_assump$time
                 log.curr.f.full = Fec_assump$age %*% log.curr.f %*% Fec_assump$time
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
+                prop.aK0.full = lapply(1:2,function(i,aK0,assump){
+                        assump[[i]] %*% aK0[[i]]
+                },aK0 = prop.aK0,assump = aK0_assump)
+
 
                      
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = prop.aK0#=- use proposal
+                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = prop.aK0.full#<- use proposal
                                 , global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
 
@@ -1443,8 +1486,12 @@ HDDLislie.sampler =
 
         } # close else after checking for negative population
         }
-            #.. Store proposed K0 matrix
-            if(k %% 1 == 0 && k > 0 && estaK0)    aK0.mcmc[k,] = as.vector((curr.aK0))        
+            #.. Store proposed aK0 matrix
+            if(k %% 1 == 0 && k > 0 && estaK0){
+                aK0.Fec.mcmc[k,] = as.vector((curr.aK0[[1]]))
+                aK0.Surv.mcmc[k,] = as.vector((curr.aK0[[2]]))
+                
+            }     
             
 
             ##...... Baseline population ......##
@@ -1472,9 +1519,14 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
+                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                     assump[[i]] %*% aK0[[i]]
+                },aK0 = curr.aK0,assump = aK0_assump)
+
+                
 
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full), SRB = invlogit(logit.curr.SRB.full),Fec=exp(log.curr.f.full), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.prop.b)    #=- use proposal
+                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full), SRB = invlogit(logit.curr.SRB.full),Fec=exp(log.curr.f.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.prop.b)    #=- use proposal
                                 , period = proj.periods, nage = nage))
 
 
@@ -2000,9 +2052,9 @@ HDDLislie.sampler =
 
             if(k %% 1 == 0 && k > 0) variances.mcmc[k,"H.var"] = curr.sigmasq.H
         
-            ##...... Carrying Capacity ......##        # Feel it will not be used    
+            ##...... Carrying Capacity ......##      
             if(estaK0){
-                prop.sigmasq.aK0 = rinvGamma(1,al.aK0+0.5,be.aK0 + 0.5*sum((curr.aK0[[1]]-mean.aK0[[1]]+curr.aK0[[2]]-mean.aK0[[2]])^2)) #bug here give NA
+                prop.sigmasq.aK0 = rinvGamma(1,al.aK0+0.5,be.aK0 + 0.5*sum(c((curr.aK0[[1]]-mean.aK0[[1]]),(curr.aK0[[2]]-mean.aK0[[2]]))^2)) #bug here give NA
                         log.prop.posterior =
                             log.post(f = log.curr.f 
                                              ,s = logit.curr.s 
@@ -2051,14 +2103,12 @@ HDDLislie.sampler =
             ar = acc.ra.var(log.prop.post = log.prop.posterior
                                                          ,log.curr.post = log.curr.posterior
                                                          ,log.prop.var = dinvGamma(prop.sigmasq.aK0
-                                                            ,al.aK0 + length(mean.aK0)/2
-                                                            ,be.aK0 + 0.5*sum((curr.aK0 -
-                                                                                             mean.aK0)^2)
+                                                            ,al.aK0 + length(mean.aK0[[1]])/2+length(mean.aK0[[2]])/2
+                                                            ,be.aK0 + 0.5*sum((c(curr.aK0[[1]] -mean.aK0[[1]],curr.aK0[[2]] -mean.aK0[[2]]))^2)
                                                             ,log = TRUE)
                                                          ,log.curr.var = dinvGamma(curr.sigmasq.aK0
                                                             ,al.aK0 + length(mean.aK0)/2
-                                                            ,be.aK0 + 0.5*sum((curr.aK0 -
-                                                                                             mean.aK0)^2)
+                                                            ,be.aK0 + 0.5*sum((c(curr.aK0[[1]] -mean.aK0[[1]],curr.aK0[[2]] -mean.aK0[[2]]))^2)
                                                             ,log = TRUE)
                                                          )
 
@@ -2092,9 +2142,13 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
+                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                            assump[[i]] %*% aK0[[i]]
+                },aK0 = curr.aK0,assump = aK0_assump)
+
 
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
 			full.aeri = getAerialCount( Harv = full.proj,H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full))
             if(k %% 1 == 0 && k > 0){
@@ -2139,8 +2193,11 @@ HDDLislie.sampler =
 		apply(as.matrix(kk),2,point.est)
 	})
 	if(estaK0){
-		mcmc.objs$invK0 = aK0.mcmc
-		mean.vital$invK0 = apply( as.matrix( aK0.mcmc),2,point.est)
+		mcmc.objs$invK0.Fec = aK0.Fec.mcmc
+		mean.vital$invK0.Fec = apply( as.matrix( aK0.Fec.mcmc),2,point.est)
+        mcmc.objs$invK0.Surv = aK0.Fec.mcmc
+		mean.vital$invK0.Surv = apply( as.matrix( aK0.Surv.mcmc),2,point.est)
+        
 	}
 	else {mean.vital$invK0.mcmc = c(0,0)}
     if(estFer){
