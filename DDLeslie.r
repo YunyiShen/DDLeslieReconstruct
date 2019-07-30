@@ -2254,7 +2254,7 @@ HDDLislie.sampler <-
                          ,mean.baseline.count = mean.b
                          ,mean.Harv.data = Harv.data
                          ,Aerial.data = Aerial.data
-                         
+                         ,Assumptions = Assumptions
                          ,point.est = point.est
                          )
 
