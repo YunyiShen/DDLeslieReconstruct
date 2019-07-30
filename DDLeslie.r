@@ -21,12 +21,12 @@ getLeslie = function(Survival,Fec,SRB,minus1=F){ # SRB, sax ratio at birth
 } #checked 10/24/2018
     
 # Linear density dependency matrix, can be global of age specific, or null = T for no density dependency. in estimaton process, if E0 is not fixed, it should be estimated as kk = solve(H, data[,1]) E0 = kk/sum(kk), by assuming that first year is at equalibrium
-DensityDependcy = function(global = F, Xn, E0, aK0, null = F){
+DensityDependcy = function(global = F, Xn, E0, aK0, midP, null = F){
     E0 = E0/sum(E0)
     nage = length(Xn)
     #D = matrix(0,ncol = nage,nrow = nage)
     if(global){
-        den = as.matrix( 1 + (aK0) * sum(Xn) )
+        den = as.matrix( 1 + (aK0) * as.numeric(sum(Xn)-midP) )
         D = (1-null)*den + null
     }
     else{
@@ -42,8 +42,8 @@ ProjectHarvest_helper = function(data_n, Survival,Fec,SRB, H_n,H_np1, global, E0
         
         nage_male = nage[2]
         X_n1 = (1-H_n) * (data_n/H_n) # living after culling
-        D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[1]], null = null) # DD of birth part of the Leslie matrix, can be just 1
-        D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[2]], null = null) # DD of death part of the Leslie matrix, can be just 1
+        D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[1]], midP = aK0[[3]] ,null = null) # DD of birth part of the Leslie matrix, can be just 1
+        D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[2]], midP = aK0[[3]] ,null = null) # DD of death part of the Leslie matrix, can be just 1
         #Leslie[c(1,nage_female+1),] =    D_bir *(Leslie[c(1,nage_female+1),])
         #Leslie[-c(1,nage_female+1),] = D_dea * Leslie[-c(1,nage_female+1),]
         Survival = Survival * D_dea
@@ -231,7 +231,13 @@ log.post = function(## estimated vitals
         }
         
         if(estaK0){
-            log.aK0.prior =sum( dunif(aK0[[1]],alpha.aK0[[1]],beta.aK0[[1]],T) , dunif(aK0[[2]],alpha.aK0[[2]],beta.aK0[[2]],T))
+            log.aK0.prior =#sum( dunif(aK0[[1]],alpha.aK0[[1]],beta.aK0[[1]],T) , dunif(aK0[[2]],alpha.aK0[[2]],beta.aK0[[2]],T))
+                Reduce(sum, 
+                       lapply(1:length(aK0),
+                              function(i,aK0,al.aK0,be.aK0){
+                                  dunif(aK0[[i]],al.aK0[[i]],be.aK0[[i]],T)}
+                              ,aK0,alpha.aK0,beta.aK0))
+            
         }
         else {
             log.aK0.prior = 0
@@ -465,10 +471,17 @@ HDDLislie.sampler =
                              ,start = burn.in + 1
                              ,thin = thin.by)
                 colnames(aK0.Surv.mcmc) = NULL
+                aK0.midPopulation.mcmc =
+                    mcmc(matrix(nrow = n.stored
+                             ,ncol = length(start.aK0[[3]]))
+                             ,start = burn.in + 1
+                             ,thin = thin.by)
+                colnames(aK0.midPopulation.mcmc) = NULL
             } 
             else{
                 aK0.Fec.mcmc = NULL
                 aK0.Surv.mcmc = NULL
+                aK0.midPopulation.mcmc = NULL
             }
 
             # Harvest proportion, can be either time homo or not
@@ -641,7 +654,7 @@ HDDLislie.sampler =
         logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
         logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+        curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
             assump[[i]] %*% aK0[[i]]
         },aK0 = curr.aK0,assump = aK0_assump)
                                                                     
@@ -748,7 +761,7 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                             assump[[i]] %*% aK0[[i]]
                 },aK0 = curr.aK0,assump = aK0_assump)
 
@@ -888,7 +901,7 @@ HDDLislie.sampler =
                         logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                         logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-                        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                        curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                             assump[[i]] %*% aK0[[i]]
                         },aK0 = curr.aK0,assump = aK0_assump)
 
@@ -1030,7 +1043,7 @@ HDDLislie.sampler =
                         logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                         logit.prop.SRB.full = SRB_assump$age %*% logit.prop.SRB %*%SRB_assump$time
                         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-                        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                        curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                             assump[[i]] %*% aK0[[i]]
                         },aK0 = curr.aK0,assump = aK0_assump)
 
@@ -1160,7 +1173,7 @@ HDDLislie.sampler =
                         logit.prop.H.full = Harv_assump$age %*% logit.prop.H %*%Harv_assump$time
                         logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                         logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-                        curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                        curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                             assump[[i]] %*% aK0[[i]]
                         },aK0 = curr.aK0,assump = aK0_assump)
 
@@ -1282,7 +1295,7 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.prop.A.full = A_assump$age %*% logit.prop.A %*%A_assump$time
-                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                     assump[[i]] %*% aK0[[i]]
                 },aK0 = curr.aK0,assump = aK0_assump)
 
@@ -1380,9 +1393,10 @@ HDDLislie.sampler =
 
             ##...... Carrying Capacity ......##
         if(estaK0){
-            prop.aK0 = curr.aK0
-            for(j in 1:length(prop.aK0)){
+            
+            for(j in 1:length(start.aK0)){
                 for(w in 1:length(curr.aK0[[j]])){
+            prop.aK0 = curr.aK0
             prop.aK0[[j]][w] = curr.aK0[[j]][w] + rnorm(1, 0, sqrt(prop.vars$aK0[[j]]))
             #prop.aK0[[2]] = curr.aK0[[2]] + rnorm(length(curr.aK0[[2]]), 0, sqrt(prop.vars$aK0[[2]]))
             
@@ -1391,7 +1405,7 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-                prop.aK0.full = lapply(1:2,function(i,aK0,assump){
+                prop.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                         assump[[i]] %*% aK0[[i]]
                 },aK0 = prop.aK0,assump = aK0_assump)
 
@@ -1474,7 +1488,7 @@ HDDLislie.sampler =
                                         acc.count$aK0[j] + 1/n.iter
                                 curr.aK0 = prop.aK0
                                 curr.proj = full.proj
-				curr.aeri=prop.aeri
+				                curr.aeri=prop.aeri
                                 log.curr.posterior = log.prop.posterior
                         } 
 
@@ -1488,6 +1502,7 @@ HDDLislie.sampler =
             if(k %% 1 == 0 && k > 0 && estaK0){
                 aK0.Fec.mcmc[k,] = as.vector((curr.aK0[[1]]))
                 aK0.Surv.mcmc[k,] = as.vector((curr.aK0[[2]]))
+                aK0.midPopulation.mcmc[k,] = as.vector((curr.aK0[[3]]))
                 
             }     
             
@@ -1517,7 +1532,7 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                      assump[[i]] %*% aK0[[i]]
                 },aK0 = curr.aK0,assump = aK0_assump)
 
@@ -2057,7 +2072,7 @@ HDDLislie.sampler =
                 logit.curr.H.full = Harv_assump$age %*% logit.curr.H %*%Harv_assump$time
                 logit.curr.SRB.full = SRB_assump$age %*% logit.curr.SRB %*%SRB_assump$time
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
-                curr.aK0.full = lapply(1:2,function(i,aK0,assump){
+                curr.aK0.full = lapply(1:length(aK0_assump),function(i,aK0,assump){
                             assump[[i]] %*% aK0[[i]]
                 },aK0 = curr.aK0,assump = aK0_assump)
 
@@ -2112,6 +2127,8 @@ HDDLislie.sampler =
 		mean.vital$invK0.Fec = apply( as.matrix( aK0.Fec.mcmc),2,point.est)
         mcmc.objs$invK0.Surv = aK0.Surv.mcmc
 		mean.vital$invK0.Surv = apply( as.matrix( aK0.Surv.mcmc),2,point.est)
+        mcmc.objs$invK0.midPopulation.mcmc = aK0.midPopulation.mcmc
+        mean.vital$invK0.midPopulation.mcmc = apply( as.matrix( aK0.midPopulation.mcmc),2,point.est)
         
 	}
 	else {mean.vital$invK0.mcmc = c(0,0)}
