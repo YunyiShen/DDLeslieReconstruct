@@ -3,16 +3,11 @@ nage = c(8,3) # nage is female first and then male, a vector with lenght usually
 period = 14
 
 
-mean.s = read.csv("./data/Survival_mean_Etter.csv")
-mean.s = mean.s[,-(1)]
-mean.f = read.csv("./data/Fecundity_mean.csv")
-mean.f = mean.f[,-(1)]
-mean.SRB = read.csv("./data/SRB_mean.csv")
-mean.SRB = mean.SRB[,-1]
-Harv.data = read.csv("./data/Culling.csv")
-Harv.data = Harv.data[,-(1)]
-Aeri.data = read.csv("./data/Aerial_count.csv")
-Aeri.data = Aeri.data[,-1]
+mean.s = read.csv("./data/Survival_mean_Etter.csv",row.names = 1)
+mean.f = read.csv("./data/Fecundity_mean.csv",row.names = 1)
+mean.SRB = read.csv("./data/SRB_mean.csv",row.names = 1)
+Harv.data = read.csv("./data/Culling.csv",row.names = 1)
+Aeri.data = read.csv("./data/Aerial_count.csv",row.names = 1)
 mean.b = Harv.data[,1]
 mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 Harv_assump = read.csv("./data/Harv_assump.csv",header = F)
@@ -20,13 +15,14 @@ Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specifi
 
 Assumptions = list()
 
-Assumptions$Fec_assump = list(time = eyes(period),age = eyes((nage[1])))
-Assumptions$Surv_assump = list(time = eyes(period),age = eyes(sum(nage)))                           
-Assumptions$SRB_assump = list(time = eyes(period),age = eyes(1))
-Assumptions$A_assump  = list(time = eyes(period+1),age = eyes(1))
-Assumptions$Harv_assump = list(time = eyes(period+1),age = Harv_assump) # tons of assumptions on vital rates
-
-
+Assumptions$Fec = list(time = eyes(period),age = eyes((nage[1])))
+Assumptions$Surv = list(time = eyes(period),age = eyes(sum(nage)))                           
+Assumptions$SRB = list(time = eyes(period),age = eyes(1))
+Assumptions$AerialDet  = list(time = eyes(period+1),age = eyes(1))
+Assumptions$Harv = list(time = eyes(period+1),age = Harv_assump) # tons of assumptions on vital rates
+# full matrix for e.g. Harvest will be:
+#  Assumptions$Harv$age %*% as.matrix(mean.H) %*% Assumptions$Harv$time
+#  It is a good idea to try the command above to see how to use assumption matrices.
 
 mean.A = matrix(0.7,1,period+1)
 

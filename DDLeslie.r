@@ -618,11 +618,11 @@ HDDLislie.sampler =
         log.Harv.mat = log(Harv.data)
         log.Aeri.mat = log(Aerial.data)
         
-        Fec_assump = Assumptions$Fec_assump
-        Surv_assump = Assumptions$Surv_assump                                                            
-        SRB_assump = Assumptions$SRB_assump                                                            
-        A_assump = Assumptions$A_assump                                                            
-        Harv_assump = Assumptions$Harv_assump
+        Fec_assump = Assumptions$Fec
+        Surv_assump = Assumptions$Surv                                                          
+        SRB_assump = Assumptions$SRB                                                          
+        A_assump = Assumptions$AerialDet                                                         
+        Harv_assump = Assumptions$Harv
         
 
         #.. Set current projection: base on initial values # homo or not is important, determin it use homo = T
@@ -2177,7 +2177,7 @@ HDDLislie.sampler =
                                  "pD_Gelman04","DIC_Gelman04")
 	
 	## abs_dif
-	abs_dif = abs(c((mean.vital$baseline.count.mcmc) * (Assumptions$Harv_assump$age%*%(matrix(mean.vital$H.mcmc,ncol = proj.periods+1))%*%Assumptions$Harv_assump$time)[,1],mean.vital$harvest.mcmc)-as.vector(Harv.data))
+	abs_dif = abs(c((mean.vital$baseline.count.mcmc) * (Harv_assump$age%*%(matrix(mean.vital$H.mcmc,ncol = proj.periods+1))%*%Harv_assump$time)[,1],mean.vital$harvest.mcmc)-as.vector(Harv.data))
 	mean_abs_dif_harv = mean(abs_dif)
 	se_abs_dif_harv = sd(abs_dif)/(sqrt(proj.periods))
 	
@@ -2282,7 +2282,7 @@ HDDLislie.sampler =
                                              
 
         #.. results
-        ret.list <- list(mcmc.objs = mcmc.objs
+        ret.list = list(mcmc.objs = mcmc.objs
 	                       ,log.like.mcmc = log.like.mcmc
                          ,alg.stats = alg.stats
 				                 ,model.checking = model.checking
