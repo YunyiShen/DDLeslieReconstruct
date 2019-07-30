@@ -1386,9 +1386,11 @@ HDDLislie.sampler =
 
             ##...... Carrying Capacity ......##
         if(estaK0){
-            prop.aK0 = list()
-            prop.aK0[[1]] = curr.aK0[[1]] + rnorm(length(curr.aK0[[1]]), 0, sqrt(prop.vars$aK0[[1]]))
-            prop.aK0[[2]] = curr.aK0[[2]] + rnorm(length(curr.aK0[[2]]), 0, sqrt(prop.vars$aK0[[2]]))
+            prop.aK0 = curr.aK0
+            for(j in 1:length(prop.aK0)){
+                for(w in 1:length(curr.aK0[[j]])){
+            prop.aK0[[j]][w] = curr.aK0[[j]][w] + rnorm(1, 0, sqrt(prop.vars$aK0[[j]]))
+            #prop.aK0[[2]] = curr.aK0[[2]] + rnorm(length(curr.aK0[[2]]), 0, sqrt(prop.vars$aK0[[2]]))
             
                 logit.curr.s.full = Surv_assump$age %*% logit.curr.s %*%Surv_assump$time
                 log.curr.f.full = Fec_assump$age %*% log.curr.f %*% Fec_assump$time
@@ -1486,6 +1488,8 @@ HDDLislie.sampler =
 
         } # close else after checking for negative population
         }
+                }
+            }
             #.. Store proposed aK0 matrix
             if(k %% 1 == 0 && k > 0 && estaK0){
                 aK0.Fec.mcmc[k,] = as.vector((curr.aK0[[1]]))
