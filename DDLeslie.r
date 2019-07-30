@@ -2195,7 +2195,7 @@ HDDLislie.sampler =
 	if(estaK0){
 		mcmc.objs$invK0.Fec = aK0.Fec.mcmc
 		mean.vital$invK0.Fec = apply( as.matrix( aK0.Fec.mcmc),2,point.est)
-        mcmc.objs$invK0.Surv = aK0.Fec.mcmc
+        mcmc.objs$invK0.Surv = aK0.Surv.mcmc
 		mean.vital$invK0.Surv = apply( as.matrix( aK0.Surv.mcmc),2,point.est)
         
 	}
