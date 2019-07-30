@@ -195,14 +195,14 @@ log.post = function(## estimated vitals
                     , estFer, estaK0
                     ## fixed prior means on vitals
                     , prior.mean.f, prior.mean.s, prior.mean.SRB
-                    , prior.mean.b, prior.mean.aK0
+                    , prior.mean.b #, prior.mean.aK0
                     , prior.mean.A, prior.mean.H
                     ## fixed prior parameters on variance distns
                     , alpha.f, beta.f, alpha.s, beta.s, alpha.SRB, beta.SRB
                     , alpha.aK0, beta.aK0
                     , alpha.A, beta.A, alpha.H, beta.H
                     ## updated variances on prior distns
-                    , sigmasq.f, sigmasq.s, sigmasq.SRB,sigmasq.n, sigmasq.aK0
+                    , sigmasq.f, sigmasq.s, sigmasq.SRB,sigmasq.n#, sigmasq.aK0
                     , sigmasq.A ,sigmasq.H
                     ## value of the log likelihood
                     , log.like
@@ -231,14 +231,7 @@ log.post = function(## estimated vitals
         }
         
         if(estaK0){
-            log.aK0.prior = sum( dnorm(aK0[[1]], mean = prior.mean.aK0[[1]]
-                                  , sd = sqrt(sigmasq.aK0)
-                                  , log = T ) )+
-                            sum(dnorm(aK0[[2]], mean = prior.mean.aK0[[2]]
-                                  , sd = sqrt(sigmasq.aK0)
-                                  , log = T ))
-            log.sigmasq.aK0.prior =
-                log(dinvGamma(sigmasq.aK0, alpha.aK0, beta.aK0))
+            log.aK0.prior =sum( dunif(aK0[[1]],alpha.aK0[[1]],beta.aK0[[1]],T) , dunif(aK0[[2]],alpha.aK0[[2]],beta.aK0[[2]],T))
         }
         else {
             log.aK0.prior = 0
@@ -272,7 +265,7 @@ log.post = function(## estimated vitals
                              log.sigmasq.f.prior
                              ,log.sigmasq.s.prior
                              ,log.sigmasq.SRB.prior                             
-                             ,log.sigmasq.aK0.prior
+                             #,log.sigmasq.aK0.prior
                              ,log.sigmasq.H.prior
                              ,log.sigmasq.A.prior
                              ,log.like))
@@ -321,20 +314,21 @@ HDDLislie.sampler =
 
                          #.. fixed variance hyper-parameters
                          ,al.f = 1, be.f = 0.0109, al.s = 1, be.s = 0.0109,al.SRB = 1,be.SRB = 0.0109
-                         , al.aK0 = 1, be.aK0 = 0.0436
+                         , al.aK0 , be.aK0 
                          , al.H = 1, be.H = 0.0436, al.A = 1, be.A = 0.0436
 
                          #.. fixed prior means
-                         , mean.f, mean.s, mean.SRB, mean.b, mean.aK0, mean.H, mean.A
+                         , mean.f, mean.s, mean.SRB, mean.b, mean.H, mean.A
                          , Assumptions
 
                          #.. inital values for vitals and variances
                          #     *vitals not transformed coming in* all not transfer, will transfer later before sample and transfer back when saving 
                          ,start.f = mean.f, start.s = mean.s, start.SRB = mean.SRB
-                         ,start.b = mean.b, start.aK0 = mean.aK0, start.H = mean.H
+                         ,start.b = mean.b, start.aK0 = al.aK0, start.H = mean.H
                          ,start.A = mean.A
                          ,start.sigmasq.f = 5, start.sigmasq.s = 5, start.sigmasq.SRB = 5
-                         ,start.sigmasq.aK0 = 5, start.sigmasq.H = 5
+                         #,start.sigmasq.aK0 = 5
+                         , start.sigmasq.H = 5
                          ,start.sigmasq.A = 5
 
                          #.. census data
@@ -461,13 +455,13 @@ HDDLislie.sampler =
             if(estaK0){
                 aK0.Fec.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = length(mean.aK0[[1]]))
+                             ,ncol = length(start.aK0[[1]]))
                              ,start = burn.in + 1
                              ,thin = thin.by)
                 colnames(aK0.Fec.mcmc) = NULL
                 aK0.Surv.mcmc =
                     mcmc(matrix(nrow = n.stored
-                             ,ncol = length(mean.aK0[[2]]))
+                             ,ncol = length(start.aK0[[2]]))
                              ,start = burn.in + 1
                              ,thin = thin.by)
                 colnames(aK0.Surv.mcmc) = NULL
@@ -501,11 +495,11 @@ HDDLislie.sampler =
 
             # variances
             variances.mcmc =
-                    mcmc(matrix(nrow = n.stored, ncol = 6)
+                    mcmc(matrix(nrow = n.stored, ncol = 5)
                              ,start = burn.in + 1
                              ,thin = thin.by)
             colnames(variances.mcmc) =
-                    c("fert.rate.var", "surv.prop.var", "SRB.var","H.var", "A.var","aK0.var"
+                    c("fert.rate.var", "surv.prop.var", "SRB.var","H.var", "A.var"
                         ) # may need check here since K0 and fert can be known (though I prefer estimating it)
 
         #.. Record acceptance rate
@@ -528,8 +522,8 @@ HDDLislie.sampler =
                          ,H = matrix(0, nrow = nrow(as.matrix(mean.H)), ncol = ncol(as.matrix( mean.H))
                             ,dimnames = dimnames(mean.H)
                             )
-                         ,aK0 = matrix(0, nrow = nrow(as.matrix( mean.aK0)), ncol = ncol( as.matrix(mean.aK0))
-                            ,dimnames = dimnames(mean.aK0)
+                         ,aK0 = matrix(0, nrow = nrow(as.matrix( start.aK0)), ncol = ncol( as.matrix(start.aK0))
+                            ,dimnames = dimnames(start.aK0)
                             )
                          ,baseline.count = matrix(0, nrow = nrow(as.matrix( mean.b))
                             ,dimnames = dimnames( mean.b)
@@ -539,7 +533,7 @@ HDDLislie.sampler =
                          ,sigmasq.SRB = 0
                          ,sigmasq.A = 0
                          ,sigmasq.H = 0
-                         ,sigmasq.aK0 = 0
+                         #,sigmasq.aK0 = 0
                          
                          )
 
@@ -569,8 +563,8 @@ HDDLislie.sampler =
                          ,H = matrix(0, nrow = nrow(as.matrix(mean.H)), ncol = ncol(as.matrix( mean.H))
                             ,dimnames = dimnames(mean.H)
                             )
-                         ,aK0 = matrix(0, nrow = nrow(as.matrix( mean.aK0)), ncol = ncol( as.matrix(mean.aK0))
-                            ,dimnames = dimnames(mean.aK0)
+                         ,aK0 = matrix(0, nrow = nrow(as.matrix( start.aK0)), ncol = ncol( as.matrix(start.aK0))
+                            ,dimnames = dimnames(start.aK0)
                             )
                          ,baseline.count = matrix(0, nrow = nrow(as.matrix( mean.b))
                             ,dimnames = dimnames( mean.b)
@@ -611,7 +605,7 @@ HDDLislie.sampler =
         curr.sigmasq.SRB = start.sigmasq.SRB
         curr.sigmasq.A = start.sigmasq.A
         curr.sigmasq.H = start.sigmasq.H
-        curr.sigmasq.aK0 = start.sigmasq.aK0
+        #curr.sigmasq.aK0 = start.sigmasq.aK0
         
 
 
@@ -675,7 +669,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -690,7 +684,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -794,7 +788,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -808,7 +802,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              ,log.like = 
                                                         log.lhood(
@@ -930,7 +924,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -945,7 +939,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1074,7 +1068,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1089,7 +1083,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1201,7 +1195,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1216,7 +1210,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1323,7 +1317,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1338,7 +1332,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1433,7 +1427,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1448,7 +1442,7 @@ HDDLislie.sampler =
 					     ,sigmasq.SRB = curr.sigmasq.SRB
 					     ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1559,7 +1553,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1574,7 +1568,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1652,7 +1646,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1667,7 +1661,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1737,7 +1731,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1752,7 +1746,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1823,7 +1817,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1838,7 +1832,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = prop.sigmasq.SRB #=- use proposal
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1908,7 +1902,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -1923,7 +1917,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB
                                              ,sigmasq.A = prop.sigmasq.A #=- use proposal
                                              ,sigmasq.H = curr.sigmasq.H
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -1993,7 +1987,7 @@ HDDLislie.sampler =
                                              ,prior.mean.SRB = logit.mean.SRB
                                              ,prior.mean.A = logit.mean.A
                                              ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
+                                             
                                              ,prior.mean.b = mean.b
                                              ,alpha.f = al.f, beta.f = be.f
                                              ,alpha.s = al.s, beta.s = be.s
@@ -2008,7 +2002,7 @@ HDDLislie.sampler =
                                              ,sigmasq.SRB = curr.sigmasq.SRB 
                                              ,sigmasq.A = curr.sigmasq.A
                                              ,sigmasq.H = prop.sigmasq.H #=- use proposal
-                                             ,sigmasq.aK0 = curr.sigmasq.aK0
+                                             
                                              
                                              
                                              ,log.like = 
@@ -2056,90 +2050,7 @@ HDDLislie.sampler =
 
             if(k %% 1 == 0 && k > 0) variances.mcmc[k,"H.var"] = curr.sigmasq.H
         
-            ##...... Carrying Capacity ......##      
-            if(estaK0){
-                prop.sigmasq.aK0 = rinvGamma(1,al.aK0+0.5,be.aK0 + 0.5*sum(c((curr.aK0[[1]]-mean.aK0[[1]]),(curr.aK0[[2]]-mean.aK0[[2]]))^2)) #bug here give NA
-                        log.prop.posterior =
-                            log.post(f = log.curr.f 
-                                             ,s = logit.curr.s 
-                                             ,SRB = logit.curr.SRB 
-                                             ,A = logit.curr.A
-                                             ,H = logit.curr.H 
-                                             ,aK0 = curr.aK0 
-                                             ,baseline.n = exp( log.curr.b ) 
-                                             ,estFer=estFer, estaK0=estaK0
-                                             ,prior.mean.f = log.mean.f
-                                             ,prior.mean.s = logit.mean.s
-                                             ,prior.mean.SRB = logit.mean.SRB
-                                             ,prior.mean.A = logit.mean.A
-                                             ,prior.mean.H = logit.mean.H
-                                             ,prior.mean.aK0 = mean.aK0
-                                             ,prior.mean.b = mean.b
-                                             ,alpha.f = al.f, beta.f = be.f
-                                             ,alpha.s = al.s, beta.s = be.s
-                                             ,alpha.SRB = al.SRB, beta.SRB = be.SRB
-                                             ,alpha.A = al.A, beta.A = be.A
-                                             ,alpha.H = al.H, beta.H = be.H
-                                             ,alpha.aK0 = al.aK0, beta.aK0 = be.aK0
-                                             
-                                             
-                                             ,sigmasq.f = curr.sigmasq.f
-                                             ,sigmasq.s = curr.sigmasq.s 
-					     ,sigmasq.SRB = curr.sigmasq.SRB 
-					     ,sigmasq.A = curr.sigmasq.A
-                                             ,sigmasq.H = curr.sigmasq.H 
-                                             ,sigmasq.aK0 = prop.sigmasq.aK0 #=- use proposal
-                                             
-                                             
-                                             ,log.like = 
-                                                        log.lhood(        
-                                                                n.census = Harv.data 
-                                                                ,n.hat = curr.proj#=- use current
-                                                                ) +#=- use current
-                                                        log.lhood(
-                                                                n.census = Aerial.data
-                                                                ,n.hat = curr.aeri#=- use current
-                                                                )#=- use current
-                                             ,non.zero.fert = fert.rows 
-                                             )
-
-                #- Acceptance ratio
-            ar = acc.ra.var(log.prop.post = log.prop.posterior
-                                                         ,log.curr.post = log.curr.posterior
-                                                         ,log.prop.var = dinvGamma(prop.sigmasq.aK0
-                                                            ,al.aK0 + length(mean.aK0[[1]])/2+length(mean.aK0[[2]])/2
-                                                            ,be.aK0 + 0.5*sum((c(curr.aK0[[1]] -mean.aK0[[1]],curr.aK0[[2]] -mean.aK0[[2]]))^2)
-                                                            ,log = TRUE)
-                                                         ,log.curr.var = dinvGamma(curr.sigmasq.aK0
-                                                            ,al.aK0 + length(mean.aK0)/2
-                                                            ,be.aK0 + 0.5*sum((c(curr.aK0[[1]] -mean.aK0[[1]],curr.aK0[[2]] -mean.aK0[[2]]))^2)
-                                                            ,log = TRUE)
-                                                         )
-
-                # - Move or stay
-                #.. stay if acceptance ratio 0, missing, infinity, etc.
-                if(is.na(ar) || is.nan(ar) || ar < 0) {
-                        if(i > burn.in) ar.na$sigmasq.aK0 =
-                                ar.na$sigmasq.aK0 + 1/n.iter
-                } else {
-                        #.. if accept, update current, store proposed
-                        #     and count acceptance
-                        if(runif(1) <= ar) {
-                                if(i > burn.in) acc.count$sigmasq.aK0 =
-                                        acc.count$sigmasq.aK0 + 1/n.iter
-                                curr.sigmasq.aK0 = prop.sigmasq.aK0
-                                log.curr.posterior = log.prop.posterior
-                        } #.. if reject, leave current and posterior
-                } # close else after checking for ar=na, nan, zero
-
-            if(k %% 1 == 0 && k > 0) variances.mcmc[k,"aK0.var"] = curr.sigmasq.aK0
-
-            
-            
-            
-            }
-                
-                
+                            
             ## ------- Store current population ------- ##
                 logit.curr.s.full = Surv_assump$age %*% logit.curr.s %*%Surv_assump$time
                 log.curr.f.full = Fec_assump$age %*% log.curr.f %*% Fec_assump$time
@@ -2280,7 +2191,7 @@ HDDLislie.sampler =
                                             ,start.sigmasq.SRB = start.sigmasq.SRB
                                             ,start.sigmasq.A = start.sigmasq.A
                                             ,start.sigmasq.H = start.sigmasq.H
-                                            ,start.sigmasq.aK0 = start.sigmasq.aK0
+                                            #,start.sigmasq.aK0 = start.sigmasq.aK0
                                             
                                             ,Harv.data = Harv.data
                                             ,Aerial.data = Aerial.data
@@ -2305,7 +2216,7 @@ HDDLislie.sampler =
                                                  ,mean.SRB = mean.SRB
                                                  ,mean.aerial.detection = mean.A
                                                  ,mean.Harvest.proportion = mean.H
-                                                 ,mean.1overK = mean.aK0
+                                                 
                                                  ,mean.baseline.count = mean.b
                                                  ,mean.Harv.data = Harv.data
                                                  ,Aerial.data = Aerial.data
