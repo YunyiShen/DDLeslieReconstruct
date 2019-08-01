@@ -12,17 +12,18 @@ mean.b = Harv.data[,1]
 mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 Harv_assump = read.csv("./data/Harv_assump.csv",header = F)
 Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specific harvest!
+Surv_assump = read.csv("./data/Surv_assump_age.csv",header = F)
 
 Assumptions = list()
 
-#Assumptions$Fec = list(time = eyes(period),age = eyes((nage[1])))
-#Assumptions$Surv = list(time = eyes(period),age = eyes(sum(nage)))
+Assumptions$Fec = list(time = eyes(period),age = as.matrix( Surv_assump[1:nage[1],1:3]))
+Assumptions$Surv = list(time = eyes(period),age = as.matrix(Surv_assump))
 
 # for direct inference:
-Assumptions$Fec = list(time = matrix(1,1,period),age = eyes((nage[1])))
-Assumptions$Surv = list(time = matrix(1,1,period),age = eyes(sum(nage)))
-mean.f = mean.f[,period]
-mean.s = mean.s[,period]
+#Assumptions$Fec = list(time = matrix(1,1,period),age = eyes((nage[1])))
+#Assumptions$Surv = list(time = matrix(1,1,period),age = eyes(sum(nage)))
+mean.f = mean.f[1:3,]
+mean.s = mean.s[c(1:3,9:11),]
 # end direct inference
 
 Assumptions$SRB = list(time = eyes(period),age = eyes(1))
@@ -45,7 +46,7 @@ prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 5000,thin.by = 5, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 5000,thin.by = 25, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = list(matrix(-.001,nage[1],1),matrix(-.001,sum(nage),1),0)
@@ -63,6 +64,6 @@ Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 5000,thin.by = 5, mea
                                    , start.sigmasq.A = .05
                                    , Harv.data = as.matrix(Harv.data)
                                    , Aerial.data = as.matrix( Aeri.data)
-                                   , prop.vars = prop.vars, estFer = T,nage = nage,estaK0 = T,null = F)
+                                   , prop.vars = prop.vars, estFer = T,nage = nage,estaK0 = F,null = T)
 
 
