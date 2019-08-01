@@ -1,0 +1,15 @@
+File name,Describe,Remarks
+Aerial_count,Reconstructed Aerial Count,
+Aerial_count_det,Aerial Count detection rate,
+Ddfec.csv,Summary of Linear Regression of fecundity and living population,including all ages of females
+DdfecX.jpg,Linear regression of fecundity and population of age X,X=1 to 8
+Ddsurv.csv,Summary of Linear Regression of natural survival and living population,
+DdsurvX.jpg,Linear regression of survival and population of age X,"X=1 to 8 for females, X=9 to 11 for males"
+FX,Reconstructed average female culling count (not marginalized over all parameters),"X=1 to 8, females, .95 interval is for average, real .95 interval is larger"
+fec_ageX,Estimated fecundity for age X,X=1 to 8 for females only
+female_fawn_ratio1,Ratio of fawn in all female population,
+HarvporX,Harvest rate,"X=1 female fawn, X=2 female Y+A, X=3 male fawn, X=4 male Y+A"
+Living_af_culling_ageX,Average estimated living individuals after culling of age X,"X=1 to 8 for females, X=9 to 11 for males"
+MX,Reconstructed average male culling count (not marginalized over all parameters),"X=1 to 3, males, .95 interval is for average, real .95 interval is larger"
+SRB1,Estimated Sex Ratio at Birth (SRB),
+Survival_ageX,Estimated survival for age X,"X=1 to 8 for females, X=9 to 11 for males"
