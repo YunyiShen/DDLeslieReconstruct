@@ -40,16 +40,16 @@ prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
                  SRB = matrix(.1,nage[1],period), # vital rates has period cols
                  A = matrix(1,1,period+1),
                  H = matrix(1,nrow = 4,ncol = period+1),
-                 aK0=list(1e-10,1e-10,5),
+                 aK0=list(5e-8,5e-8,50),
                  baseline.pop.count = matrix(1,nrow = sum(nage),ncol = 1))
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 50, burn.in = 0,thin.by = 1, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 15000, burn.in = 5000,thin.by = 5, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = list(matrix(-.001,nage[1],1),matrix(-.001,sum(nage),1),0)
-                                   , be.aK0 = list(matrix(.001,nage[1],1),matrix(.001,sum(nage),1),300)
+                                   , be.aK0 = list(matrix(.001,nage[1],1),matrix(.001,sum(nage),1),500)
                                    , al.H = 1, be.H = .05
                                    , al.A = 1, be.A = .05
                                    , mean.s = as.matrix(mean.s)
