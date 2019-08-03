@@ -12,18 +12,16 @@ mean.b = Harv.data[,1]
 mean.H = read.csv("./data/Harvest_rate_prior.csv",row.names = 1)
 Harv_assump = read.csv("./data/Harv_assump.csv",header = F)
 Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specific harvest!
-Surv_assump = read.csv("./data/Surv_assump_age.csv",header = F)
+#Surv_assump = read.csv("./data/Surv_assump_age.csv",header = F)
 
 Assumptions = list()
 
-Assumptions$Fec = list(time = eyes(period),age = as.matrix( Surv_assump[1:nage[1],1:3]))
-Assumptions$Surv = list(time = eyes(period),age = as.matrix(Surv_assump))
+Assumptions$Fec = list(time = eyes(period),age = as.matrix(eyes(nage[1])))
+Assumptions$Surv = list(time = eyes(period),age = as.matrix(eyes(sum(nage))))
 
 # for direct inference:
 #Assumptions$Fec = list(time = matrix(1,1,period),age = eyes((nage[1])))
 #Assumptions$Surv = list(time = matrix(1,1,period),age = eyes(sum(nage)))
-mean.f = mean.f[1:3,]
-mean.s = mean.s[c(1:3,9:11),]
 # end direct inference
 
 Assumptions$SRB = list(time = eyes(period),age = eyes(1))

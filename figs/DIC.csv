@@ -1,0 +1,18 @@
+,pD,DIC,,remarks
+Harvest(?fawn*sex),187.11,649.38,,4 harvest 
+Harvest(?fawn),196.3,631.48,,3 harvest
+"Fec(age,popu)Surv(age,popu)",108.81,835.74,,"solely DD, popu for reconstructed population"
+"Fec(fya,t)Surv(fya,t)",148.36,732.35,,"fys for fawn, yearling and adults, 3 age classes"
+,,,,
+,,,,
+,,,,
+,,,,
+,,,,
+"if not mentioned, all parameters except uncertainties were assumed to be functions of time, sex and age, but not density",,,,
+"parameters considered: Fecundity(Fec), Survival(Surv), Harvest rate(Harv), Sex ratio at birth(SRB), Carrying capacity (K0, if applicable), intercept of DD (midP, if applicable), Aerial count detection rate (A), uncertainty of vital rates (sigma_{v}, v=Fec, Surv, Harv, SRB, A)",,,,
+pD: effective # of parameters,,,,
+"DIC: deviance information criterion, similar to AIC",,,,
+,,,,
+,,,,
+,,,,
+, ,,,
