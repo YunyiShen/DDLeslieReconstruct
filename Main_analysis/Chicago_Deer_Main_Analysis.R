@@ -1,4 +1,4 @@
-source('DDLeslie.r')
+source('./R/DDLeslie.R')
 nage = c(8,3) # nage is female first and then male, a vector with lenght usually 2
 period = 14
 

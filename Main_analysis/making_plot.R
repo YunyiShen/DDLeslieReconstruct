@@ -1,17 +1,7 @@
 require(ggplot2)
+source('./R/misc.R')
 # Just for plotting things
 
-## invK0 
-# br_K0 = Chicago_RES$mcmc.objs$invK0.mcmc
-# plot(Chicago_RES$mcmc.objs$invK0.mcmc[,1])
-# 
-# hist(Chicago_RES$mcmc.objs$invK0.mcmc)
-# invK0_post = data.frame(invK0 = Chicago_RES$mcmc.objs$invK0.mcmc)
-# 
-# ggplot(invK0_post,aes(x=invK0)) + 
-#   geom_density(alpha=.05) +
-#   geom_vline(xintercept = 0)
-# ggsave("./figs/temp/invK0post.jpg")
 
 ## Harvest prediction
 mean.harv = apply(Chicago_RES$mcmc.objs$harvest.mcmc,2,mean)
@@ -39,10 +29,10 @@ for(i in 1:11){
   temp2 = data.frame(point = "data",mean = t(Harv.data[i,2:15]),low =t( Harv.data[i,2:15]),high = t(Harv.data[i,2:15]),time = 1993:2006)
   colnames(temp2) = colnames(temp1)
   temp = rbind(temp1,temp2)
-  write.csv(temp,paste0("./figs/temp/",BI_harv_high$age[i],".csv"))
+  write.csv(temp,paste0("./Main_analysis/figs/temp/",BI_harv_high$age[i],".csv"))
   rm(temp1)
   rm(temp2)
-  filename = paste0("./figs/temp/",BI_harv_high$age[i],".jpg")
+  filename = paste0("./Main_analysis/figs/temp/",BI_harv_high$age[i],".jpg")
   ggplot(data.frame(temp),aes(x=time, y=mean, colour = point)) + 
     geom_errorbar(aes(ymin=low, ymax=high), width=.1) +
     geom_point()
@@ -66,7 +56,7 @@ for(i in 0:period+1){
 
 
 living_inid = (Chicago_RES$mcmc.objs$harvest.mcmc/H_full[,-(1:sum(nage))])*(1-H_full[,-(1:sum(nage))])
-plotthings(YD_obj=living_inid,pathsave="./figs/temp/living_af_culling_age",sum(nage),period,1993:2006)
+plotthings(YD_obj=living_inid,pathsave="./Main_analysis/figs/temp/living_af_culling_age",sum(nage),period,1993:2006)
 
 total_living = matrix(0,nrow(living_inid),ncol = period)
 
@@ -78,7 +68,7 @@ bl = rowSums(Chicago_RES$mcmc.objs$baseline.count.mcmc/(H_full[,(1:sum(nage))])*
 bl_mean = colMeans(Chicago_RES$mcmc.objs$baseline.count.mcmc/(H_full[,(1:sum(nage))])*(1-H_full[,(1:sum(nage))]))
 total_living_bl = cbind(bl,total_living)
 
-plotthings(YD_obj=total_living_bl,pathsave="./figs/temp/living_af_culling_all",1,period+1,1992:2006)
+plotthings(YD_obj=total_living_bl,pathsave="./Main_analysis/figs/temp/living_af_culling_all",1,period+1,1992:2006)
 
 mean.total.aeri = apply(Chicago_RES$mcmc.objs$aerial.count.mcmc,2,median)
 plot(mean.total.aeri)
@@ -96,21 +86,21 @@ temp1 = data.frame(point = "model predict (95% CI)",mean = mean.total.aeri,low =
 temp2 = data.frame(point = "data",mean =t( Aeri.data),low =t(Aeri.data),high = t(Aeri.data),time = 1992:2006)
 colnames(temp2) = colnames(temp1)
 temp = rbind(temp1,temp2)
-write.csv(temp,paste0("./figs/temp/","Aerial_count.csv"))
+write.csv(temp,paste0("./Main_analysis/figs/temp/","Aerial_count.csv"))
 rm(temp1)
 rm(temp2)
-filename = paste0("./figs/temp/","Aerial_count.jpg")
+filename = paste0("./Main_analysis/figs/temp/","Aerial_count.jpg")
 ggplot(data.frame(temp),aes(x=time, y=mean, colour = point)) + 
   geom_errorbar(aes(ymin=low, ymax=high), width=.1) +
   geom_point()
 ggsave(filename, plot = last_plot())
 
 ## vital rates
-plotthings(YD_obj=(Chicago_RES$mcmc.objs$surv.prop.mcmc),pathsave="./figs/temp/survival_age",nage=11,period,1993:2006)
-plotthings(Chicago_RES$mcmc.objs$fert.rate.mcmc,pathsave="./figs/temp/fec_age",nage=8,period,1993:2006)
-plotthings(YD_obj=Chicago_RES$mcmc.objs$H.mcmc,pathsave="./figs/temp/Harvpor",4,period+1,1992:2006)
-plotthings(YD_obj=Chicago_RES$mcmc.objs$SRB.mcmc,pathsave="./figs/temp/SRB",1,period,1993:2006)
-plotthings(YD_obj=Chicago_RES$mcmc.objs$aerial.detection.mcmc,pathsave="./figs/temp/Aerial_detectionrate",1,period+1,1992:2006)
+plotthings(YD_obj=(Chicago_RES$mcmc.objs$surv.prop.mcmc),pathsave="./Main_analysis/figs/temp/survival_age",nage=11,period,1993:2006)
+plotthings(Chicago_RES$mcmc.objs$fert.rate.mcmc,pathsave="./Main_analysis/figs/temp/fec_age",nage=8,period,1993:2006)
+plotthings(YD_obj=Chicago_RES$mcmc.objs$H.mcmc,pathsave="./Main_analysis/figs/temp/Harvpor",4,period+1,1992:2006)
+plotthings(YD_obj=Chicago_RES$mcmc.objs$SRB.mcmc,pathsave="./Main_analysis/figs/temp/SRB",1,period,1993:2006)
+plotthings(YD_obj=Chicago_RES$mcmc.objs$aerial.detection.mcmc,pathsave="./Main_analysis/figs/temp/Aerial_detectionrate",1,period+1,1992:2006)
 
 
 ## Aerial counts prediction
@@ -128,10 +118,10 @@ temp1 = data.frame(point = "model predict (95% CI)",mean = mean.total.aeri,low =
 temp2 = data.frame(point = "data",mean =t( Aeri.data),low =t(Aeri.data),high = t(Aeri.data),time = 1992:2006)
 colnames(temp2) = colnames(temp1)
 temp = rbind(temp1,temp2)
-write.csv(temp,paste0("./figs/temp/","Aerial_count.csv"))
+write.csv(temp,paste0("./Main_analysis/figs/temp/","Aerial_count.csv"))
 rm(temp1)
 rm(temp2)
-filename = paste0("./figs/temp/","Aerial_count.jpg")
+filename = paste0("./Main_analysis/figs/temp/","Aerial_count.jpg")
 ggplot(data.frame(temp),aes(x=time, y=mean, colour = point)) + 
   geom_errorbar(aes(ymin=low, ymax=high), width=.1) +
   geom_point()

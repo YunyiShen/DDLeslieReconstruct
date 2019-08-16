@@ -35,13 +35,13 @@ pvalues_DDsurv = Reduce(rbind, lapply(summary_DDsurv,function(w){w$coefficients[
 adjRsqr_DDsurv = unlist( lapply(summary_DDsurv,function(w){w$adj.r.squared}))
 
 res_DDsurv = data.frame( pvalues_DDsurv,adjRsqr = adjRsqr_DDsurv)
-write.csv(res_DDsurv,"./figs/temp/DDsurv.csv")
+write.csv(res_DDsurv,"./Main_analysis/figs/temp/DDsurv.csv")
 
 pvalues_DDfec = Reduce(rbind, lapply(summary_DDfec,function(w){w$coefficients[2,]}))
 adjRsqr_DDfec = unlist( lapply(summary_DDfec,function(w){w$adj.r.squared}))
 
 res_DDfec = data.frame(pvalues_DDfec,adjRsqr = adjRsqr_DDfec)
-write.csv(res_DDfec,"./figs/temp/DDfec.csv")
+write.csv(res_DDfec,"./Main_analysis/figs/temp/DDfec.csv")
 
 require(ggplot2)
 
@@ -49,7 +49,7 @@ for(i in 1:nage[1]){
   ggplot(DDfec[[i]]$model,aes(x=mean.living.total,y=mean.age.fec) )+
     geom_point()+
     stat_smooth(method = "lm")
-  filename = paste0("./figs/temp/DDfec_age",i,".jpg")
+  filename = paste0("./Main_analysis/figs/temp/DDfec_age",i,".jpg")
   ggsave(filename, plot = last_plot())
 }
 
@@ -57,6 +57,6 @@ for(i in 1:sum(nage)){
   ggplot(DDsurv[[i]]$model,aes(x=mean.living.total,y=mean.age.surv) )+
     geom_point()+
     stat_smooth(method = "lm")
-  filename = paste0("./figs/temp/DDsurv_age",i,".jpg")
+  filename = paste0("./Main_analysis/figs/temp/DDsurv_age",i,".jpg")
   ggsave(filename, plot = last_plot())
 }
