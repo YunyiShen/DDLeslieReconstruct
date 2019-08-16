@@ -119,8 +119,7 @@ note that baseline year should be trait differently since there is no
 $L_{0}$ needed. A graphical illustration of the dynamics is given in
 Fig.\[Fig.LHD\].
 
-![Projection Model used in Bayesian Framework for Culling
-Dynamics](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/LHD.jpg)
+![Projection Model used in Bayesian Framework for Culling Dynamics](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/LHD.jpg)
 
 ### Bayesian Reconstruction
 
@@ -133,8 +132,7 @@ estimating vital rates $s$, $f$, $H$ and population population counts
 $X$. We used the same 4 level setting to count for uncertainty of
 initial estimation (Fig.\[Fig.Bayes4level\]).
 
-![Prior and Likelihood Part of the Bayesian Reconstruction
-Framework](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/4level.jpg){width="0.8\linewidth"}
+![Prior and Likelihood Part of the Bayesian Reconstruction Framework](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/4level.jpg){width="0.8\linewidth"}
 
 Relationship between data and parameters were shown in
 Fig.\[Fig.Bayes\]. Note that $\alpha_{v}$ and $\beta_{v}$
@@ -150,9 +148,7 @@ counts as well as aerial counts served in the likelihood part of the
 model, prediction of the projection model served as expected value of
 the Poisson distribution to evaluate the likelihood.
 
-![Relationship between Various Data and Parameters in the Bayesian
-Reconstruction Model for Culling
-Dynamics](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/bayesian.jpg){width="0.8\linewidth"}
+![Relationship between Various Data and Parameters in the Bayesian Reconstruction Model for Culling Dynamics](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/bayesian.jpg){width="0.8\linewidth"}
 
 ### Determining the Hyperparameters
 
@@ -244,8 +240,7 @@ individuals which achieved our goal of controlling the population.
 Harvest rate for fawns has mean of 0.26 and sd of 0.05, for other than
 fawns has mean of 0.53 and sd of 0.13.
 
-![Reconstructed Population Size After
-Culling](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/popsize.jpg)
+![Reconstructed Population Size After Culling](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/popsize.jpg)
 
 Density Dependency of Vital Rates
 ---------------------------------
