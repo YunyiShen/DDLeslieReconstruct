@@ -120,7 +120,7 @@ $L_{0}$ needed. A graphical illustration of the dynamics is given in
 Fig.\[Fig.LHD\].
 
 ![Projection Model used in Bayesian Framework for Culling
-Dynamics[]{data-label="Fig.LHD"}](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/LHD.jpg){width="0.8\linewidth"}
+Dynamics](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/LHD.jpg)
 
 ### Bayesian Reconstruction
 
@@ -134,7 +134,7 @@ $X$. We used the same 4 level setting to count for uncertainty of
 initial estimation (Fig.\[Fig.Bayes4level\]).
 
 ![Prior and Likelihood Part of the Bayesian Reconstruction
-Framework[]{data-label="Fig.Bayes4level"}](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/4level.jpg){width="0.8\linewidth"}
+Framework](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/4level.jpg){width="0.8\linewidth"}
 
 Relationship between data and parameters were shown in
 Fig.\[Fig.Bayes\]. Note that $\alpha_{v}$ and $\beta_{v}$
@@ -152,7 +152,7 @@ the Poisson distribution to evaluate the likelihood.
 
 ![Relationship between Various Data and Parameters in the Bayesian
 Reconstruction Model for Culling
-Dynamics[]{data-label="Fig.Bayes"}](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/bayesian.jpg){width="0.8\linewidth"}
+Dynamics](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/bayesian.jpg){width="0.8\linewidth"}
 
 ### Determining the Hyperparameters
 
@@ -165,8 +165,8 @@ Table.\[tab:hyper\]
 
               Survival   Fecundity   SRB   Harvest   Aerial detection
   ---------- ---------- ----------- ----- --------- ------------------
-   $\alpha$      1           1        1       1             1
-   $\beta$      .05         .01      .05     .05           .05
+   alpha$      1           1        1       1             1
+   beta      .05         .01      .05     .05           .05
 
   : \[tab:hyper\]Hyperparameter Setting in This Study
 
@@ -192,8 +192,8 @@ $\mathbf{X}_{t}$ using eqn. \[eqn.living\]
 $$\label{eqn.living}
 \mathbf{X}_{t}=(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}$$
 
-The model is implemented in R 3.6.0 ([@R]) modified from package
-`popReconstruct` ([@RN1]). Source code is available on
+The model is implemented in R 3.6.0 modified from package
+`popReconstruct` (Weldon et al. 2013) Source code is available on
 [`GitHub`](https://github.com/YunyiShen/DDLeslieReconstruct) under MIT
 license.
 
@@ -245,7 +245,7 @@ Harvest rate for fawns has mean of 0.26 and sd of 0.05, for other than
 fawns has mean of 0.53 and sd of 0.13.
 
 ![Reconstructed Population Size After
-Culling[]{data-label="Fig.popsize"}](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/popsize.jpg){width="0.8\linewidth"}
+Culling](https://github.com/YunyiShen/DDLeslieReconstruct/tree/uniform-aK0-prior/_figs_/popsize.jpg)
 
 Density Dependency of Vital Rates
 ---------------------------------
@@ -261,14 +261,14 @@ Table.\[tab:DDvital\_female\].
   ----------------- ----------- ----------- ----------- ----------- ----------- ----------- ------------- -------------
   ***Fecundity***       \*          \*          \*          \*          \*          \*           \*       
   p-value             0.00203     2.79e-5     2.27e-5     2.82e-4     7.71e-4     1.84e-3      0.0147        0.0343
-  adj $R^2$            0.525       0.762       0.770       0.654       0.593       0.532        0.353         0.265
-  $\beta$            -6.32e-05   -1.01e-03   -6.37e-04   -4.96e-04   -4.09e-04   -3.28e-04    -2.70e-04     -2.49e-04
-  SE $\beta$         1.61e-05    1.55e-04    9.540e-05   9.81e-05    9.16e-05    8.26e-05     9.49e-05      1.04e-04
+  adj R^2            0.525       0.762       0.770       0.654       0.593       0.532        0.353         0.265
+  beta            -6.32e-05   -1.01e-03   -6.37e-04   -4.96e-04   -4.09e-04   -3.28e-04    -2.70e-04     -2.49e-04
+  SE beta         1.61e-05    1.55e-04    9.540e-05   9.81e-05    9.16e-05    8.26e-05     9.49e-05      1.04e-04
   ***Survival***                                                                    \*           \*       
   p-value              0.365       0.150       0.886       0.130       0.514      0.00705      2.63e-4       0.0546
-  adj $R^2$              0        0.0949         0         0.112         0         0.423     0.657629475   0.213787859
-  $\beta$            -8.10e-05   2.64e-04    -9.31e-06   -1.69e-04   5.60e-05    -4.42e-04    -2.12e-04     -9.33e-05
-  SE $\beta$         8.61e-05    1.72e-04    6.39e-05    1.04e-04    8.32e-05    1.36e-04     4.16e-05      4.38e-05
+  adj R^2              0        0.0949         0         0.112         0         0.423     0.657629475   0.213787859
+  \beta            -8.10e-05   2.64e-04    -9.31e-06   -1.69e-04   5.60e-05    -4.42e-04    -2.12e-04     -9.33e-05
+  SE \beta         8.61e-05    1.72e-04    6.39e-05    1.04e-04    8.32e-05    1.36e-04     4.16e-05      4.38e-05
   \*:$p<0.01$                                                                                             
 
   : \[tab:DDvital\_female\]Linear Regressions of Female Vital Rates and
