@@ -159,10 +159,10 @@ hyperparameter were set to be enough conservative that has .95 quantile
 $>2$ ($\alpha=1$,$\beta=.1$). Detail hyperparameter setting is shown in
 
 
-            |  Survival |  Fecundity |  SRB |  Harvest |  Aerial detection
-  ----------| ----------| -----------| -----| ---------| ------------------
-   alpha    |   1       |    1       | 1    |   1      |       1
-   beta     | .05       |  .01       |.05   |  .05     |      .05
+     parameters |  Survival |  Fecundity |  SRB |  Harvest |  Aerial detection
+  --------------| ----------| -----------| -----| ---------| ------------------
+   alpha        |   1       |    1       | 1    |   1      |       1
+   beta         | .05       |  .01       |.05   |  .05     |      .05
 
   : \[tab:hyper\]Hyperparameter Setting in This Study
 
@@ -207,9 +207,7 @@ keep this. Average fecundity for adults is 1.86, yearling 1.53 and fawn
 and adults respectively (Etter 2008). Mean harvest rate for the population
 is 0.5 (Etter et al. 2019 unpublished data).
 
-prediction.
-
-                                |  Mean  |   Standard Error
+  metrics                       |mean    |   Standard Error
   ------------------------------|--------|------------------
   Absolute Difference           |  3.38  |     1.65
   Posterior Standard Deviation  |  3.25  |     0.151
@@ -217,8 +215,6 @@ prediction.
   Absolute Difference           |  2.25  |     0.33
   Posterior Standard Deviation  |  14.20 |     0.240
 
-  : \[tab:check\]Model Checking Indexes for Reconstruction of Culling
-  Data
 
 Living Individuals After Culling
 --------------------------------
