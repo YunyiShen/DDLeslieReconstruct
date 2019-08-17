@@ -108,9 +108,9 @@ is given by: $$\label{proj}
 \mathbf{C}_{t+1}=\mathbf{H}_{t+1}\mathbf{L}_{t+1}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}$$
 
 We also have aerial count data as estimation of post-harvest population
-with imperfect detection \cite{}. Model for aerial count is given by
-\[aeri\]. $$\label{aeri}
-Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})$$
+with imperfect detection \cite{}. Model for aerial count is given below.
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" title="\Large Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" />
+
 
 In which $I$ is identity matrix. Note that
 $(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}$ solves the living
@@ -219,12 +219,8 @@ Living Individuals After Culling
 --------------------------------
 
 After reconstruct the culling dynamic, we solved the total living
-individuals’ posterior distribution as described by eqn.\[eqn.living\].
-Results were shown in Fig.\[Fig.popsize\]. After 1996, posterior mean
-showed the population was stabled around average 161 (sd=17) female
-individuals which achieved our goal of controlling the population.
-Harvest rate for fawns has mean of 0.26 and sd of 0.05, for other than
-fawns has mean of 0.53 and sd of 0.13.
+individuals’ posterior distribution as described by eqn.1.
+Results were shown in Fig below. 
 
 ![](https://github.com/YunyiShen/DDLeslieReconstruct/blob/uniform-aK0-prior/_figs_/popsize.jpg "Reconstructed Population Size After Culling")
 
@@ -258,10 +254,10 @@ For males:
   ----------------| -----------| -----------| ----------
   ***Survival***  |     \*     |            | 
   p-value         |  0.000441  |    0.402   |   0.0805
-  adj $R^2$       |    0.628   |      0     |   0.169
-  $\beta$         |  -6.53e-04 |  7.731e-05 |  1.55e-04
-  SE $\beta$      |  1.36e-04  |  8.89e-05  |  8.17e-05
-  \*:$p:0.01$     |            |            | 
+  adj R^2         |    0.628   |      0     |   0.169
+  beta            |  -6.53e-04 |  7.731e-05 |  1.55e-04
+  SE beta         |  1.36e-04  |  8.89e-05  |  8.17e-05
+  \*:p:0.01       |            |            | 
 
   
 
