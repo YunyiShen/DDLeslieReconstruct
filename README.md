@@ -159,12 +159,11 @@ hyperparameter were set to be enough conservative that has .95 quantile
 $>2$ ($\alpha=1$,$\beta=.1$). Detail hyperparameter setting is shown in
 
 
-     parameters |  Survival |  Fecundity |  SRB |  Harvest |  Aerial detection
-  --------------| ----------| -----------| -----| ---------| ------------------
-   alpha        |   1       |    1       | 1    |   1      |       1
-   beta         | .05       |  .01       |.05   |  .05     |      .05
+  parameters   |Survival  |Fecundity  |SRB  |Harvest  |Aerial detection
+  -------------|----------|-----------|-----|---------|-----------------
+  alpha        |   1      |    1      | 1   |  1      |       1
+  beta         | .05      |  .01      |.05  | .05     |      .05
 
-  : \[tab:hyper\]Hyperparameter Setting in This Study
 
 ### Estimation
 
