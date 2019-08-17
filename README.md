@@ -157,12 +157,12 @@ except for harvest rate were based on previous study’s error estimation,
 use the same method in (Wheldon et al. 2013), but more conservative. Harvest rate’s
 hyperparameter were set to be enough conservative that has .95 quantile
 $>2$ ($\alpha=1$,$\beta=.1$). Detail hyperparameter setting is shown in
-Table.\[tab:hyper\]
 
-              Survival   Fecundity   SRB   Harvest   Aerial detection
-  ---------- ---------- ----------- ----- --------- ------------------
-   alpha$      1           1        1       1             1
-   beta      .05         .01      .05     .05           .05
+
+            |  Survival |  Fecundity |  SRB |  Harvest |  Aerial detection
+  ----------| ----------| -----------| -----| ---------| ------------------
+   alpha    |   1       |    1       | 1    |   1      |       1
+   beta     | .05       |  .01       |.05   |  .05     |      .05
 
   : \[tab:hyper\]Hyperparameter Setting in This Study
 
@@ -207,24 +207,15 @@ keep this. Average fecundity for adults is 1.86, yearling 1.53 and fawn
 and adults respectively (Etter 2008). Mean harvest rate for the population
 is 0.5 (Etter et al. 2019 unpublished data).
 
-Model Checking
---------------
-
-We use 2 distinct model checking indexes, Absolute Difference (AD)
-defined as absolute value of difference between model predicted culling
-counts and real counts which evaluates precision of the model. Posterior
-Standard Deviation (PSD) defined as standard deviation of posterior
-distribution of model predicted culling which evaluated uncertainty of
 prediction.
 
-                                  Mean    Standard Error
-  ------------------------------ ------- ----------------
-  ***Harvest***                          
-  Absolute Difference             3.38         1.65
-  Posterior Standard Deviation    3.25        0.151
-  ***Aerial counts***                    
-  Absolute Difference             2.25         0.33
-  Posterior Standard Deviation    14.20       0.240
+                                |  Mean  |   Standard Error
+  ------------------------------|--------|------------------
+  Absolute Difference           |  3.38  |     1.65
+  Posterior Standard Deviation  |  3.25  |     0.151
+  ***Aerial counts***           |        | 
+  Absolute Difference           |  2.25  |     0.33
+  Posterior Standard Deviation  |  14.20 |     0.240
 
   : \[tab:check\]Model Checking Indexes for Reconstruction of Culling
   Data
@@ -250,36 +241,34 @@ growth (ueno 2010). To address whether there exist density dependency we
 did linear regression between vital rates and reconstruct living
 population size before reproduction (i.e. living individual counts after
 culling of the previous year). Results were summarized in
-Table.\[tab:DDvital\_female\].
+Table below.
 
-  Age                   0.5         1.5         2.5         3.5         4.5         5.5          6.5           7.5
-  ----------------- ----------- ----------- ----------- ----------- ----------- ----------- ------------- -------------
-  ***Fecundity***       \*          \*          \*          \*          \*          \*           \*       
-  p-value             0.00203     2.79e-5     2.27e-5     2.82e-4     7.71e-4     1.84e-3      0.0147        0.0343
-  adj R^2            0.525       0.762       0.770       0.654       0.593       0.532        0.353         0.265
-  beta            -6.32e-05   -1.01e-03   -6.37e-04   -4.96e-04   -4.09e-04   -3.28e-04    -2.70e-04     -2.49e-04
-  SE beta         1.61e-05    1.55e-04    9.540e-05   9.81e-05    9.16e-05    8.26e-05     9.49e-05      1.04e-04
-  ***Survival***                                                                    \*           \*       
-  p-value              0.365       0.150       0.886       0.130       0.514      0.00705      2.63e-4       0.0546
-  adj R^2              0        0.0949         0         0.112         0         0.423     0.657629475   0.213787859
-  \beta            -8.10e-05   2.64e-04    -9.31e-06   -1.69e-04   5.60e-05    -4.42e-04    -2.12e-04     -9.33e-05
-  SE \beta         8.61e-05    1.72e-04    6.39e-05    1.04e-04    8.32e-05    1.36e-04     4.16e-05      4.38e-05
-  \*:$p<0.01$                                                                                             
+  Age              |     0.5    |     1.5    |     2.5    |     3.5    |     4.5    |     5.5    |      6.5     |      7.5
+  -----------------| -----------| -----------| -----------| -----------| -----------| -----------| -------------| -------------
+  ***Fecundity***  |     \*     |     \*     |     \*     |     \*     |     \*     |     \*     |      \*      | 
+  p-value          |   0.00203  |   2.79e-5  |   2.27e-5  |   2.82e-4  |   7.71e-4  |   1.84e-3  |    0.0147    |    0.0343
+  adj R^2          |  0.525     |  0.762     |  0.770     |  0.654     |  0.593     |  0.532     |   0.353      |   0.265
+  beta             |-6.32e-05   | -1.01e-03  | -6.37e-04  | -4.96e-04  | -4.09e-04  | -3.28e-04  |  -2.70e-04   |  -2.49e-04
+  SE beta          |1.61e-05    | 1.55e-04   | 9.540e-05  | 9.81e-05   | 9.16e-05   | 8.26e-05   |  9.49e-05    |  1.04e-04
+  ***Survival***   |            |            |            |            |            |     \*     |      \*      | 
+  p-value          |    0.365   |    0.150   |    0.886   |    0.130   |    0.514   |   0.00705  |    2.63e-4   |    0.0546
+  adj R^2          |    0       | 0.0949     |    0       |  0.112     |    0       |  0.423     |0.657629475   |0.213787859
+  beta             |-8.10e-05   | 2.64e-04   | -9.31e-06  | -1.69e-04  | 5.60e-05   | -4.42e-04  |  -2.12e-04   |  -9.33e-05
+  SE beta          |8.61e-05    | 1.72e-04   | 6.39e-05   | 1.04e-04   | 8.32e-05   | 1.36e-04   |  4.16e-05    |  4.38e-05
+  \*:  p:0.01      |            |            |            |            |            |            |              | 
 
-  : \[tab:DDvital\_female\]Linear Regressions of Female Vital Rates and
-  Population Size after Culling
+For males:
 
-  Age                 Fawn      Yearling     Adult
-  ---------------- ----------- ----------- ----------
-  ***Survival***       \*                  
-  p-value           0.000441      0.402      0.0805
-  adj $R^2$           0.628         0        0.169
-  $\beta$           -6.53e-04   7.731e-05   1.55e-04
-  SE $\beta$        1.36e-04    8.89e-05    8.17e-05
-  \*:$p<0.01$                              
+  Age             |    Fawn    |  Yearling  |   Adult
+  ----------------| -----------| -----------| ----------
+  ***Survival***  |     \*     |            | 
+  p-value         |  0.000441  |    0.402   |   0.0805
+  adj $R^2$       |    0.628   |      0     |   0.169
+  $\beta$         |  -6.53e-04 |  7.731e-05 |  1.55e-04
+  SE $\beta$      |  1.36e-04  |  8.89e-05  |  8.17e-05
+  \*:$p:0.01$     |            |            | 
 
-  : \[tab:DDvital\_male\]Linear Regressions of Male Survival Rates and
-  Population Size after Culling
+  
 
 Discussion
 ==========
