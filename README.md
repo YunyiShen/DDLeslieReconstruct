@@ -80,44 +80,47 @@ Bayesian Reconstruction of Population Dynamics under Culling
 
 Parameters of interest are time and age specific fecundity and survival,
 as well as harvest rate and population size of female deers in study
-area. We later on use $C_{a,t}$ for culling counts at age $a$ and time
-$t$, $s_{a,t}$ for survival, $f_{a,t}$ for fecundity, $H_{a,t}$ harvest
-rate, $X_{a,t}$ for latent living population size after culling,
-$Ae_{t}$ for the post harvest aerial count estimation, $A_{t}$ for the
-aerial count detection, $SRB$ for sex ratio at birth and $M$ for the
+area. We later on use C_{a,t} for culling counts at age a and time
+$t$, s_{a,t} for survival, f_{a,t} for fecundity, H_{a,t} harvest
+rate, X_{a,t} for latent living population size after culling,
+Ae_{t} for the post harvest aerial count estimation, A_{t} for the
+aerial count detection, $SRB$ for sex ratio at birth and M for the
 matrix projection model. Bold form of value is the the corresponding age
-vector (e.g. $\mathbf{C}_{t}=(C_{1,t},C_{2,t}...)$). Underline of
+vector (e.g. \mathbf{C}_{t}=(C_{1,t},C_{2,t}...)). Underline of
 certain parameters means the best estimation and data we have currently
-that will be used in the model. (see Fig.\[Fig.Bayes\])
+that will be used in the model. 
 
 ### Projection Model for Culling Dynamics
 
 We assume a time inhomogeneous stochastic proportional harvest. Further,
 harvest rate of fawns (age 0.5) is assumed to be different from yearling
-and adults (age $>0.5$). We used a diagonal harvest matrix
-$\mathbf{H}_{t}$ to model the harvest in the projection to seperate
+and adults (age >0.5). We used a diagonal harvest matrix
+\mathbf{H}_{t} to model the harvest in the projection to seperate
 harvest and other mortality. Growth of living individuals are projected
 using standard stochastic Leslie matrix model (Leslie 1945). Leslie
-matrix contains $s_{a,t}$ and $f_{a,t}$ was noted by $\mathbf{L}_{t}$.
+matrix contains s_{a,t} and f_{a,t} was noted by \mathbf{L}_{t}.
 Since harvest happened after reproduction, we left multiply the harvest
 matrix. Vital rates’ distribution as described in the prior part of the
 Bayesian framework.
 
-Formally the projection model of harvest count vector $\mathbf{C}_{t}$
-is given by: $$\label{proj}
-\mathbf{C}_{t+1}=\mathbf{H}_{t+1}\mathbf{L}_{t+1}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}$$
+Formally the projection model of harvest count vector<img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{C}_{t}" title="\Large \mathbf{C}_{t}" /> 
+is given by: 
+
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{C}_{t+1}=\mathbf{H}_{t+1}\mathbf{L}_{t+1}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" title="\Large \mathbf{C}_{t+1}=\mathbf{H}_{t+1}\mathbf{L}_{t+1}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" /> 
 
 We also have aerial count data as estimation of post-harvest population
 with imperfect detection \cite{}. Model for aerial count is given below.
+
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" title="\Large Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" />
 
 
 In which $I$ is identity matrix. Note that
-$(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}$ solves the living
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" title="\Large (\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" /> 
+$$ solves the living
 individual after culling that undergone reproduction at time $t+1$. Also
 note that baseline year should be trait differently since there is no
 $L_{0}$ needed. A graphical illustration of the dynamics is given in
-Fig.\[Fig.LHD\].
+Fig below.
 
 ![](https://github.com/YunyiShen/DDLeslieReconstruct/blob/uniform-aK0-prior/_figs_/LHD.jpg "Projection Model used in Bayesian Framework for Culling Dynamics")
 
@@ -130,20 +133,19 @@ log normal since we have 0 harvests. Projection model used in our study
 was described by eqn.\[proj\]. Reconstruction is equivalent of
 estimating vital rates $s$, $f$, $H$ and population population counts
 $X$. We used the same 4 level setting to count for uncertainty of
-initial estimation (Fig.\[Fig.Bayes4level\]).
+initial estimation.
 
 ![](https://github.com/YunyiShen/DDLeslieReconstruct/blob/uniform-aK0-prior/_figs_/4level.jpg "Prior and Likelihood Part of the Bayesian Reconstruction Framework")
 
 Relationship between data and parameters were shown in
-Fig.\[Fig.Bayes\]. Note that $\alpha_{v}$ and $\beta_{v}$
-$v\in\{s,f,H,A,SR\}$ are hyperparameters which encode the prior
+Fig below. Note that alpha and beta are hyperparameters which encode the prior
 knowledge we have for the uncertainty of certain vital rate or culling
 count. Initial estimations of survival (logit transformed), fecundity
 (log transformed), sex ratio at birth (SRB, logit transformed), harvest
 rate (logit transformed), as well as aerial count probability (logit
 transformed) were used as corresponding transformed prior mean of the
-normal distribution whose $\sigma$ was invGamma distributed with
-parameter $\alpha_{v}$ and $\beta_{v}$ $v\in\{s,f,H,A,SR\}$. Culling
+normal distribution whose sigma was invGamma distributed with
+parameter alpha and beta. Culling
 counts as well as aerial counts served in the likelihood part of the
 model, prediction of the projection model served as expected value of
 the Poisson distribution to evaluate the likelihood.
@@ -156,7 +158,7 @@ Determination of hyperparameters $\alpha$ and $\beta$ for vital rates
 except for harvest rate were based on previous study’s error estimation,
 use the same method in (Wheldon et al. 2013), but more conservative. Harvest rate’s
 hyperparameter were set to be enough conservative that has .95 quantile
-$>2$ ($\alpha=1$,$\beta=.1$). Detail hyperparameter setting is shown in
+$>2$. Detail hyperparameter setting is shown in
 
 
   parameters   |Survival  |Fecundity  |SRB  |Harvest  |Aerial detection
@@ -168,9 +170,9 @@ $>2$ ($\alpha=1$,$\beta=.1$). Detail hyperparameter setting is shown in
 ### Estimation
 
 We draw samples from posterior distribution using Markov chain Monte
-Carlo (MCMC) method ([@RN14; @RN15]) and diagnose using R package `coda`
-([@RN16]). The algorithm generally followed Wheldon et al. 2013. We
-updated variance ($\sigma_{v}$s) from conjugated full conditional
+Carlo (MCMC) method and diagnose using R package `coda`
+. The algorithm generally followed Wheldon et al. 2013. We
+updated variance (sigmas) from conjugated full conditional
 distributions as proposed density in Metropolis-Hastings algorithm.
 Other vital rates including culling rate were updated using
 Metropolis-Hastings steps and a symmetric normal proposal. Algorithm was
@@ -180,12 +182,12 @@ time-specific parameters and variance parameters.
 
 ### Living Individuals
 
-After we reconstruct the culling dynamics $\mathbf{C}_{t}$ and harvest
-rate $\mathbf{H}_{t}$, we solve the living individual after culling
-$\mathbf{X}_{t}$ using eqn. \[eqn.living\]
+After we reconstruct the culling dynamics <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{C}_{t}" title="\Large \mathbf{C}_{t}" /> and harvest
+rate <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{H}_{t}" title="\Large \mathbf{H}_{t}" />, we solve the living individual after culling
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{X}_{t}" title="\Large \mathbf{X}_{t}" /> using eqn:
 
-$$\label{eqn.living}
-\mathbf{X}_{t}=(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}$$
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{X}_{t}=(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" title="\Large \mathbf{X}_{t}=(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" />
+
 
 The model is implemented in R 3.6.0 modified from package
 `popReconstruct` (Weldon et al. 2013) Source code is available on
