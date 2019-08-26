@@ -235,7 +235,8 @@ Three models were tested to chose the best supported:
 1) Four Harvest full model: Survival and Fecundity rates are time sex and age dependent, with 4 harvest rates: female fawn, femal adult male fawn and male adult which are time dependent.  
 2) Three Harvest full model: Survival and Fecundity rates are time sex and age dependent, with 3 harvest rates: fawn, femal adult and male adult which are time dependent.  
 3) Solely Density dependent model: Survival and Fecundity rates are sex age and density but not time dependent, with 4 harvest rates, which are time dependent.  
-4) Three age class: All similar to 1 but fecundity and survival has only 3 age classes for both female and male.
+4) Three age class: All similar to 1 but fecundity and survival has only 3 age classes for both female and male.  
+
   Model | effective n parameters |  DIC |Best Model
   ------|------------------------|------|----------
   1     |187.11	                 |649.38|
