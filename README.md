@@ -80,13 +80,20 @@ Bayesian Reconstruction of Population Dynamics under Culling
 
 Parameters of interest are time and age specific fecundity and survival,
 as well as harvest rate and population size of female deers in study
-area. We later on use C_{a,t} for culling counts at age a and time
-$t$, s_{a,t} for survival, f_{a,t} for fecundity, H_{a,t} harvest
-rate, X_{a,t} for latent living population size after culling,
-Ae_{t} for the post harvest aerial count estimation, A_{t} for the
+area. We later on use <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{C}_{a,t}" title="cat" />   for culling counts at age a and time
+t,  <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{s}_{a,t}" title="sat" /> 
+for survival, <img src="https://latex.codecogs.com/svg.latex?\Large&space;f_{a,t}" title="fat" />
+for fecundity, <img src="https://latex.codecogs.com/svg.latex?\Large&space;H_{a,t}" title="Hat" />
+harvest rate, <img src="https://latex.codecogs.com/svg.latex?\Large&space;X_{a,t}" title="Xat" />
+for latent living population size after culling,
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;Ae_{t}" title="Aet" /> 
+for the post harvest aerial count estimation, 
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;A_{t}" title="At" />
+for the
 aerial count detection, $SRB$ for sex ratio at birth and M for the
 matrix projection model. Bold form of value is the the corresponding age
-vector (e.g. \mathbf{C}_{t}=(C_{1,t},C_{2,t}...)). Underline of
+vector (e.g.<img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{C}_{t}=(C_{1,t},C_{2,t}...)" title="Cteg" />
+ ). Underline of
 certain parameters means the best estimation and data we have currently
 that will be used in the model. 
 
@@ -95,10 +102,13 @@ that will be used in the model.
 We assume a time inhomogeneous stochastic proportional harvest. Further,
 harvest rate of fawns (age 0.5) is assumed to be different from yearling
 and adults (age >0.5). We used a diagonal harvest matrix
-\mathbf{H}_{t} to model the harvest in the projection to seperate
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;H_{a,t}" title="Hat" />
+to model the harvest in the projection to seperate
 harvest and other mortality. Growth of living individuals are projected
 using standard stochastic Leslie matrix model (Leslie 1945). Leslie
-matrix contains s_{a,t} and f_{a,t} was noted by \mathbf{L}_{t}.
+matrix contains <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{s}_{a,t}" title="sat" /> 
+ and <img src="https://latex.codecogs.com/svg.latex?\Large&space;f_{a,t}" title="fat" />
+ was noted by <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{H}_{a,t}" title="Hat" />.
 Since harvest happened after reproduction, we left multiply the harvest
 matrix. Vital rates’ distribution as described in the prior part of the
 Bayesian framework.
@@ -109,7 +119,7 @@ is given by:
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;\mathbf{C}_{t+1}=\mathbf{H}_{t+1}\mathbf{L}_{t+1}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" title="\Large \mathbf{C}_{t+1}=\mathbf{H}_{t+1}\mathbf{L}_{t+1}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" /> 
 
 We also have aerial count data as estimation of post-harvest population
-with imperfect detection \cite{}. Model for aerial count is given below.
+with imperfect detection. Model for aerial count is given below.
 
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" title="\Large Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" />
 
@@ -129,10 +139,9 @@ Fig below.
 We generally followed Bayesian reconstruction framework of (Wheldon et al. 2013),
 except we had a new set of parameters regarding the harvest rate and
 aerial count. Further, likelihood used Poisson distribution rather than
-log normal since we have 0 harvests. Projection model used in our study
-was described by eqn.\[proj\]. Reconstruction is equivalent of
-estimating vital rates $s$, $f$, $H$ and population population counts
-$X$. We used the same 4 level setting to count for uncertainty of
+log normal since we have 0 harvests. Reconstruction is equivalent of
+estimating vital rates s, f, H and population population counts
+X. We used the same 4 level setting to count for uncertainty of
 initial estimation.
 
 ![](https://github.com/YunyiShen/DDLeslieReconstruct/blob/uniform-aK0-prior/_figs_/4level.jpg "Prior and Likelihood Part of the Bayesian Reconstruction Framework")
@@ -194,6 +203,9 @@ The model is implemented in R 3.6.0 modified from package
 [`GitHub`](https://github.com/YunyiShen/DDLeslieReconstruct) under MIT
 license.
 
+### Model Selection
+In this frame work, we use [DIC](https://en.wikipedia.org/wiki/Deviance_information_criterion) as model selection criterion (Gerlam 2002). Lower DIC means higher support of the model by data. 
+
 Results
 =======
 
@@ -208,13 +220,30 @@ keep this. Average fecundity for adults is 1.86, yearling 1.53 and fawn
 and adults respectively (Etter 2008). Mean harvest rate for the population
 is 0.5 (Etter et al. 2019 unpublished data).
 
-  metrics                       |mean    |   Standard Error
+  ***Culling counts***          |mean    |   Standard Error
   ------------------------------|--------|------------------
   Absolute Difference           |  3.38  |     1.65
   Posterior Standard Deviation  |  3.25  |     0.151
   ***Aerial counts***           |        | 
   Absolute Difference           |  2.25  |     0.33
   Posterior Standard Deviation  |  14.20 |     0.240
+
+
+Model Selection
+---------------
+Three models were tested to chose the best supported:  
+1) Four Harvest full model: Survival and Fecundity rates are time sex and age dependent, with 4 harvest rates: female fawn, femal adult male fawn and male adult which are time dependent.  
+2) Three Harvest full model: Survival and Fecundity rates are time sex and age dependent, with 3 harvest rates: fawn, femal adult and male adult which are time dependent.  
+3) Solely Density dependent model: Survival and Fecundity rates are sex age and density but not time dependent, with 4 harvest rates, which are time dependent.  
+4) Three age class: All similar to 1 but fecundity and survival has only 3 age classes for both female and male.
+  Model | effective n parameters |  DIC |Best Model
+  ------|------------------------|------|----------
+  1     |187.11	                 |649.38|
+  2     |196.3                   |631.48|*
+  3     |108.81                  |835.74|
+  4     |148.36                  |732.35|
+
+
 
 
 Living Individuals After Culling
