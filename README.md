@@ -124,12 +124,12 @@ with imperfect detection. Model for aerial count is given below.
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" title="\Large Ae_{t}=sum(A_{t}(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t})" />
 
 
-In which $I$ is identity matrix. Note that
+In which I is identity matrix. Note that
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;(\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" title="\Large (\mathbf{H}_{t}^{-1}-\mathbf{I})\mathbf{C}_{t}" /> 
-$$ solves the living
-individual after culling that undergone reproduction at time $t+1$. Also
+ solves the living
+individual after culling that undergone reproduction at time t+1. Also
 note that baseline year should be trait differently since there is no
-$L_{0}$ needed. A graphical illustration of the dynamics is given in
+L0 needed. A graphical illustration of the dynamics is given in
 Fig below.
 
 ![](https://github.com/YunyiShen/DDLeslieReconstruct/blob/uniform-aK0-prior/_figs_/LHD.jpg "Projection Model used in Bayesian Framework for Culling Dynamics")
@@ -163,11 +163,11 @@ the Poisson distribution to evaluate the likelihood.
 
 ### Determining the Hyperparameters
 
-Determination of hyperparameters $\alpha$ and $\beta$ for vital rates
+Determination of hyperparameters alpha and beta for vital rates
 except for harvest rate were based on previous study’s error estimation,
 use the same method in (Wheldon et al. 2013), but more conservative. Harvest rate’s
 hyperparameter were set to be enough conservative that has .95 quantile
-$>2$. Detail hyperparameter setting is shown in
+greater than 2. Detail hyperparameter setting is shown in
 
 
   parameters   |Survival  |Fecundity  |SRB  |Harvest  |Aerial detection
@@ -204,7 +204,7 @@ The model is implemented in R 3.6.0 modified from package
 license.
 
 ### Model Selection
-In this frame work, we use [DIC](https://en.wikipedia.org/wiki/Deviance_information_criterion) as model selection criterion (Gerlam 2002). Lower DIC means higher support of the model by data. 
+In this frame work, we use [DIC](https://en.wikipedia.org/wiki/Deviance_information_criterion) as model selection criterion (Gelman 2002). Lower DIC means higher support of the model by data. 
 
 Results
 =======
