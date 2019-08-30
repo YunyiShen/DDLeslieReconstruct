@@ -21,3 +21,18 @@ arma::mat getLeslie(const arma::mat& Surv, const arma::mat& Fec, double SRB, boo
 	}
 	return(Tr);
 }
+
+///Calculate the density dependency
+// [[Rcpp::export]]
+arma::mat DD(bool global, arma::mat& Xn, arma::mat& E0, double aK0, const arma::mat& midP, bool null,const IntegerVector& nage){
+  E0 = E0/sum(E0);
+  arma::mat D;
+  if(global){
+    arma::mat den = ( 1 + (aK0) * (sum(Xn)-midP) );
+    D = (1-null)*den + null;
+  }
+  else{
+    D = 1-(1-null)* aK0 * (Xn-midP);
+  }
+  return(D);
+}
