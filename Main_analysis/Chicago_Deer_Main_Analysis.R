@@ -36,7 +36,7 @@ Assumptions$aK0 = list(eyes(nage[1]),eyes(sum(nage)),matrix(1,1,1))
 #  It is a good idea to try the command above to see how to use assumption matrices.
 
 mean.A = matrix(0.7,1,period+1)
-mean.aK0 = list(matrix(0,nage[1],1),matrix(0,sum(nage),1))
+mean.aK0 = list(matrix(0,nage[1],1),matrix(0,sum(nage),1),10)
 prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
                  surv.prop = matrix(1,nrow = sum(nage), ncol = period),
                  SRB = matrix(.1,nage[1],period), # vital rates has period cols
@@ -47,7 +47,7 @@ prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 50, burn.in = 50,thin.by = 25, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 50, burn.in = 50,thin.by = 1, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = list(matrix(-.001,nage[1],1),matrix(-.001,sum(nage),1),0)
