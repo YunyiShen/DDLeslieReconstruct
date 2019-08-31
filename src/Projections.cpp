@@ -64,3 +64,7 @@ arma::mat getAerialCountCpp(const arma::mat& Harv, const arma::mat& H, const arm
 	return(Aerial_count);
 }
 
+///Misc
+
+
+

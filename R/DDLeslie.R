@@ -39,10 +39,10 @@ HDDLislie.sampler =
                          ,proj.periods = (ncol(Harv.data)-1)
 
                          #.. age group, if multiple sex, the one reproduce should be at first.
-                         ,nage = 8 
+                         ,nage = matrix(c(8,3)) 
                          
-                         ,estFer=T, Fec=rep(1,nage), estaK0 = T
-                         ,E0=NULL , aK0 = 0, global = T, null = T 
+                         ,estFer=T, Fec=rep(1,nage), estaK0 = F
+                         ,aK0 = list(matrix(0,nage[1],1),matrix(0,sum(nage)),1,matrix(0,1,1)), global = T, null = T 
                          # control parameters for the model, global is whether density dependency is global rather than age specific, null is whether exist density dependency (True of not ).
                           # whether assume time homogeneous of everything, currently homo=T is not stable
                          ,point.est = mean
@@ -53,7 +53,10 @@ HDDLislie.sampler =
                          )
 {
         require(coda)
+        require(RcppArmadillo)
+        require(Rcpp)
         source('./R/misc.R')
+        sourceCpp('./src/Projections.cpp')
         ## .............. Sampler .............. ##
         ## ..................................... ##
 
@@ -348,9 +351,9 @@ HDDLislie.sampler =
                                                                     
                                                                     
         curr.proj =
-                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full),E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
         
-        curr.aeri = ( getAerialCount( Harv = ( curr.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
+        curr.aeri = ( getAerialCountCpp( Harv = ( curr.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
 
                                                                     
 #.. Current log posterior
@@ -456,9 +459,9 @@ HDDLislie.sampler =
                 
 
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.prop.f.full)#=- use proposal
+                                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.prop.f.full)#=- use proposal
                                 , SRB = invlogit(logit.curr.SRB.full)
-                                , E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                , aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                 
 
 
@@ -470,7 +473,7 @@ HDDLislie.sampler =
                         }
                 } else {
                         
-                    prop.aeri = ( getAerialCount( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
+                    prop.aeri = ( getAerialCountCpp( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
 			
                     # - Calculate log posterior of proposed vital under projection                    
                     ## shit again so many parameters to pass here... really hard to read...
@@ -596,8 +599,8 @@ HDDLislie.sampler =
                         
 
                         full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.prop.s.full)#=- use proposal
-                                , Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                (ProjectHarvestCpp(Surv = invlogit(logit.prop.s.full)#=- use proposal
+                                , Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -608,7 +611,7 @@ HDDLislie.sampler =
                                 }
                         } else {
                                 
-                                prop.aeri = ( getAerialCount( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
+                                prop.aeri = ( getAerialCountCpp( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
 
                         # - Calculate log posterior of proposed vital under projection
                         log.prop.posterior =
@@ -739,9 +742,9 @@ HDDLislie.sampler =
                     
                     
                         full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full)
+                                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full)
                                 , Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.prop.SRB.full)#=- use proposal
-                                , E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                , aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -752,7 +755,7 @@ HDDLislie.sampler =
                                 }
                         } else {
                                 
-                                prop.aeri = ( getAerialCount( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
+                                prop.aeri = ( getAerialCountCpp( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
 
                         # - Calculate log posterior of proposed vital under projection
                         log.prop.posterior =
@@ -867,8 +870,8 @@ HDDLislie.sampler =
 
 
                         full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar =( invlogit(logit.prop.H.full))#=- use proposal
-                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+                                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full), Harvpar =( invlogit(logit.prop.H.full))#=- use proposal
+                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -879,7 +882,7 @@ HDDLislie.sampler =
                                 }
                         } else {
                                 
-                                prop.aeri = ( getAerialCount( Harv = ( full.proj),H = invlogit(logit.prop.H.full),A = invlogit(logit.curr.A.full)))
+                                prop.aeri = ( getAerialCountCpp( Harv = ( full.proj),H = invlogit(logit.prop.H.full),A = invlogit(logit.curr.A.full)))
 
                 # - Calculate log posterior of proposed vital under projection
                 log.prop.posterior =
@@ -989,8 +992,8 @@ HDDLislie.sampler =
 
 
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full)
-                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
+                                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full)
+                                ,Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b) , period = proj.periods, nage = nage))
                         
 
                         if(sum(full.proj < 0) > 0 || is.na(sum(full.proj))
@@ -1001,7 +1004,7 @@ HDDLislie.sampler =
                                 }
                         } else {
                                 
-                                prop.aeri = ( getAerialCount( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.prop.A.full))) #=- use proposal
+                                prop.aeri = ( getAerialCountCpp( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.prop.A.full))) #=- use proposal
 
                 # - Calculate log posterior of proposed vital under projection
                 log.prop.posterior =
@@ -1100,7 +1103,7 @@ HDDLislie.sampler =
 
                      
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = prop.aK0.full#<- use proposal
+                                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), aK0 = prop.aK0.full#<- use proposal
                                 , global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
 
@@ -1112,7 +1115,7 @@ HDDLislie.sampler =
                                 }
                         } else {
                                 
-                                prop.aeri = ( getAerialCount( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
+                                prop.aeri = ( getAerialCountCpp( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
 
                 # - Calculate log posterior of proposed vital under projection
                 log.prop.posterior =
@@ -1227,7 +1230,7 @@ HDDLislie.sampler =
                 
 
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full), SRB = invlogit(logit.curr.SRB.full),Fec=exp(log.curr.f.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.prop.b)    #=- use proposal
+                                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full), SRB = invlogit(logit.curr.SRB.full),Fec=exp(log.curr.f.full), aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.prop.b)    #=- use proposal
                                 , period = proj.periods, nage = nage))
 
 
@@ -1239,7 +1242,7 @@ HDDLislie.sampler =
                 }
             } else {
                 log.prop.proj = log(full.proj)
-                prop.aeri = ( getAerialCount( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
+                prop.aeri = ( getAerialCountCpp( Harv = ( full.proj),H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full)))
 
                 # - Calculate log posterior of proposed vital under projection
                  log.prop.posterior =
@@ -1766,9 +1769,9 @@ HDDLislie.sampler =
 
 
                 full.proj =
-                                (ProjectHarvest_inhomo(Survival = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), E0=E0, aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
+                                (ProjectHarvestCpp(Surv = invlogit(logit.curr.s.full), Harvpar = invlogit(logit.curr.H.full),Fec=exp(log.curr.f.full), SRB = invlogit(logit.curr.SRB.full), aK0 = (curr.aK0.full), global = global, null = null, bl = exp(log.curr.b)    , period = proj.periods, nage = nage))
                         
-			full.aeri = getAerialCount( Harv = full.proj,H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full))
+			full.aeri = getAerialCountCpp( Harv = full.proj,H = invlogit(logit.curr.H.full),A = invlogit(logit.curr.A.full))
             if(k %% 1 == 0 && k > 0){
             lx.mcmc[k,] =
                     as.vector(full.proj)[-(1:ncol(baseline.count.mcmc))] # to delete all age class' baseline count, because of as.vector,thus need to do like this
@@ -1833,9 +1836,9 @@ HDDLislie.sampler =
                 logit.curr.A.full = A_assump$age %*% logit.curr.A %*%A_assump$time
 
                 #full.proj =
-                #                (ProjectHarvest_inhomo(Survival = matrix( mean.vital$surv.prop.mcmc,ncol = proj.periods), Harvpar = matrix( mean.vital$H.mcmc,ncol = proj.periods+1),Fec=matrix(mean.vital$fert.rate.mcmc,ncol = proj.periods), SRB = mean.vital$SRB.mcmc, E0=E0, aK0 = mean.vital$invK0.mcmc, global = global, null = null, bl = mean.vital$baseline.count.mcmc     , period = proj.periods, nage = nage))
+                #                (ProjectHarvestCpp(Surv = matrix( mean.vital$surv.prop.mcmc,ncol = proj.periods), Harvpar = matrix( mean.vital$H.mcmc,ncol = proj.periods+1),Fec=matrix(mean.vital$fert.rate.mcmc,ncol = proj.periods), SRB = mean.vital$SRB.mcmc, aK0 = mean.vital$invK0.mcmc, global = global, null = null, bl = mean.vital$baseline.count.mcmc     , period = proj.periods, nage = nage))
 
-			#full.aeri = getAerialCount( Harv = full.proj,H = matrix( mean.vital$H.mcmc,ncol = proj.periods+1),A = mean.vital$aerial.detection.mcmc)
+			#full.aeri = getAerialCountCpp( Harv = full.proj,H = matrix( mean.vital$H.mcmc,ncol = proj.periods+1),A = mean.vital$aerial.detection.mcmc)
 	
 	#log_likelihood_mean = log.lhood(
     #                                                            n.census = Harv.data

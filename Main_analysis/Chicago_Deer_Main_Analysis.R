@@ -1,6 +1,8 @@
 source('./R/DDLeslie.R')
 source('./R/misc.R')
-nage = c(8,3) # nage is female first and then male, a vector with lenght usually 2
+require(RcppArmadillo)
+require(Rcpp)
+nage = matrix( c(8,3),2,1) # nage is female first and then male, a vector with lenght usually 2
 period = 14
 
 
@@ -45,7 +47,7 @@ prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 50000, burn.in = 5000,thin.by = 25, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 50, burn.in = 50,thin.by = 25, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = list(matrix(-.001,nage[1],1),matrix(-.001,sum(nage),1),0)
