@@ -37,10 +37,10 @@ DensityDependcy = function(global = F, Xn, E0, aK0, midP, null = F){
 
 
 # Project the (density dependent) harvest-after-reproducing model from year i to i+1, given harvest # and return harvest # of year i+1 
-ProjectHarvest_helper = function(data_n, Survival,Fec,SRB, H_n,H_np1, global, E0, aK0, null = F,nage){
-        nage_female = (nage[1])
+ProjectHarvest_helper = function(data_n, Survival,Fec,SRB, H_n,H_np1, global, E0, aK0, null = F){
         
-        nage_male = nage[2]
+        
+        
         X_n1 = (1-H_n) * (data_n/H_n) # living after culling
         D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[1]], midP = aK0[[3]] ,null = null) # DD of birth part of the Leslie matrix, can be just 1
         D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[[2]], midP = aK0[[3]] ,null = null) # DD of death part of the Leslie matrix, can be just 1
@@ -65,7 +65,7 @@ ProjectHarvest_inhomo = function(Survival, Harvpar,Fec, SRB,E0=NULL, aK0 = NULL,
     else E0 = E0/(sum(E0))
     for(i in 1 : period + 1){
         #Leslie = getLeslie(Survival[,i-1],Fec[,i-1],SRB[i-1],minus1=F) # inhomo, Survival rows are age structure, cols are time, SRB has only one row or col, for 
-        Harvest[,i] = ProjectHarvest_helper(data_n = Harvest[,i-1],Survival = Survival[,i-1],Fec = Fec[,i-1],SRB = SRB[i-1],global = global, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null,nage = nage)
+        Harvest[,i] = ProjectHarvest_helper(data_n = Harvest[,i-1],Survival = Survival[,i-1],Fec = Fec[,i-1],SRB = SRB[i-1],global = global, E0=E0, aK0=aK0, H_n=Harvpar[,i-1],H_np1 = Harvpar[,i],null = null)
     }
     return(Harvest)
 } # checked 10/24/2018
