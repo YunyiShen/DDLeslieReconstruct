@@ -59,9 +59,7 @@ arma::mat ProjectHarvestCpp(const arma::mat& Surv,const arma::mat& Harvpar,const
 ///get Aerial count
 //[[Rcpp::export]]
 arma::mat getAerialCountCpp(const arma::mat& Harv, const arma::mat& H, const arma::mat& A){
-	arma::mat Aerial_count;
-	Aerial_count = sum((1/H-1) % Harv);
-	return(Aerial_count);
+  return((sum((1/H-1) % Harv))%A);
 }
 
 ///Misc
