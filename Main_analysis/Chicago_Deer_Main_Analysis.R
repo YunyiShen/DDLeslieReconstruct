@@ -2,6 +2,7 @@ source('./R/DDLeslie.R')
 source('./R/misc.R')
 require(RcppArmadillo)
 require(Rcpp)
+sourceCpp('./src/Projections.cpp')
 nage = matrix( c(8,3),2,1) # nage is female first and then male, a vector with lenght usually 2
 period = 14
 
