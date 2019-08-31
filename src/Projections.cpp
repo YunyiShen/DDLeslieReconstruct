@@ -5,7 +5,7 @@ using namespace Rcpp;
 
 ///get Leslie matrix from survival etc.
 // [[Rcpp::export]]
-arma::mat getLeslie(const arma::mat& Surv, const arma::mat& Fec, const double& SRB){
+arma::mat getLeslieCpp(const arma::mat& Surv, const arma::mat& Fec, const double& SRB){
 	int nage_female = Fec.n_elem;
 	int nage_male = Surv.n_elem - nage_female;
 	arma::mat Tr(nage_female + nage_male , nage_male + nage_female);
@@ -20,7 +20,8 @@ arma::mat getLeslie(const arma::mat& Surv, const arma::mat& Fec, const double& S
 }
 
 ///Calculate the density dependency
-arma::mat DD(const bool& global, const arma::mat& Xn, const arma::mat& E0,const double & aK0, const arma::mat& midP, const bool& null){
+//[[Rcpp::export]]
+arma::mat DD(const bool& global, const arma::mat& Xn,const arma::mat & aK0, const arma::mat& midP, const bool& null){
   //E0 = E0/sum(E0);// This was done in main projector
   arma::mat D;
   if(global){
@@ -35,33 +36,31 @@ arma::mat DD(const bool& global, const arma::mat& Xn, const arma::mat& E0,const 
 
 ///Helper function for a single year projection, inner function, export for test.
 //[[Rcpp::export]]
-arma::mat ProjectHarvest_helper(const arma::mat& data_n,const arma::mat& Surv, const& arma::mat Fec,const double& SRB,const arma::mat& H_n, const arma::mat& H_np1,bool global, arma::mat& E0, list& aK0,bool null){
+arma::mat ProjectHarvest_helperCpp(const arma::mat& data_n,const arma::mat& Surv, const arma::mat& Fec,const double& SRB,const arma::mat& H_n, const arma::mat& H_np1,bool global, const List& aK0,const bool & null){
 	arma::mat X_n1 = (1-H_n) % (data_n/H_n);
-	arma::mat D_bir = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[1], midP = aK0[3] ,null = null);
-	arma::mat D_dea = DensityDependcy(global = global, Xn=X_n1, E0=E0, aK0=aK0[2], midP = aK0[3] ,null = null);
+	arma::mat D_bir = DD(global, X_n1, aK0[0], aK0[2] ,null);
+	arma::mat D_dea = DD(global, X_n1, aK0[1], aK0[2] ,null);
+	return(H_np1 % (getLeslieCpp(Surv % D_dea, Fec % D_bir, SRB)*X_n1));
 	
-	if(global){
-		return(H_np1 % (getLeslie(Surv * D_dea, Fec * D_bir, SRB)*X_n1));
-	}
-	else{
-
-		return(H_np1 % (getLeslie(Surv % D_dea, Fec % D_bir, SRB)*X_n1));
-	}
 }
 
 ///main projection function
 //[[Rcpp::export]]
-arma::mat ProjectHarvestCpp(const arma::mat& Surv,const arma::mat& Harvpar,const arma::mat& Fec, const arma::mat& SRB,arma::mat E0, const list& aK0, const bool& global, const bool& null, const arma::mat& bl ,const int& period, const IntegerVector& nage){
-	arma::mat Harvest(sum(nage),period);
+arma::mat ProjectHarvestCpp(const arma::mat& Surv,const arma::mat& Harvpar,const arma::mat& Fec, const arma::mat& SRB, const List& aK0, const bool& global, const bool& null, const arma::mat& bl ,const int& period, const IntegerVector& nage){
+	arma::mat Harvest(sum(nage),period+1);
 	Harvest.col(0) = bl;
-	E0 = E0/(sum(E0));// need to check whether there is one in R call rather than here.
+	//E0 = E0/(sum(E0));// need to check whether there is one in R call rather than here.
 	for(int i = 1; i<period + 1; i++){
-		Harvest.col(i) = ProjectHarvest_helper(data_n = Harvest.col(i-1),Survival = Survival.col(i-1),Fec = Fec.col(i-1),SRB = SRB.col(i-1),global = global, E0=E0, aK0=aK0, H_n=Harvpar.col(i-1),H_np1 = Harvpar.col(i),null = null);
+		Harvest.col(i) = ProjectHarvest_helperCpp(Harvest.col(i-1),Surv.col(i-1),Fec.col(i-1),(SRB(0,i-1)), Harvpar.col(i-1),Harvpar.col(i),global, aK0,null);
 	}
 	return(Harvest);
 }
 
-
-
-
+///get Aerial count
+//[[Rcpp::export]]
+arma::mat getAerialCountCpp(const arma::mat& Harv, const arma::mat& H, const arma::mat& A){
+	arma::mat Aerial_count;
+	Aerial_count = sum((1/H-1) % Harv);
+	return(Aerial_count);
+}
 
