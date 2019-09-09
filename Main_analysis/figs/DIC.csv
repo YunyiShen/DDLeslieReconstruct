@@ -1,8 +1,8 @@
 ,pD,DIC,,remarks
-Harvest(?fawn*sex),187.11,649.38,1397.82,4 harvest 
-Harvest(?fawn),196.3,631.48,1416.68,3 harvest
-"Fec(age,popu)Surv(age,popu)",108.81,835.74,1270.98,"solely DD, popu for reconstructed population"
-"Fec(fya,t)Surv(fya,t)",148.36,732.35,1325.79,"fys for fawn, yearling and adults, 3 age classes"
+Harvest(?fawn*sex),187.11,649.38,1210.71,4 harvest 
+Harvest(?fawn),196.3,631.48,1220.38,3 harvest
+"Fec(age,popu)Surv(age,popu)",108.81,835.74,1162.17,"solely DD, popu for reconstructed population"
+"Fec(fya,t)Surv(fya,t)",148.36,732.35,1177.43,"fys for fawn, yearling and adults, 3 age classes"
 ,,,,
 ,,,,
 ,,,,
