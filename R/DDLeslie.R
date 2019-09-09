@@ -1850,7 +1850,7 @@ HDDLislie.sampler =
 	#pD_Spie02 = -2 * mean(log.like.mcmc) + 2 * log_likelihood_mean
         pD_Gelman04 = 2 * var(log.like.mcmc)	
 	#DIC_Spie02 = -2* mean(log.like.mcmc) - 2 * (pD_Spie02)
-        DIC_Gelman04 = -2* mean(log.like.mcmc) - 2 * (pD_Gelman04)
+        DIC_Gelman04 = -2* mean(log.like.mcmc) + (pD_Gelman04)
         DIC = list(#pD_Spie02,DIC_Spie02,
                          pD_Gelman04,DIC_Gelman04)
 	names(DIC) = c(#"pD_Spie02","DIC_Spie02",
