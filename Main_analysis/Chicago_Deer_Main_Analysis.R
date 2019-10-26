@@ -7,8 +7,8 @@ nage = matrix( c(8,3),2,1) # nage is female first and then male, a vector with l
 period = 14
 
 
-mean.s = read.csv("./data/Survival_mean_Etter.csv",row.names = 1)
-mean.f = read.csv("./data/Fecundity_mean.csv",row.names = 1)
+mean.s = read.csv("./data/Survival_mean_Etter.csv",row.names = 1)[c(1,2,9,10),]
+mean.f = read.csv("./data/Fecundity_mean.csv",row.names = 1)[c(1,2),]
 mean.SRB = read.csv("./data/SRB_mean.csv",row.names = 1)
 Harv.data = read.csv("./data/Culling.csv",row.names = 1)
 Aeri.data = read.csv("./data/Aerial_count.csv",row.names = 1)
@@ -20,8 +20,9 @@ Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specifi
 
 Assumptions = list()
 
-Assumptions$Fec = list(time = eyes(period),age = as.matrix(eyes(nage[1])))
-Assumptions$Surv = list(time = eyes(period),age = as.matrix(eyes(sum(nage))))
+Surv_assump_age = as.matrix(read.csv("./Main_analysis/figs/combine_surv_yearling_adults/Surv_assump_age.csv",header = F))
+Assumptions$Fec = list(time = eyes(period),age = Surv_assump_age[1:8,1:2])
+Assumptions$Surv = list(time = eyes(period),age = Surv_assump_age)
 
 # for direct inference:
 #Assumptions$Fec = list(time = matrix(1,1,period),age = eyes((nage[1])))
@@ -48,7 +49,7 @@ prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 2000000, burn.in = 50000,thin.by = 1000, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 1000000, burn.in = 50000,thin.by = 1, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = list(matrix(-.001,nage[1],1),matrix(-.001,sum(nage),1),0)
