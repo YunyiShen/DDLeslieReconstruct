@@ -49,7 +49,7 @@ prop.vars = list(fert.rate = matrix(1,nrow = nage[1],ncol = period),
 
 set.seed(42)
 
-Chicago_RES = HDDLislie.sampler( n.iter = 1000000, burn.in = 50000,thin.by = 1, mean.f = as.matrix( mean.f)
+Chicago_RES = HDDLislie.sampler( n.iter = 1000000, burn.in = 50000,thin.by = 1000, mean.f = as.matrix( mean.f)
                                    ,al.f = 1, be.f = 1e-2, al.s = 1, be.s = .05
                                    , al.SRB = 1, be.SRB = .05
                                    , al.aK0 = list(matrix(-.001,nage[1],1),matrix(-.001,sum(nage),1),0)
