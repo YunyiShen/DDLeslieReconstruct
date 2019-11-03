@@ -7,8 +7,8 @@ nage = matrix( c(8,3),2,1) # nage is female first and then male, a vector with l
 period = 14
 
 
-mean.s = read.csv("./data/Survival_mean_Etter.csv",row.names = 1)[c(1,2,9,10),]
-mean.f = read.csv("./data/Fecundity_mean.csv",row.names = 1)[c(1,2),]
+mean.s = read.csv("./data/Survival_mean_Etter.csv",row.names = 1)[c(1,2,3,9,10,11),]
+mean.f = read.csv("./data/Fecundity_mean.csv",row.names = 1)[c(1,2,3),]
 mean.SRB = read.csv("./data/SRB_mean.csv",row.names = 1)
 Harv.data = read.csv("./data/Culling.csv",row.names = 1)
 Aeri.data = read.csv("./data/Aerial_count.csv",row.names = 1)
@@ -20,8 +20,8 @@ Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specifi
 
 Assumptions = list()
 
-Surv_assump_age = as.matrix(read.csv("./Main_analysis/figs/combine_surv_yearling_adults/Surv_assump_age.csv",header = F))
-Assumptions$Fec = list(time = eyes(period),age = Surv_assump_age[1:8,1:2])
+Surv_assump_age = as.matrix(read.csv("./Assumptions/6serv.csv",header = F))
+Assumptions$Fec = list(time = eyes(period),age = Surv_assump_age[1:8,1:3])
 Assumptions$Surv = list(time = eyes(period),age = Surv_assump_age)
 
 # for direct inference:
