@@ -126,3 +126,28 @@ ggplot(data.frame(temp),aes(x=time, y=mean, colour = point)) +
   geom_errorbar(aes(ymin=low, ymax=high), width=.1) +
   geom_point()
 ggsave(filename, plot = last_plot())
+
+
+sd_est = lapply(Chicago_RES$mcmc.objs,apply,2,sd)
+
+sd_fec = matrix(sd_est$fert.rate.mcmc,8,14)
+sd_surv = matrix(sd_est$surv.prop.mcmc,11,14)
+
+row.names(sd_fec) = 0:7+0.5
+colnames(sd_fec) = 1992+1:14
+
+row.names(sd_surv) = row.names(mean.s)
+colnames(sd_surv) = 1:14+1992
+
+write.csv(sd_fec,"fecundity_sd.csv")
+write.csv(sd_surv,"survival_sd.csv")
+
+
+last_year_inid = living_inid[,1:11 + 13 * 11]
+
+laster_year_female_YA = last_year_inid[,2:8]
+
+laster_year_male_YA = last_year_inid[,c(10,11)]
+
+laster_year_female_YA_sum = rowSums(laster_year_female_YA)
+laster_year_male_YA_sum = rowSums(laster_year_male_YA)
