@@ -20,7 +20,7 @@ Harv_assump = as.matrix(Harv_assump) # this is the assumption matrix for specifi
 
 Assumptions = list()
 
-Surv_assump_age = as.matrix(read.csv("./Assumptions/6serv.csv",header = F))
+Surv_assump_age = as.matrix(read.csv("./Assumptions/6surv.csv",header = F))
 Assumptions$Fec = list(time = eyes(period),age = Surv_assump_age[1:8,1:3])
 Assumptions$Surv = list(time = eyes(period),age = Surv_assump_age)
 
